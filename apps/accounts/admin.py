@@ -9,6 +9,22 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ['is_staff', 'is_active', 'is_superuser', 'is_instructor', 'is_student']
     search_fields = ['username', 'email', 'first_name', 'last_name']
     ordering = ['username']
+    
+    fieldsets = BaseUserAdmin.fieldsets + (
+        ('Instructor Profile', {
+            'fields': ('title', 'bio'),
+            'description': 'Fields for instructor profile information'
+        }),
+    )
+    
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        ('RBAC Fields', {
+            'fields': ('is_instructor', 'is_student'),
+        }),
+        ('Instructor Profile', {
+            'fields': ('title', 'bio'),
+        }),
+    )
 
 
 @admin.register(RoleRequest)
@@ -16,6 +32,7 @@ class RoleRequestAdmin(admin.ModelAdmin):
     list_display = ['user', 'status', 'created_at']
     list_filter = ['status']
     search_fields = ['user__username', 'user__email']
+    readonly_fields = ['user', 'status', 'created_at', 'introduction']
     ordering = ['-created_at']
     
     actions = ['approve_requests']

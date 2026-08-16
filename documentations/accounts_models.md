@@ -1,112 +1,109 @@
 # Accounts App Models Documentation
 
 ## Overview
-The `accounts` app handles user authentication and Role-Based Access Control (RBAC) for the UniQAKNTU platform. It extends Django's default `AbstractUser` to add instructor/student role differentiation and provides a workflow for students to request instructor status.
+The `accounts` app handles user authentication, authorization, and role-based access control (RBAC) for the UniQAKNTU platform. It extends Django's built-in `AbstractUser` model to provide custom functionality for instructors and students.
 
 ## Models
 
-### 1. User Model
+### User Model
 **Location:** `apps/accounts/models.py`
 
-The custom `User` model extends Django's `AbstractUser` to add RBAC fields for distinguishing between instructors and students.
+The `User` model extends `AbstractUser` to provide RBAC fields and instructor profile information.
 
 #### Fields
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| Field Name | Type | Default | Description |
+|------------|------|---------|-------------|
+| `username` | CharField (inherited) | - | Unique username for authentication (from AbstractUser) |
+| `email` | EmailField (inherited) | - | User's email address (from AbstractUser) |
+| `first_name` | CharField (inherited) | - | User's first name (from AbstractUser) |
+| `last_name` | CharField (inherited) | - | User's last name (from AbstractUser) |
 | `is_instructor` | BooleanField | `False` | Indicates if the user has instructor privileges. Instructors can create and edit answers. |
 | `is_student` | BooleanField | `True` | Indicates if the user has student privileges. Students have read-only access to answers. |
+| `title` | CharField | `null`, blank | Academic title of the instructor (e.g., "Dr.", "Prof.", "TA"). Max length: 50 characters. |
+| `bio` | TextField | `null`, blank | Academic background and experience of the instructor. Used for displaying instructor profile information. |
 
-#### Behavior
-- By default, all new users are created as students (`is_student=True`, `is_instructor=False`).
-- When a user's `RoleRequest` is approved by an admin, `is_instructor` is set to `True` and `is_student` is set to `False`.
-- These flags are used throughout the application to enforce access control:
-  - Only users with `is_instructor=True` can create or edit answers.
-  - All authenticated users can view answers, but only instructors can modify their own.
+#### Meta Options
+- `db_table`: `'auth_user'` - Uses the default Django auth_user table
+- `verbose_name`: `'user'`
+- `verbose_name_plural`: `'users'`
 
-#### Example Usage
-```python
-from apps.accounts.models import User
+#### Methods
+- `__str__()`: Returns the username as the string representation
 
-# Check if user is an instructor
-if request.user.is_instructor:
-    # Allow answer creation
-    pass
-
-# Check if user is a student
-if request.user.is_student:
-    # Read-only access
-    pass
-```
+#### Usage Notes
+- The `title` and `bio` fields are specifically designed for instructor profiles and are optional (blank=True, null=True)
+- When a user is approved as an instructor via the RoleRequest system, `is_instructor` is set to `True` and `is_student` is set to `False`
+- The `title` field should contain academic titles like "Dr.", "Professor", "TA", etc.
+- The `bio` field should contain a brief description of the instructor's academic background, research interests, and teaching experience
 
 ---
 
-### 2. RoleRequest Model
+### RoleRequest Model
 **Location:** `apps/accounts/models.py`
 
-The `RoleRequest` model manages the workflow for students requesting to be upgraded to instructor status. This provides an auditable trail of role change requests.
+The `RoleRequest` model handles the workflow for students requesting to be upgraded to instructor status.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `user` | ForeignKey (User) | Reference to the user who submitted the request. On delete: CASCADE. |
-| `status` | CharField | Current status of the request. Choices: `Pending`, `Approved`, `Rejected`. Default: `Pending`. |
-| `created_at` | DateTimeField | Timestamp when the request was created. Auto-set on creation. |
+| Field Name | Type | Default | Description |
+|------------|------|---------|-------------|
+| `user` | ForeignKey (User) | - | Reference to the User making the request. On delete: CASCADE. |
+| `status` | CharField | `'Pending'` | Current status of the request. Choices: 'Pending', 'Approved', 'Rejected'. |
+| `created_at` | DateTimeField | auto_now_add | Timestamp when the request was created. Automatically set on creation. |
+| `introduction` | TextField | `null`, blank | Optional text field where the user explains why they are requesting instructor status. Should include background information, qualifications, and reasons for the request. |
 
 #### Status Choices
-- **Pending:** Request is awaiting admin review.
-- **Approved:** Request has been approved; user should have `is_instructor=True`.
-- **Rejected:** Request has been denied.
-
-#### Meta Options
-- `verbose_name = 'Role Request'`
-- `verbose_name_plural = 'Role Requests'`
-- `ordering = ['-created_at']` (Newest requests first)
-
-#### Admin Integration
-The `RoleRequestAdmin` class in `admin.py` provides:
-- `list_display`: Shows `user`, `status`, and `created_at`.
-- `list_filter`: Allows filtering by `status`.
-- **Custom Action:** `approve_requests` - An admin action that:
-  1. Sets the request status to `Approved`.
-  2. Sets `user.is_instructor = True`.
-  3. Sets `user.is_student = False`.
-  4. Saves both the request and user objects.
-
-#### Example Workflow
 ```python
-from apps.accounts.models import RoleRequest, User
-
-# Student submits a request
-request = RoleRequest.objects.create(user=some_student, reason="I am a TA")
-
-# Admin approves via admin panel (or programmatically)
-request.status = 'Approved'
-request.save()
-request.user.is_instructor = True
-request.user.is_student = False
-request.user.save()
+STATUS_CHOICES = [
+    ('Pending', 'Pending'),
+    ('Approved', 'Approved'),
+    ('Rejected', 'Rejected'),
+]
 ```
 
----
+#### Meta Options
+- `verbose_name`: `'Role Request'`
+- `verbose_name_plural`: `'Role Requests'`
+- `ordering`: `['-created_at']` - Orders by most recent requests first
 
-## Database Schema Summary
+#### Methods
+- `__str__()`: Returns a string in the format `"{username} - {status}"`
 
-### auth_user table (extended)
-- Standard Django User fields (username, email, password, etc.)
-- `is_instructor` (BOOLEAN)
-- `is_student` (BOOLEAN)
+#### Usage Notes
+- When a student wants to become an instructor, they submit a RoleRequest with an introduction explaining their qualifications
+- Admins can review the `introduction` field in the Django Admin panel to make informed approval decisions
+- The admin action `approve_requests` automatically sets `user.is_instructor = True` and `user.is_student = False` when approving a request
+- The `introduction` field is displayed as readonly in the admin panel to prevent accidental modification
+- Multiple pending requests from the same user should be prevented at the application level
 
-### accounts_rolerequest table
-- `id` (INTEGER, PRIMARY KEY)
-- `user_id` (INTEGER, FOREIGN KEY -> auth_user.id)
-- `status` (VARCHAR(10))
-- `created_at` (DATETIME)
+#### Example Introduction Text
+```
+I am a teaching assistant for the Operating Systems course this semester. 
+I have completed my Master's degree in Computer Science from KNTU and have 
+been working as a TA for two semesters. I need instructor access to provide 
+official solutions for exam questions to help students understand the correct 
+approaches to solving problems.
+```
 
----
+## Admin Configuration
 
-## Security Considerations
-1. **Never trust client-side role checks:** Always verify `request.user.is_instructor` on the server side before allowing sensitive operations.
-2. **Audit trail:** The `RoleRequest` model provides a complete history of role change requests, which is essential for accountability.
-3. **Admin approval required:** Students cannot self-promote; all role changes must go through the admin approval workflow.
+### UserAdmin
+- Extends Django's built-in `UserAdmin`
+- Displays `is_instructor` and `is_student` in `list_display` and `list_filter`
+- Includes `title` and `bio` fields in the fieldsets under "Instructor Profile" section
+- Added fieldsets for both regular user editing and user creation (`add_fieldsets`)
+
+### RoleRequestAdmin
+- Displays `user`, `status`, and `created_at` in list view
+- Filters by `status` for easy pending request management
+- Includes `introduction` as a readonly field for admins to review
+- Provides `approve_requests` admin action that:
+  1. Sets the request status to 'Approved'
+  2. Sets `user.is_instructor = True`
+  3. Sets `user.is_student = False`
+  4. Saves the user object
+
+## Related Documentation
+- See `wiki_models.md` for how `is_instructor` is used in answer creation permissions
+- See `API.md` for the `/users/request-instructor/` endpoint specification

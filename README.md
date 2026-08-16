@@ -8,28 +8,31 @@ The application strictly separates Backend and Frontend components, prioritizing
 ## Features
 * **Instructor-Led Solutions & Role-Based Access Control:** Verified instructors can post and edit their own isolated answers. Students have Read-Only access to view solutions.
 * **Multi-Answer System:** Multiple instructors can provide different solutions to the same question, similar to StackOverflow.
+* **File Upload Support:** Instructors can upload images (e.g., hand-written solutions) and PDF files alongside Markdown text for comprehensive answers.
+* **Instructor Profiles:** Detailed instructor profiles including academic title (Dr., Prof., TA) and biography for academic background.
 * **Revision History:** Full tracking of answer modifications via `AnswerRevision` to maintain data integrity and enable personal revision history for each instructor's answer.
 * **Markdown & MathJax Integration:** Native rendering of code snippets, algorithms, and mathematical formulas.
 * **Modular Architecture:** Segregated Django Apps (`accounts`, `curriculum`, `wiki`) for clear responsibility boundaries.
-* **Bulk Answer Upload:** Instructors can submit answers for an entire exam at once through a dedicated dashboard.
-* **Role Request System:** Students can request to be upgraded to instructor status through an admin-approved workflow.
+* **Bulk Answer Upload:** Instructors can submit answers for an entire exam at once through a dedicated dashboard with file upload support.
+* **Role Request System:** Students can request to be upgraded to instructor status through an admin-approved workflow with introduction field for providing background information.
 
 ## Technology Stack
 * **Backend:** Python 3, Django
 * **Frontend:** HTML5, CSS (Bootstrap 5 / Tailwind), JavaScript
 * **Text Processing:** MarkdownX / EasyMDE, MathJax
+* **File Handling:** Django ImageField, FileField for image and PDF uploads
 
 ## Project Structure
 ```text
 UniQAKNTU/
 ├── config/                 # Core Django configuration (settings, wsgi, asgi)
 ├── apps/                   # Django applications directory
-│   ├── accounts/           # Custom User model with RBAC fields and RoleRequest
+│   ├── accounts/           # Custom User model with RBAC fields, instructor profile, and RoleRequest
 │   ├── curriculum/         # Course and Exam models
-│   └── wiki/               # Question, Answer (multi-answer), and AnswerRevision models
+│   └── wiki/               # Question, Answer (multi-answer with file uploads), and AnswerRevision models
 ├── templates/              # HTML templates (base and app-specific)
 ├── static/                 # Static assets (CSS, JS, Images)
-└── media/                  # User-uploaded files (e.g., question images)
+└── media/                  # User-uploaded files (questions, answer images, PDFs)
 ```
 
 ## Installation & Setup
@@ -73,3 +76,4 @@ UniQAKNTU/
 * **Core Developers:**
     * Mohammad Amin Haji Alirezaei
     * Mohammad Sajjad Hamidifard
+

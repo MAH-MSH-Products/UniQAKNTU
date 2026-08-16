@@ -22,9 +22,11 @@ class Question(models.Model):
 class Answer(models.Model):
     """Model representing an instructor's answer to a question. Multiple instructors can provide answers."""
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
-    current_body = models.TextField()
+    current_body = models.TextField(blank=True, null=True)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='authored_answers')
     is_verified = models.BooleanField(default=False)
+    image = models.ImageField(upload_to='answers/images/', blank=True, null=True)
+    pdf_file = models.FileField(upload_to='answers/pdfs/', blank=True, null=True)
     
     class Meta:
         verbose_name = 'Answer'

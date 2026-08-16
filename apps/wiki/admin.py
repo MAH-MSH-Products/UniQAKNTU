@@ -12,10 +12,11 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ['question', 'author', 'current_body', 'is_verified']
+    list_display = ['question', 'author', 'current_body', 'is_verified', 'image', 'pdf_file']
     list_filter = ['author', 'is_verified']
     search_fields = ['question__text', 'author__username']
     ordering = ['question']
+    readonly_fields = ['image', 'pdf_file']
 
 
 @admin.register(AnswerRevision)

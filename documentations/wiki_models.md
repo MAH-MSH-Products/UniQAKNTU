@@ -1,171 +1,167 @@
 # Wiki App Models Documentation
 
 ## Overview
-The `wiki` app manages the core content of the UniQAKNTU platform: questions from exams and instructor-provided answers. The architecture has been refactored from a Wiki-style single-answer model to an **Instructor-led Multi-Answer system** where multiple instructors can provide different solutions to the same question.
+The `wiki` app manages the core Q&A functionality of the UniQAKNTU platform. It handles questions from exams and instructor-provided answers with support for file uploads (images and PDFs). The system uses a multi-answer architecture where multiple instructors can provide different solutions to the same question.
 
 ## Models
 
-### 1. Question Model
+### Question Model
 **Location:** `apps/wiki/models.py`
 
-Represents a question from an exam. Questions are tied to specific exams and have a sequential number within that exam.
+Represents a question from an exam.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `exam` | ForeignKey (curriculum.Exam) | Reference to the parent Exam. On delete: CASCADE. Related name: `questions`. |
-| `text` | TextField | The full text of the question. |
-| `image` | ImageField (optional) | Optional image associated with the question (e.g., diagrams). Uploads to `questions/`. |
-| `question_number` | IntegerField | Sequential number of the question within the exam. |
+| Field Name | Type | Description |
+|------------|------|-------------|
+| `exam` | ForeignKey (Exam) | Reference to the parent Exam. On delete: CASCADE. Related name: `questions` |
+| `text` | TextField | The full text content of the question |
+| `image` | ImageField | Optional image associated with the question (e.g., diagrams). Upload path: `questions/` |
+| `question_number` | IntegerField | The sequential number of the question within the exam |
 
 #### Meta Options
-- `verbose_name = 'Question'`
-- `verbose_name_plural = 'Questions'`
-- `ordering = ['exam', 'question_number']`
-- `unique_together = ['exam', 'question_number']` - Ensures each question number is unique per exam.
+- `verbose_name`: `'Question'`
+- `verbose_name_plural`: `'Questions'`
+- `ordering`: `['exam', 'question_number']`
+- `unique_together`: `['exam', 'question_number']` - Ensures each question number is unique per exam
 
-#### Relationships
-- **One-to-Many with Exam:** Each exam can have multiple questions.
-- **One-to-Many with Answer:** Each question can have multiple answers from different instructors (via `related_name='answers'`).
+#### Methods
+- `__str__()`: Returns `f"Question {self.question_number} - {self.exam}"`
 
 ---
 
-### 2. Answer Model
+### Answer Model
 **Location:** `apps/wiki/models.py`
 
-Represents an instructor's answer to a question. Multiple instructors can provide different answers to the same question, but each instructor can only submit one answer per question.
+Represents an instructor's answer to a question. Multiple instructors can provide different answers to the same question.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `question` | ForeignKey (Question) | Reference to the parent Question. On delete: CASCADE. Related name: `answers`. |
-| `current_body` | TextField | The current content of the answer (Markdown format). |
-| `author` | ForeignKey (User) | Reference to the instructor who authored this answer. On delete: CASCADE. Related name: `authored_answers`. |
-| `is_verified` | BooleanField | Default: `False`. Indicates if this answer has been verified/marked as correct by an admin. |
+| Field Name | Type | Default | Description |
+|------------|------|---------|-------------|
+| `question` | ForeignKey (Question) | - | Reference to the Question being answered. On delete: CASCADE. Related name: `answers` (allows `question.answers.all()`) |
+| `current_body` | TextField | `null`, blank | The Markdown-formatted text content of the answer. Can be empty if the answer consists only of uploaded files. |
+| `author` | ForeignKey (User) | - | Reference to the instructor who authored the answer. On delete: CASCADE. Related name: `authored_answers` |
+| `is_verified` | BooleanField | `False` | Indicates if the answer has been verified by an admin or course supervisor |
+| `image` | ImageField | `null`, blank | Optional image upload for the answer (e.g., hand-written solution photos). Upload path: `answers/images/` |
+| `pdf_file` | FileField | `null`, blank | Optional PDF file upload for the answer (e.g., typed solution documents). Upload path: `answers/pdfs/` |
 
 #### Meta Options
-- `verbose_name = 'Answer'`
-- `verbose_name_plural = 'Answers'`
-- `unique_together = ['question', 'author']` - **Critical constraint:** Prevents the same instructor from submitting multiple distinct answers to the same question.
+- `verbose_name`: `'Answer'`
+- `verbose_name_plural`: `'Answers'`
+- `unique_together`: `['question', 'author']` - **Critical constraint** that prevents the same instructor from posting multiple distinct answers to the same question
 
-#### Key Architectural Changes
-1. **ForeignKey instead of OneToOneField:** Changed from `question = models.OneToOneField(...)` to `question = models.ForeignKey(...)`. This allows multiple answers per question.
-2. **Added `is_verified` field:** Allows marking certain answers as verified/correct.
-3. **Unique Together Constraint:** The `unique_together = ['question', 'author']` constraint ensures data integrity by preventing duplicate answers from the same author.
+#### Methods
+- `__str__()`: Returns `f"Answer by {self.author.username} to {self.question}"`
 
-#### Example Usage
+#### Key Constraints and Behavior
+
+##### ForeignKey Relationship (Multi-Answer System)
+- The `question` field is a **ForeignKey**, NOT a OneToOneField
+- This allows multiple instructors to provide different answers to the same question
+- Each instructor can only have ONE answer per question (enforced by `unique_together`)
+
+##### unique_together Constraint
 ```python
-from apps.wiki.models import Question, Answer
+unique_together = ['question', 'author']
+```
+This constraint ensures:
+1. An instructor cannot submit multiple separate answers to the same question
+2. If an instructor wants to modify their answer, they must edit the existing one (creating an `AnswerRevision`)
+3. Different instructors CAN each have their own answer for the same question
 
+##### File Upload Support
+- **`image` field**: Stores uploaded images (PNG, JPG, etc.) in `MEDIA_ROOT/answers/images/`
+  - Use case: Hand-written solutions, diagrams, graphs
+  - Access via: `answer.image.url` or `answer.image.path`
+  
+- **`pdf_file` field**: Stores uploaded PDF documents in `MEDIA_ROOT/answers/pdfs/`
+  - Use case: Typed solutions, formal documents
+  - Access via: `answer.pdf_file.url` or `answer.pdf_file.path`
+
+- **`current_body` field**: Now optional (blank=True, null=True) to allow answers that consist solely of file uploads
+
+#### Usage Examples
+
+```python
 # Get all answers for a question
 question = Question.objects.get(pk=1)
-all_answers = question.answers.all()  # Returns QuerySet of all instructor answers
+all_answers = question.answers.all()  # Returns QuerySet of Answer objects
 
-# Check if an instructor already answered
+# Check if an instructor already has an answer for a question
 existing_answer = Answer.objects.filter(
     question=question,
     author=request.user
 ).first()
 
-if not existing_answer and request.user.is_instructor:
-    # Allow creating new answer
-    Answer.objects.create(
-        question=question,
-        current_body="Solution here...",
-        author=request.user
-    )
+# Create an answer with file uploads
+answer = Answer.objects.create(
+    question=question,
+    author=user,
+    current_body="## Solution\nUsing dynamic programming...",
+    image=request.FILES.get('solution_image'),
+    pdf_file=request.FILES.get('solution_pdf')
+)
+
+# Access uploaded files
+if answer.image:
+    image_url = answer.image.url  # /media/answers/images/solution_1.png
+    
+if answer.pdf_file:
+    pdf_url = answer.pdf_file.url  # /media/answers/pdfs/solution_1.pdf
 ```
 
 ---
 
-### 3. AnswerRevision Model
+### AnswerRevision Model
 **Location:** `apps/wiki/models.py`
 
-Tracks the revision history of an instructor's answer. Unlike the previous Wiki-style model where revisions represented community edits, this model now serves as **personal revision history** for each instructor's own answer.
+Tracks the revision history of an instructor's answer. This serves as personal revision history for an instructor's own answer, not community history.
 
 #### Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `answer` | ForeignKey (Answer) | Reference to the parent Answer. On delete: CASCADE. Related name: `revisions`. |
-| `body` | TextField | The content of this revision (snapshot of the answer at this point in time). |
-| `editor` | ForeignKey (User) | Reference to the user who made this revision. Typically the same as `answer.author`. On delete: CASCADE. Related name: `answer_revisions`. |
-| `created_at` | DateTimeField | Auto-set on creation (`auto_now_add=True`). Timestamp of when this revision was created. |
-| `edit_summary` | CharField (optional) | Optional brief description of what changed in this revision. Max length: 255. |
+| Field Name | Type | Description |
+|------------|------|-------------|
+| `answer` | ForeignKey (Answer) | Reference to the Answer being revised. On delete: CASCADE. Related name: `revisions` |
+| `body` | TextField | The Markdown content of this specific revision |
+| `editor` | ForeignKey (User) | Reference to the user who made this revision. On delete: CASCADE. Related name: `answer_revisions` |
+| `created_at` | DateTimeField | Auto-set timestamp when the revision was created (`auto_now_add=True`) |
+| `edit_summary` | CharField | Optional summary describing the changes made in this revision (max 255 chars) |
 
 #### Meta Options
-- `verbose_name = 'Answer Revision'`
-- `verbose_name_plural = 'Answer Revisions'`
-- `ordering = ['-created_at']` (Newest revisions first)
+- `verbose_name`: `'Answer Revision'`
+- `verbose_name_plural`: `'Answer Revisions'`
+- `ordering`: `['-created_at']` - Most recent revisions first
 
-#### Behavioral Notes
-- **Personal History:** Revisions now track changes made by an instructor to their own answer, not community-wide edits.
-- **No Rollback Conflicts:** Since each instructor manages their own isolated answer, there's no risk of concurrent edit conflicts between different users.
-- **Audit Trail:** Provides a complete history of how an answer evolved over time.
+#### Methods
+- `__str__()`: Returns `f"Revision of {self.answer} by {self.editor.username} at {self.created_at}"`
 
-#### Example Usage
-```python
-from apps.wiki.models import Answer, AnswerRevision
+#### Usage Notes
+- Created automatically when an instructor updates their answer
+- The `editor` should typically be the same as `answer.author` (instructors can only edit their own answers)
+- The `body` field captures the state of `answer.current_body` at the time of revision
+- File uploads (`image`, `pdf_file`) are NOT tracked in revisions - only the text body history is maintained
 
-# Create a revision before updating an answer
-answer = Answer.objects.get(pk=1)
-AnswerRevision.objects.create(
-    answer=answer,
-    body=answer.current_body,  # Save old content
-    editor=request.user,
-    edit_summary="Updating algorithm explanation"
-)
+## Admin Configuration
 
-# Now update the answer
-answer.current_body = "New solution..."
-answer.save()
-```
+### QuestionAdmin
+- Displays `question_number`, `text`, and `exam` in list view
+- Filters by `exam`
+- Searchable by `text` and `question_number`
 
----
+### AnswerAdmin
+- Displays `question`, `author`, `current_body`, `is_verified`, `image`, and `pdf_file` in list view
+- Filters by `author` and `is_verified`
+- Searchable by question text and author username
+- `image` and `pdf_file` are readonly fields (display only)
 
-## Database Schema Summary
+### AnswerRevisionAdmin
+- Displays `answer`, `editor`, `created_at`, and `edit_summary` in list view
+- Filters by `editor` and `created_at`
+- Searchable by answer question text and editor username
+- Ordered by most recent first
 
-### wiki_question table
-- `id` (INTEGER, PRIMARY KEY)
-- `exam_id` (INTEGER, FOREIGN KEY -> curriculum_exam.id)
-- `text` (TEXT)
-- `image` (VARCHAR, NULL)
-- `question_number` (INTEGER)
-- **Unique Index:** `(exam_id, question_number)`
-
-### wiki_answer table
-- `id` (INTEGER, PRIMARY KEY)
-- `question_id` (INTEGER, FOREIGN KEY -> wiki_question.id)
-- `current_body` (TEXT)
-- `author_id` (INTEGER, FOREIGN KEY -> auth_user.id)
-- `is_verified` (BOOLEAN)
-- **Unique Index:** `(question_id, author_id)` - Prevents duplicate answers from same author
-
-### wiki_answerrevision table
-- `id` (INTEGER, PRIMARY KEY)
-- `answer_id` (INTEGER, FOREIGN KEY -> wiki_answer.id)
-- `body` (TEXT)
-- `editor_id` (INTEGER, FOREIGN KEY -> auth_user.id)
-- `created_at` (DATETIME)
-- `edit_summary` (VARCHAR(255), NULL)
-
----
-
-## Access Control Rules
-
-1. **Read Access:** All users (authenticated or not) can view questions and answers.
-2. **Create Answer:** Only users with `is_instructor=True` can create answers.
-3. **Edit Answer:** Only the original author (`answer.author`) can edit their own answer.
-4. **Delete Answer:** Only the original author or admin/staff can delete an answer.
-5. **View Revisions:** All users can view the revision history of any answer.
-
----
-
-## Migration Notes
-
-When migrating from the old Wiki-style model:
-1. The `OneToOneField` on `Answer.question` was changed to `ForeignKey`.
-2. Existing data will be preserved; each existing answer becomes one of potentially many answers for its question.
-3. The `unique_together` constraint must be enforced after migration to prevent future duplicates.
+## Related Documentation
+- See `accounts_models.md` for User model and RBAC fields
+- See `wiki_views.md` for `ExamBulkAnswerView` with file upload handling
+- See `API.md` for endpoints supporting multipart/form-data uploads

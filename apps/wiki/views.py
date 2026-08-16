@@ -17,6 +17,7 @@ def exam_bulk_answer_view(request, exam_id):
     Logic: Receives an exam_id. Fetches all Question objects for that exam.
            Renders a Django modelformset_factory for the Answer model, pre-filtered
            for the current user and the specific questions of that exam.
+           Supports file uploads (image and pdf_file) via multipart/form-data.
     """
     # Authorization check - only instructors can access
     if not request.user.is_instructor:
@@ -25,10 +26,10 @@ def exam_bulk_answer_view(request, exam_id):
     exam = get_object_or_404(Exam, pk=exam_id)
     questions = Question.objects.filter(exam=exam).order_by('question_number')
     
-    # Create a formset factory for Answer model
+    # Create a formset factory for Answer model with file upload support
     AnswerFormSet = modelformset_factory(
         Answer,
-        fields=['current_body'],
+        fields=['current_body', 'image', 'pdf_file'],
         extra=0,
         can_delete=False
     )
@@ -40,7 +41,8 @@ def exam_bulk_answer_view(request, exam_id):
             author=request.user
         )
         
-        formset = AnswerFormSet(request.POST, queryset=existing_answers)
+        # CRITICAL: Pass request.FILES to handle file uploads
+        formset = AnswerFormSet(request.POST, request.FILES, queryset=existing_answers)
         
         if formset.is_valid():
             # Save all answers

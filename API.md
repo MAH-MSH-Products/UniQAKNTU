@@ -3,7 +3,7 @@
 ## Overview
 This document defines the REST API endpoints used for dynamic frontend-backend communication. The application uses a hybrid approach: initial page loads are Server-Side Rendered (SSR) via Django templates, while Answer actions (creating, editing, viewing multiple answers) are handled asynchronously via these endpoints.
 
-**Architecture Change:** The system has migrated from a Wiki-style single-answer model to an **Instructor-led Multi-Answer system** with strict Role-Based Access Control (RBAC). Students have Read-Only access, while verified Instructors can post and edit their own isolated answers.
+**Architecture Change:** The system has migrated from a Wiki-style single-answer model to an **Instructor-led Multi-Answer system** with strict Role-Based Access Control (RBAC). Students have Read-Only access, while verified Instructors can post and edit their own isolated answers. Answers now support file uploads (images and PDFs) in addition to Markdown text.
 
 ## Base URL
 `/api/v1/`
@@ -37,7 +37,7 @@ Renders raw Markdown + MathJax content into safe HTML. Used for live preview in 
   ```
 
 ### 2. Fetch All Answers for a Question
-Returns all instructor answers for a specific question. Each answer includes author information and verification status.
+Returns all instructor answers for a specific question. Each answer includes author information, verification status, and file attachments if present.
 
 - **URL:** `/questions/{question_id}/answers/`
 - **Method:** `GET`
@@ -52,6 +52,8 @@ Returns all instructor answers for a specific question. Each answer includes aut
               "author_is_instructor": true,
               "current_body": "The scheduler uses Round Robin algorithm...",
               "is_verified": true,
+              "image_url": "/media/answers/images/solution_1.png",
+              "pdf_file_url": "/media/answers/pdfs/solution_1.pdf",
               "created_at": "2026-08-16T10:00:00Z"
           },
           {
@@ -60,6 +62,8 @@ Returns all instructor answers for a specific question. Each answer includes aut
               "author_is_instructor": true,
               "current_body": "Alternative approach using Priority Scheduling...",
               "is_verified": false,
+              "image_url": null,
+              "pdf_file_url": null,
               "created_at": "2026-08-16T14:30:00Z"
           }
       ]
@@ -69,16 +73,19 @@ Returns all instructor answers for a specific question. Each answer includes aut
 ### 3. Create New Answer (Instructors Only)
 Creates a new answer for a question. **Strictly requires `is_instructor = True`**. Students cannot create answers.
 
+**NOTE:** This endpoint accepts `multipart/form-data` instead of `application/json` to support file uploads (`image` and `pdf_file`).
+
 - **URL:** `/questions/{question_id}/answers/`
 - **Method:** `POST`
 - **Auth Required:** Yes
 - **Permission Required:** `user.is_instructor == True` (Returns 403 Forbidden for non-instructors)
-- **Request Body:**
-  ```json
-  {
-      "body": "The solution involves implementing a mutex lock...",
-      "edit_summary": "Initial answer submission"
-  }
+- **Content-Type:** `multipart/form-data`
+- **Request Body (Form Data):**
+  ```
+  current_body: "The solution involves implementing a mutex lock..."
+  image: <file upload>
+  pdf_file: <file upload>
+  edit_summary: "Initial answer submission"
   ```
 - **Response (201 Created):**
   ```json
@@ -104,16 +111,19 @@ Creates a new answer for a question. **Strictly requires `is_instructor = True`*
 ### 4. Update Answer (Author Only)
 Updates an existing answer. Only the original author can update their own answer.
 
+**NOTE:** This endpoint accepts `multipart/form-data` instead of `application/json` to support file uploads (`image` and `pdf_file`).
+
 - **URL:** `/answers/{answer_id}/update/`
 - **Method:** `PUT`
 - **Auth Required:** Yes
 - **Permission Required:** User must be the author of the answer
-- **Request Body:**
-  ```json
-  {
-      "body": "Updated markdown text with corrections...",
-      "edit_summary": "Fixed typo in algorithm explanation"
-  }
+- **Content-Type:** `multipart/form-data`
+- **Request Body (Form Data):**
+  ```
+  current_body: "Updated markdown text with corrections..."
+  image: <file upload or omit to keep existing>
+  pdf_file: <file upload or omit to keep existing>
+  edit_summary: "Fixed typo in algorithm explanation"
   ```
 - **Response (200 OK):**
   ```json
@@ -133,7 +143,8 @@ New endpoint for students to request an upgrade to instructor status.
 - **Request Body:**
   ```json
   {
-      "reason": "I am a teaching assistant for this course and need to provide official solutions."
+      "reason": "I am a teaching assistant for this course and need to provide official solutions.",
+      "introduction": "I have completed my Master's degree in Computer Science and have been working as a TA for Operating Systems course for two semesters."
   }
   ```
 - **Response (201 Created):**
