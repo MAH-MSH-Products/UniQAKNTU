@@ -51,4 +51,5 @@ The development lifecycle must strictly follow these steps:
 * **Frontend workflow:** Must execute UI validation or JS linting (if applicable).
 * Merging is hard-blocked if any workflow fails.
 
-## 5. You HAVE to create a .md document file for each file which you implement based on constraint that is mentioned in documentations/Document-Constraint.md
+## 5. Document
+* You HAVE to create a .md document file for each file which you implement based on constraint that is mentioned in documentations/Document-Constraint.md
