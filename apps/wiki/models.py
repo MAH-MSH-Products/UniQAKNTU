@@ -20,21 +20,25 @@ class Question(models.Model):
 
 
 class Answer(models.Model):
-    """Model representing the current answer to a question."""
-    question = models.OneToOneField(Question, on_delete=models.CASCADE, related_name='answer')
+    """Model representing an instructor's answer to a question. Multiple instructors can provide answers."""
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     current_body = models.TextField()
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='authored_answers')
+    is_verified = models.BooleanField(default=False)
     
     class Meta:
         verbose_name = 'Answer'
         verbose_name_plural = 'Answers'
+        unique_together = ['question', 'author']
     
     def __str__(self):
-        return f"Answer to {self.question}"
+        return f"Answer by {self.author.username} to {self.question}"
 
 
 class AnswerRevision(models.Model):
-    """Model representing a revision history of an answer."""
+    """Model representing a revision history of an instructor's own answer.
+    This serves as personal revision history for an instructor's answer, not community history.
+    """
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='revisions')
     body = models.TextField()
     editor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='answer_revisions')

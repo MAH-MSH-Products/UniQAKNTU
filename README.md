@@ -1,16 +1,18 @@
 # UniQAKNTU - Open Exam Wiki
 
 ## Overview
-UniQAKNTU is a collaborative, wiki-style web application designed to manage, archive, and crowdsource solutions for university course exams. The system is currently targeted towards the Operating Systems course but features a scalable architecture designed to support multiple disciplines.
+UniQAKNTU is a collaborative web application designed to manage, archive, and provide instructor-led solutions for university course exams. The system features a scalable architecture with strict Role-Based Access Control (RBAC) to ensure answer quality and integrity.
 
 The application strictly separates Backend and Frontend components, prioritizing functional execution, system logic, and database versioning over monolithic design.
 
 ## Features
-* **Wiki-Style Collaboration:** Authenticated users can write, update, and refine exam answers.
-* **Revision History:** Full tracking of answer modifications via `AnswerRevision` to maintain data integrity and enable rollback capabilities.
+* **Instructor-Led Solutions & Role-Based Access Control:** Verified instructors can post and edit their own isolated answers. Students have Read-Only access to view solutions.
+* **Multi-Answer System:** Multiple instructors can provide different solutions to the same question, similar to StackOverflow.
+* **Revision History:** Full tracking of answer modifications via `AnswerRevision` to maintain data integrity and enable personal revision history for each instructor's answer.
 * **Markdown & MathJax Integration:** Native rendering of code snippets, algorithms, and mathematical formulas.
 * **Modular Architecture:** Segregated Django Apps (`accounts`, `curriculum`, `wiki`) for clear responsibility boundaries.
-* **Role-Based Access:** Admin panel for Question/Exam entry, user-facing interfaces for Answer contributions.
+* **Bulk Answer Upload:** Instructors can submit answers for an entire exam at once through a dedicated dashboard.
+* **Role Request System:** Students can request to be upgraded to instructor status through an admin-approved workflow.
 
 ## Technology Stack
 * **Backend:** Python 3, Django
@@ -22,9 +24,9 @@ The application strictly separates Backend and Frontend components, prioritizing
 UniQAKNTU/
 ├── config/                 # Core Django configuration (settings, wsgi, asgi)
 ├── apps/                   # Django applications directory
-│   ├── accounts/           # Custom User model and authentication logic
+│   ├── accounts/           # Custom User model with RBAC fields and RoleRequest
 │   ├── curriculum/         # Course and Exam models
-│   └── wiki/               # Question, Answer, and AnswerRevision models
+│   └── wiki/               # Question, Answer (multi-answer), and AnswerRevision models
 ├── templates/              # HTML templates (base and app-specific)
 ├── static/                 # Static assets (CSS, JS, Images)
 └── media/                  # User-uploaded files (e.g., question images)
@@ -34,7 +36,7 @@ UniQAKNTU/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-org/UniQAKNTU.git
+   git clone https://github.com/MAH-MSH-Products/UniQAKNTU.git
    cd UniQAKNTU
    ```
 

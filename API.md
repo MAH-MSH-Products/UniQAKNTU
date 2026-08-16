@@ -1,7 +1,9 @@
 # API Specification - UniQAKNTU
 
 ## Overview
-This document defines the REST API endpoints used for dynamic frontend-backend communication. The application uses a hybrid approach: initial page loads are Server-Side Rendered (SSR) via Django templates, while Wiki actions (editing, previewing, history) are handled asynchronously via these endpoints.
+This document defines the REST API endpoints used for dynamic frontend-backend communication. The application uses a hybrid approach: initial page loads are Server-Side Rendered (SSR) via Django templates, while Answer actions (creating, editing, viewing multiple answers) are handled asynchronously via these endpoints.
+
+**Architecture Change:** The system has migrated from a Wiki-style single-answer model to an **Instructor-led Multi-Answer system** with strict Role-Based Access Control (RBAC). Students have Read-Only access, while verified Instructors can post and edit their own isolated answers.
 
 ## Base URL
 `/api/v1/`
@@ -30,44 +32,128 @@ Renders raw Markdown + MathJax content into safe HTML. Used for live preview in 
 - **Response (200 OK):**
   ```json
   {
-      "html": "<p>Here is an OS concept: \(O(n)\) scheduling.</p>"
+      "html": "<p>Here is an OS concept: \\(O(n)\\) scheduling.</p>"
   }
   ```
 
-### 2. Submit / Update Answer
-Submits a new answer or updates an existing one. If an answer exists, the backend automatically creates an `AnswerRevision` before updating the `current_body`.
+### 2. Fetch All Answers for a Question
+Returns all instructor answers for a specific question. Each answer includes author information and verification status.
 
-- **URL:** `/questions/{question_id}/answer/`
+- **URL:** `/questions/{question_id}/answers/`
+- **Method:** `GET`
+- **Auth Required:** No (Read-only)
+- **Response (200 OK):**
+  ```json
+  {
+      "answers": [
+          {
+              "id": 1,
+              "author_name": "dr_khanmirza",
+              "author_is_instructor": true,
+              "current_body": "The scheduler uses Round Robin algorithm...",
+              "is_verified": true,
+              "created_at": "2026-08-16T10:00:00Z"
+          },
+          {
+              "id": 2,
+              "author_name": "prof_smith",
+              "author_is_instructor": true,
+              "current_body": "Alternative approach using Priority Scheduling...",
+              "is_verified": false,
+              "created_at": "2026-08-16T14:30:00Z"
+          }
+      ]
+  }
+  ```
+
+### 3. Create New Answer (Instructors Only)
+Creates a new answer for a question. **Strictly requires `is_instructor = True`**. Students cannot create answers.
+
+- **URL:** `/questions/{question_id}/answers/`
 - **Method:** `POST`
 - **Auth Required:** Yes
+- **Permission Required:** `user.is_instructor == True` (Returns 403 Forbidden for non-instructors)
 - **Request Body:**
   ```json
   {
-      "body": "Updated markdown text...",
-      "edit_summary": "Fixed deadlock prevention algorithm",
-      "last_modified": "2026-08-16T18:00:00Z" 
+      "body": "The solution involves implementing a mutex lock...",
+      "edit_summary": "Initial answer submission"
   }
   ```
-  *(Note: `last_modified` is used for Optimistic Concurrency Control. If another user edited the answer after this timestamp, return a `409 Conflict`)*
-- **Response (200 OK - Updated):**
+- **Response (201 Created):**
   ```json
   {
       "status": "success",
-      "message": "Answer updated.",
-      "revision_id": 42
+      "message": "Answer created successfully.",
+      "answer_id": 42
+  }
+  ```
+- **Response (403 Forbidden):**
+  ```json
+  {
+      "error": "Only instructors can create answers."
   }
   ```
 - **Response (409 Conflict):**
   ```json
   {
-      "error": "Edit conflict. Another user has modified this answer."
+      "error": "You have already submitted an answer to this question."
   }
   ```
 
-### 3. Fetch Revision History
-Retrieves the list of previous revisions for a specific question's answer.
+### 4. Update Answer (Author Only)
+Updates an existing answer. Only the original author can update their own answer.
 
-- **URL:** `/questions/{question_id}/revisions/`
+- **URL:** `/answers/{answer_id}/update/`
+- **Method:** `PUT`
+- **Auth Required:** Yes
+- **Permission Required:** User must be the author of the answer
+- **Request Body:**
+  ```json
+  {
+      "body": "Updated markdown text with corrections...",
+      "edit_summary": "Fixed typo in algorithm explanation"
+  }
+  ```
+- **Response (200 OK):**
+  ```json
+  {
+      "status": "success",
+      "message": "Answer updated.",
+      "revision_id": 5
+  }
+  ```
+
+### 5. Request Instructor Status
+New endpoint for students to request an upgrade to instructor status.
+
+- **URL:** `/users/request-instructor/`
+- **Method:** `POST`
+- **Auth Required:** Yes
+- **Request Body:**
+  ```json
+  {
+      "reason": "I am a teaching assistant for this course and need to provide official solutions."
+  }
+  ```
+- **Response (201 Created):**
+  ```json
+  {
+      "status": "success",
+      "message": "Role request submitted. Please wait for admin approval."
+  }
+  ```
+- **Response (400 Bad Request):**
+  ```json
+  {
+      "error": "You have already submitted a pending request."
+  }
+  ```
+
+### 6. Fetch Revision History for an Answer
+Retrieves the revision history for a specific answer (personal revision history for that instructor's answer).
+
+- **URL:** `/answers/{answer_id}/revisions/`
 - **Method:** `GET`
 - **Auth Required:** No (Read-only)
 - **Response (200 OK):**
@@ -75,45 +161,17 @@ Retrieves the list of previous revisions for a specific question's answer.
   {
       "revisions": [
           {
-              "id": 42,
-              "editor": "amin_h",
+              "id": 5,
+              "editor": "dr_khanmirza",
               "created_at": "2026-08-16T18:05:00Z",
               "edit_summary": "Fixed deadlock prevention algorithm"
           },
           {
-              "id": 41,
-              "editor": "sajjad_h",
+              "id": 4,
+              "editor": "dr_khanmirza",
               "created_at": "2026-08-15T10:00:00Z",
               "edit_summary": "Initial answer"
           }
       ]
-  }
-  ```
-
-### 4. Fetch Revision Diff
-Gets the difference between two revisions for visual rendering.
-
-- **URL:** `/revisions/{revision_id}/diff/?compare_to={target_revision_id}`
-- **Method:** `GET`
-- **Auth Required:** No
-- **Response (200 OK):**
-  ```json
-  {
-      "diff_html": "<div class='diff-line-added'>+ New algorithm step</div><div class='diff-line-removed'>- Old step</div>"
-  }
-  ```
-
-### 5. Rollback Revision (Admin/Editor Only)
-Reverts the current answer to a specific revision state.
-
-- **URL:** `/revisions/{revision_id}/rollback/`
-- **Method:** `POST`
-- **Auth Required:** Yes (Admin/Staff only)
-- **Request Body:** `{}`
-- **Response (200 OK):**
-  ```json
-  {
-      "status": "success",
-      "message": "Rolled back successfully."
   }
   ```

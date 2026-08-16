@@ -12,8 +12,8 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ['question', 'author', 'current_body']
-    list_filter = ['author']
+    list_display = ['question', 'author', 'current_body', 'is_verified']
+    list_filter = ['author', 'is_verified']
     search_fields = ['question__text', 'author__username']
     ordering = ['question']
 
