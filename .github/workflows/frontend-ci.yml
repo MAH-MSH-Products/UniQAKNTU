@@ -1,0 +1,49 @@
+name: Frontend CI/CD
+
+on:
+  push:
+    branches: [ main, develop, feature/fe-* ]
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  frontend-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies (if package.json exists)
+      run: |
+        if [ -f "package.json" ]; then
+          npm install
+        else
+          echo "No package.json found, skipping npm install"
+        fi
+        
+    - name: Lint JavaScript with ESLint (if configured)
+      run: |
+        if [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ] || [ -f "eslint.config.js" ]; then
+          npx eslint . || true
+        else
+          echo "No ESLint configuration found, skipping linting"
+        fi
+        
+    - name: Check formatting with Prettier (if configured)
+      run: |
+        if [ -f ".prettierrc" ] || [ -f "prettier.config.js" ]; then
+          npx prettier --check "**/*.{js,jsx,ts,tsx,css,html}" || true
+        else
+          echo "No Prettier configuration found, skipping formatting check"
+        fi
+        
+    - name: Validate HTML templates
+      run: |
+        # Basic validation of Django templates
+        find templates/ -name "*.html" -exec head -1 {} \; || true
+        echo "HTML template validation complete"

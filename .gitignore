@@ -1,0 +1,40 @@
+# Python dependencies
+*.egg-info/
+.eggs/
+dist/
+build/
+venv/
+env/
+.env*
+
+# Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Database (SQLite)
+db.sqlite3
+
+# Media files (user uploads)
+media/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules (if using frontend build tools)
+node_modules/
+
+# Static files collected
+staticfiles/
+
+# Logs
+*.log
