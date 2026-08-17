@@ -19,3 +19,7 @@ python-dotenv>=1.0.1
 
 # Production Server (Optional for Deployment)
 gunicorn>=21.2.0
+
+# Development & Testing Tools
+flake8>=6.0.0
+black>=23.0.0
