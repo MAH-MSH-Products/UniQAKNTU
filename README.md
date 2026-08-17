@@ -1,79 +1,83 @@
-# UniQAKNTU - Open Exam Wiki
+# UniQAKNTU: Instructor-Led Exam Q&A Platform
+
+<div align="center">
+  <img src="documentations/imgs/djangoReact.png" alt="Django and React Integration" width="600"/>
+</div>
 
 ## Overview
-UniQAKNTU is a collaborative web application designed to manage, archive, and provide instructor-led solutions for university course exams. The system features a scalable architecture with strict Role-Based Access Control (RBAC) to ensure answer quality and integrity.
+UniQAKNTU is a collaborative, instructor-led web application engineered to archive, manage, and crowdsource verified solutions for university examinations. Designed with a strict Role-Based Access Control (RBAC) architecture, the system isolates student read-only privileges from instructor write privileges, ensuring high academic integrity.
 
-The application strictly separates Backend and Frontend components, prioritizing functional execution, system logic, and database versioning over monolithic design.
+The platform has transitioned from a monolithic architecture to a Decoupled Monorepo, separating the robust Django REST API backend from the highly interactive React Single Page Application (SPA) frontend.
 
-## Features
-* **Instructor-Led Solutions & Role-Based Access Control:** Verified instructors can post and edit their own isolated answers. Students have Read-Only access to view solutions.
-* **Multi-Answer System:** Multiple instructors can provide different solutions to the same question, similar to StackOverflow.
-* **File Upload Support:** Instructors can upload images (e.g., hand-written solutions) and PDF files alongside Markdown text for comprehensive answers.
-* **Instructor Profiles:** Detailed instructor profiles including academic title (Dr., Prof., TA) and biography for academic background.
-* **Revision History:** Full tracking of answer modifications via `AnswerRevision` to maintain data integrity and enable personal revision history for each instructor's answer.
-* **Markdown & MathJax Integration:** Native rendering of code snippets, algorithms, and mathematical formulas.
-* **Modular Architecture:** Segregated Django Apps (`accounts`, `curriculum`, `wiki`) for clear responsibility boundaries.
-* **Bulk Answer Upload:** Instructors can submit answers for an entire exam at once through a dedicated dashboard with file upload support.
-* **Role Request System:** Students can request to be upgraded to instructor status through an admin-approved workflow with introduction field for providing background information.
+## System Architecture
 
-## Technology Stack
-* **Backend:** Python 3, Django
-* **Frontend:** HTML5, CSS (Bootstrap 5 / Tailwind), JavaScript
-* **Text Processing:** MarkdownX / EasyMDE, MathJax
-* **File Handling:** Django ImageField, FileField for image and PDF uploads
+<div align="center">
+  <img src="documentations/imgs/architecture.jpg" alt="System Architecture Diagram" width="800"/>
+</div>
+
+The system operates on a decoupled client-server model:
+* **Backend:** A Pure REST API built with Django REST Framework (DRF), managing database models, RBAC validation, file storage (PDF/Images), and system audit logs via `django-simple-history`.
+* **Frontend:** A modern React application handling complex UI states, Markdown/MathJax rendering, and API consumption with JWT/Session authentication logic.
+
+## Key Features
+* **Decoupled Architecture:** Full separation of Backend (Django REST API) and Frontend (React/Vite).
+* **Role-Based Access Control (RBAC):** Strict permission checks differentiating standard users (Students) and verified contributors (Instructors).
+* **Multi-Answer Solutions:** Instructors can provide independent, version-controlled solutions using combinations of Markdown text, MathJax formulas, and direct file uploads (Images/PDFs).
+* **Integrated Support System:** A built-in ticketing mechanism for role requests, platform support, and content error reporting.
+* **Audit Trails:** Complete logging of administrative actions and database modifications.
 
 ## Project Structure
+
 ```text
 UniQAKNTU/
-├── config/                 # Core Django configuration (settings, wsgi, asgi)
-├── apps/                   # Django applications directory
-│   ├── accounts/           # Custom User model with RBAC fields, instructor profile, and RoleRequest
-│   ├── curriculum/         # Course and Exam models
-│   └── wiki/               # Question, Answer (multi-answer with file uploads), and AnswerRevision models
-├── templates/              # HTML templates (base and app-specific)
-├── static/                 # Static assets (CSS, JS, Images)
-└── media/                  # User-uploaded files (questions, answer images, PDFs)
+│
+├── backend/                  # Django REST Framework Backend
+│   ├── apps/
+│   │   ├── accounts/         # RBAC, User Models, Role Requests
+│   │   ├── curriculum/       # Course and Exam Hierarchy Models
+│   │   ├── wiki/             # Question, Answer, and Revision Models
+│   │   └── support/          # Ticketing and Content Report Models
+│   ├── config/               # Core Django Settings & API Routing
+│   ├── media/                # Uploaded Assets (PDFs, Images)
+│   ├── manage.py
+│   └── requirements.txt      # Python Dependencies
+│
+├── frontend/                 # React SPA Frontend
+│   ├── public/
+│   ├── src/
+│   │   ├── components/       # Reusable UI (Navbar, Editor, Cards)
+│   │   ├── context/          # Global Auth & Role State Management
+│   │   ├── pages/            # View Components (Dashboards, ExamDetails)
+│   │   └── App.jsx           # Main Router
+│   ├── package.json          # Node Dependencies
+│   └── vite.config.js        # Build Configuration
+│
+└── documentations/           # File-Centric Technical Documentation
+    ├── imgs/                 # Architecture and Stack Diagrams
+    └── ...
 ```
 
-## Installation & Setup
+## Setup & Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/MAH-MSH-Products/UniQAKNTU.git
-   cd UniQAKNTU
-   ```
+### 1. Backend Setup (Django)
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py makemigrations
+python manage.py migrate
+python manage.py runserver
+```
 
-2. **Set up the virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
+### 2. Frontend Setup (React)
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Apply database migrations:**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-5. **Create a superuser for administration:**
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-6. **Run the development server:**
-   ```bash
-   python manage.py runserver
-   ```
-
-## Development Team & Credits
-
+## Development Team
 * **Supervising Professor:** Dr. Hamed Khanmirza
-* **Core Developers:**
-    * Mohammad Amin Haji Alirezaei
-    * Mohammad Sajjad Hamidifard
-
+* **Frontend Developer:** Mohammad Amin Haji Alirezaei
+* **Backend Developer:** Mohammad Sajjad Hamidifard
