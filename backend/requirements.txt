@@ -1,0 +1,21 @@
+# backend/requirements.txt
+
+# Core Django
+Django>=4.2,<5.0
+
+# REST API & Cross-Origin
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+
+# Database & File Handling
+psycopg2-binary>=2.9.9
+Pillow>=10.2.0
+
+# Audit Trail & Logging (Admin Support)
+django-simple-history>=3.4.0
+
+# Environment Variable Management
+python-dotenv>=1.0.1
+
+# Production Server (Optional for Deployment)
+gunicorn>=21.2.0
