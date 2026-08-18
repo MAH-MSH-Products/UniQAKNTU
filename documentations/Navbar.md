@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `Navbar.jsx` file implements a responsive navigation bar component for the UniQAKNTU application. It displays branding, user authentication status, role indicators, and provides navigation controls based on the user's authentication state.
+The `Navbar.jsx` file implements a responsive navigation bar component for the UniQAKNTU application. It displays branding, user authentication status, role indicators, and provides navigation controls based on the user's authentication state. The component also includes a language switcher for English/Persian (EN/FA) with i18n support.
 
 ## Key Components
 
@@ -12,11 +12,12 @@ The `Navbar.jsx` file implements a responsive navigation bar component for the U
 const Navbar = () => {
   const { user, isAuthenticated, logout, isInstructor } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   // ...
 };
 ```
 
-A functional React component that renders a Bootstrap-styled navigation bar with dynamic content based on authentication state.
+A functional React component that renders a Bootstrap-styled navigation bar with dynamic content based on authentication state and selected language.
 
 **Props:** None (uses AuthContext via hook)
 
@@ -26,16 +27,61 @@ A functional React component that renders a Bootstrap-styled navigation bar with
   - `isAuthenticated`: Boolean indicating login status
   - `logout`: Logout function
   - `isInstructor`: Boolean indicating instructor role
+- Uses `useTranslation()` hook from react-i18next for translations
+- Uses `i18n` instance to detect current language and handle language changes
 
 ### Branding Section
 
 ```jsx
 <Link className="navbar-brand" to="/">
-  UniQAKNTU
+  {t('nav.brand')}
 </Link>
 ```
 
-Displays the application logo/brand that links to the home page.
+Displays the application logo/brand that links to the home page. The text is translated using i18n.
+
+### Language Switcher
+
+```jsx
+<li className="nav-item me-2">
+  <div className="btn-group btn-group-sm" role="group">
+    <button
+      type="button"
+      className={`btn ${i18n.language === 'en' ? 'btn-light text-primary' : 'btn-outline-light'}`}
+      onClick={() => handleLanguageChange('en')}
+    >
+      EN
+    </button>
+    <button
+      type="button"
+      className={`btn ${i18n.language === 'fa' ? 'btn-light text-primary' : 'btn-outline-light'}`}
+      onClick={() => handleLanguageChange('fa')}
+    >
+      FA
+    </button>
+  </div>
+</li>
+```
+
+**Features:**
+- Two-button group for language selection (EN/FA)
+- Active language is highlighted with `btn-light text-primary` styling
+- Inactive language uses `btn-outline-light` styling
+- Calls `handleLanguageChange(lng)` which triggers `i18n.changeLanguage(lng)`
+
+### handleLanguageChange Function
+
+```javascript
+const handleLanguageChange = (lng) => {
+  i18n.changeLanguage(lng);
+};
+```
+
+**Functionality:**
+1. Changes the active language in i18next
+2. Triggers re-render of all components using `useTranslation()`
+3. Activates RTL/LTR direction switch in App.jsx (via language change listener)
+4. Persists language preference in localStorage
 
 ### Mobile Toggle Button
 
@@ -62,10 +108,10 @@ Provides responsive collapse functionality for mobile devices using Bootstrap's 
   <>
     <li className="nav-item me-3">
       <span className="navbar-text text-white">
-        Welcome, {user?.username}
+        {t('nav.welcome')}, {user?.username}
         {isInstructor && (
           <span className="badge bg-warning text-dark ms-2">
-            Instructor
+            {t('nav.instructor_badge')}
           </span>
         )}
       </span>
@@ -75,14 +121,14 @@ Provides responsive collapse functionality for mobile devices using Bootstrap's 
         className="btn btn-outline-light btn-sm"
         onClick={handleLogout}
       >
-        Logout
+        {t('nav.logout')}
       </button>
     </li>
   </>
 ) : (
   <li className="nav-item">
     <Link className="btn btn-outline-light btn-sm" to="/login">
-      Login
+      {t('nav.login')}
     </Link>
   </li>
 )}
@@ -91,12 +137,12 @@ Provides responsive collapse functionality for mobile devices using Bootstrap's 
 **Conditional Rendering Logic:**
 
 **When Authenticated:**
-- Displays welcome message with username
-- Shows "Instructor" badge if `user.is_instructor` is true
-- Provides logout button that triggers `handleLogout()`
+- Displays welcome message with username (translated)
+- Shows "Instructor" badge if `user.is_instructor` is true (translated)
+- Provides logout button that triggers `handleLogout()` (translated)
 
 **When Not Authenticated:**
-- Displays login button linking to `/login` route
+- Displays login button linking to `/login` route (translated)
 
 ### handleLogout Function
 
@@ -146,6 +192,17 @@ import { useAuth } from '../../context/AuthContext';
 const { user, isAuthenticated, logout, isInstructor } = useAuth();
 ```
 
+### i18n Integration
+
+Uses react-i18next for internationalization:
+```javascript
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
+
+const { t } = useTranslation();
+// Usage: {t('nav.brand')}, {t('nav.logout')}, etc.
+```
+
 ### MainLayout Integration
 
 Used as the top navigation component in the application shell:
@@ -192,8 +249,11 @@ navigate('/login');
 - **badge**: Role indicator badge
 - **bg-warning**: Warning color for instructor badge
 - **btn-outline-light**: Outline button style
+- **btn-group**: Button group container
+- **btn-group-sm**: Small button size
 - **ms-auto**: Margin start (auto) for right alignment
 - **align-items-center**: Vertical center alignment
+- **me-2**, **me-3**: Margin end spacing
 
 ### Responsive Behavior
 
@@ -211,6 +271,13 @@ navigate('/login');
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto align-items-center">
+        <!-- Language Switcher -->
+        <li class="nav-item me-2">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-light text-primary">EN</button>
+            <button class="btn btn-outline-light">FA</button>
+          </div>
+        </li>
         <!-- Authenticated or Login content -->
       </ul>
     </div>
@@ -223,8 +290,29 @@ navigate('/login');
 - **React**: Functional component
 - **react-router-dom**: `Link`, `useNavigate` for routing
 - **AuthContext**: `useAuth` hook for authentication state
+- **react-i18next**: `useTranslation` hook for translations
+- **i18next**: Core i18n instance for language detection and changes
 - **Bootstrap**: CSS framework for styling (`bootstrap/dist/css/bootstrap.min.css`)
+
+## Translation Keys Used
+
+| Key | English | Persian |
+|-----|---------|---------|
+| `nav.brand` | UniQAKNTU | یونی‌قاکنتو |
+| `nav.welcome` | Welcome | خوش آمدید |
+| `nav.instructor_badge` | Instructor | استاد |
+| `nav.login` | Login | ورود |
+| `nav.logout` | Logout | خروج |
+| `nav.register` | Register | ثبت‌نام |
+| `nav.register_here` | Register here | اینجا ثبت‌نام کنید |
+| `nav.dont_have_account` | Don't have an account? | حساب کاربری ندارید؟ |
 
 ## Change Log
 
 - **Initial Implementation**: Created responsive navbar with authentication-based conditional rendering, instructor badge display, and logout functionality
+- **Phase 7 - i18n Localization**: 
+  - Added language switcher (EN/FA buttons)
+  - Integrated useTranslation hook for all text content
+  - Implemented handleLanguageChange function for dynamic language switching
+  - Updated all hardcoded strings to use translation keys
+

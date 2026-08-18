@@ -1,18 +1,42 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import SupportCenter from './pages/support/SupportCenter';
+import AdminSupportPanel from './pages/admin/AdminSupportPanel';
+import './i18n';
+import i18n from 'i18next';
 
 /**
  * App Component - Main Application Entry Point
  * 
  * Sets up routing structure and provides authentication context.
  * Configures protected and public routes with layout wrapper.
+ * Handles RTL/LTR direction switching based on active language.
  */
 
 function App() {
+  // Handle RTL/LTR direction switching based on language
+  useEffect(() => {
+    const handleLanguageChange = (lng) => {
+      document.documentElement.dir = lng === 'fa' ? 'rtl' : 'ltr';
+      document.documentElement.lang = lng;
+    };
+
+    // Set initial direction
+    handleLanguageChange(i18n.language);
+
+    // Listen for language changes
+    i18n.on('languageChanged', handleLanguageChange);
+
+    // Cleanup listener on unmount
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -21,6 +45,8 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<div className="p-4"><h2>Courses Page</h2></div>} />
+            <Route path="/support" element={<SupportCenter />} />
+            <Route path="/admin/support" element={<AdminSupportPanel />} />
             <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
             <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
             <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />

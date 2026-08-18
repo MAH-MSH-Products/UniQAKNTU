@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Login Component - User Authentication Page
  * 
  * Provides login form for user authentication.
  * Uses AuthContext to manage login state and redirection.
+ * Uses i18n translations for all text content.
  */
 
 const Login = () => {
@@ -17,6 +19,7 @@ const Login = () => {
   
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -46,7 +49,7 @@ const Login = () => {
         <div className="col-md-6 col-lg-4">
           <div className="card shadow">
             <div className="card-header bg-primary text-white text-center">
-              <h4 className="mb-0">Login to UniQAKNTU</h4>
+              <h4 className="mb-0">{t('login.title')}</h4>
             </div>
             <div className="card-body p-4">
               {error && (
@@ -58,7 +61,7 @@ const Login = () => {
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
                   <label htmlFor="username" className="form-label">
-                    Username
+                    {t('login.username')}
                   </label>
                   <input
                     type="text"
@@ -73,7 +76,7 @@ const Login = () => {
                 
                 <div className="mb-3">
                   <label htmlFor="password" className="form-label">
-                    Password
+                    {t('login.password')}
                   </label>
                   <input
                     type="password"
@@ -94,17 +97,17 @@ const Login = () => {
                   {isLoading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Logging in...
+                      {t('login.logging_in')}
                     </>
                   ) : (
-                    'Login'
+                    t('login.login_button')
                   )}
                 </button>
               </form>
             </div>
             <div className="card-footer text-muted text-center small">
-              Don't have an account?{' '}
-              <Link to="/register">Register here</Link>
+              {t('nav.dont_have_account')}{' '}
+              <Link to="/register">{t('nav.register_here')}</Link>
             </div>
           </div>
         </div>
