@@ -49,3 +49,14 @@ Frontend: Mohammad Amin Haji Alirezaei | Backend: Mohammad Sajjad Hamidifard.
 - [ ] **[Frontend - Mohammad Amin]** `SupportCenter`: Page for standard users to submit Tickets (including Role Requests with introductions) and view the status of their past tickets.
 - [ ] **[Frontend - Mohammad Amin]** `ContentReportModal`: A modal on every Question/Answer allowing users to quickly report content errors.
 - [ ] **[Frontend - Mohammad Amin]** `AdminSupportPanel`: A dedicated React dashboard strictly for `is_staff=True`. Needs a data grid to list all active tickets, role requests, and reports, allowing admins to open a ticket, read the history, and submit a `TicketReply` directly.
+
+
+
+## Phase 7: i18n Localization (Persian/English Support)
+**Goal:** Implement a fully scalable, client-side translation system to support English and Persian (RTL/LTR) directly within React using `react-i18next`.
+- [ ] **[Frontend - Mohammad Amin]** Install dependencies: `i18next`, `react-i18next`, `i18next-browser-languagedetector`.
+- [ ] **[Frontend - Mohammad Amin]** Initialize `i18n.js` config file and structure `src/locales/en/translation.json` and `src/locales/fa/translation.json`.
+- [ ] **[Frontend - Mohammad Amin]** Update `App.jsx` and `index.html` logic to dynamically toggle the HTML `dir` attribute (`ltr`/`rtl`) based on the active language.
+- [ ] **[Frontend - Mohammad Amin]** Update `Navbar.jsx` to include a dynamic Language Switcher button (EN/FA).
+- [ ] **[Frontend - Mohammad Amin]** Refactor Phase 4 and Phase 5 components (`Sidebar`, `Home`, `Login`, `AnswerForm`, `QuestionExplorer`) by replacing hardcoded strings with the `useTranslation()` hook.
+- [ ] **[Frontend - Mohammad Amin]** Add `documentations/i18n_setup.md` detailing the localization structure and how to add new keys.
