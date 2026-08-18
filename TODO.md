@@ -79,3 +79,25 @@ Frontend: Mohammad Amin Haji Alirezaei | Backend: Mohammad Sajjad Hamidifard.
     - **Implementation Date**: Phase 7
     - **Documentation**: `documentations/i18n_setup.md`
     - **Verification**: ✅ Complete - Comprehensive documentation created with usage examples and best practices
+
+## Phase 8: Rebranding, UI/UX Overhaul & Dynamic Widgets
+**Goal:** Rebrand the platform to "AzmoonHub Nasir", overhaul the UI/UX with a professional academic theme (removing emojis, improving tabs/cards), and add dynamic side widgets for recent/popular content.
+
+### Backend Tasks (MohammadSajjad)
+- [ ] **[Backend]** Global Rebranding: Search and replace all instances of "UniQAKNTU" with "AzmoonHub Nasir" across all documentation files (`README.md`, `API.md`, `RULES.md`, `AGENT_CONSTRAINTS.md`) and Django config files (e.g., `settings.py`).
+- [ ] **[Backend]** `Widgets API`: Implement new REST endpoints to supply data for the dynamic side panels:
+    - `GET /api/v1/widgets/recent-answers/`: Returns the top 5-10 most recently added instructor answers.
+    - `GET /api/v1/widgets/popular-courses/`: Returns the top courses based on the number of exams/questions available.
+    - `GET /api/v1/widgets/latest-exams/`: Returns the most recently added exams.
+- [ ] **[Backend]** Update `API.md`: Document the newly created `Widgets API` endpoints with their expected JSON response structures.
+
+### Frontend Tasks (Mohammad Amin)
+- [ ] **[Frontend]** Rebranding & Logo Integration: Update `frontend/index.html` (title tag), update `translation.json` files to replace old names, and modify `Navbar.jsx` to render the official logo from `frontend/src/assets/` instead of plain text.
+- [ ] **[Frontend]** Professional Iconography: Completely remove all emojis (e.g., 📚, 🎫, ⚠️) from `Sidebar.jsx`, `MainLayout.jsx`, and other UI elements. Install and integrate a professional icon library (like `react-icons` or `bootstrap-icons`) and replace them with standard SVG icons.
+- [ ] **[Frontend]** Color Palette & Styling Overhaul: Update `frontend/src/index.css` and `frontend/src/App.css`:
+    - Apply a professional academic color scheme (e.g., Deep Blue for primary, Cyan/Teal for secondary, and a Light Gray `#f4f5f7` for the main background).
+    - Apply consistent structural styling: Add `border: 1px solid #e0e0e0`, `border-radius`, and soft `box-shadow` on hover to all `Card` components to create a clean, separated box-layout.
+- [ ] **[Frontend]** Tabs UI Refactor: Redesign tabbed interfaces (e.g., inside `SupportCenter` or `QuestionExplorer`) to mimic modern, professional standards (like Coursera). Active tabs should have a distinct bottom border and bold text, rather than pill/button shapes.
+- [ ] **[Frontend]** `WidgetsPanel` Component: Build a new UI component (`frontend/src/components/layout/WidgetsPanel.jsx`) that sits on the side (in desktop view) or bottom (in mobile view) of the layout.
+- [ ] **[Frontend]** Widget Integration: Connect `WidgetsPanel.jsx` to the new Backend APIs using `axios`, displaying clean lists of "Recent Answers", "Popular Courses", and "Latest Exams".
+- [ ] **[Frontend]** Documentation: Update all affected `.md` files in the `documentations/` directory to reflect the new brand name, new components (`WidgetsPanel.md`), and updated UI logic.
