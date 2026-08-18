@@ -4,6 +4,8 @@ import { AuthProvider } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import SupportCenter from './pages/support/SupportCenter';
+import AdminSupportPanel from './pages/admin/AdminSupportPanel';
 
 /**
  * App Component - Main Application Entry Point
@@ -21,6 +23,8 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<div className="p-4"><h2>Courses Page</h2></div>} />
+            <Route path="/support" element={<SupportCenter />} />
+            <Route path="/admin/support" element={<AdminSupportPanel />} />
             <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
             <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
             <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />
