@@ -237,3 +237,78 @@ This document defines the REST API endpoints for the Decoupled Architecture (Dja
       "status": "Report submitted to admins."
   }
   ```
+
+---
+
+## 5. Widgets (`/widgets/`)
+
+### 5.1 Get Recent Answers
+- **URL:** `/widgets/recent-answers/`
+- **Method:** `GET`
+- **Auth Required:** Yes
+- **Description:** Returns the most recently added instructor answers (top 5-10).
+- **Response (200 OK):**
+  ```json
+  [
+      {
+          "id": 42,
+          "title": "Banker's Algorithm Solution",
+          "course": "Operating Systems",
+          "author": "Dr. Khanmirza",
+          "date": "2026-08-16"
+      },
+      {
+          "id": 41,
+          "title": "Deadlock Prevention",
+          "course": "Operating Systems",
+          "author": "Prof. Rahimi",
+          "date": "2026-08-15"
+      }
+  ]
+  ```
+
+### 5.2 Get Popular Courses
+- **URL:** `/widgets/popular-courses/`
+- **Method:** `GET`
+- **Auth Required:** Yes
+- **Description:** Returns the top courses based on the number of exams/questions available.
+- **Response (200 OK):**
+  ```json
+  [
+      {
+          "id": 1,
+          "name": "Operating Systems",
+          "code": "CE414",
+          "examCount": 12
+      },
+      {
+          "id": 2,
+          "name": "Computer Networks",
+          "code": "CE420",
+          "examCount": 10
+      }
+  ]
+  ```
+
+### 5.3 Get Latest Exams
+- **URL:** `/widgets/latest-exams/`
+- **Method:** `GET`
+- **Auth Required:** Yes
+- **Description:** Returns the most recently added exams.
+- **Response (200 OK):**
+  ```json
+  [
+      {
+          "id": 15,
+          "title": "Final Exam 1402",
+          "course": "Operating Systems",
+          "date": "2026-08-16"
+      },
+      {
+          "id": 14,
+          "title": "Midterm 1402",
+          "course": "Computer Networks",
+          "date": "2026-08-15"
+      }
+  ]
+  ```

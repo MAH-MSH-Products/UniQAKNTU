@@ -231,30 +231,26 @@ const AdminSupportPanel = () => {
     <div className="container-fluid py-4">
       <div className="row mb-4">
         <div className="col-12">
-          <h2>Admin Support Panel</h2>
+          <h2 className="page-heading">Admin Support Panel</h2>
           <p className="text-muted">Manage all system tickets and content reports</p>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <ul className="nav nav-tabs mb-4">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'tickets' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tickets')}
-          >
-            All Tickets
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === 'reports' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reports')}
-          >
-            Content Reports
-          </button>
-        </li>
-      </ul>
+      {/* Coursera-Style Tab Navigation */}
+      <div className="coursera-tabs mb-4">
+        <button
+          className={activeTab === 'tickets' ? 'coursera-tab-active' : 'coursera-tab'}
+          onClick={() => setActiveTab('tickets')}
+        >
+          All Tickets
+        </button>
+        <button
+          className={activeTab === 'reports' ? 'coursera-tab-active' : 'coursera-tab'}
+          onClick={() => setActiveTab('reports')}
+        >
+          Content Reports
+        </button>
+      </div>
 
       {/* Data Grid Table */}
       <div className="card">

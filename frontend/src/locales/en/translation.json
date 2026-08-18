@@ -1,13 +1,13 @@
 {
   "app": {
-    "title": "UniQAKNTU",
-    "welcome": "Welcome to UniQAKNTU",
+    "title": "AzmoonHub Nasir",
+    "welcome": "Welcome to AzmoonHub Nasir",
     "description": "Open Exam Wiki Platform for Knowledge Sharing and Collaborative Learning",
     "access_info": "Access course materials, exam questions, and instructor-approved answers.",
     "join_community": "Join our community of learners and educators."
   },
   "nav": {
-    "brand": "UniQAKNTU",
+    "brand": "AzmoonHub Nasir",
     "welcome": "Welcome",
     "instructor_badge": "Instructor",
     "login": "Login",
@@ -18,19 +18,19 @@
   },
   "sidebar": {
     "navigation": "Navigation",
-    "all_courses": "📚 All Courses",
-    "my_tickets": "🎫 My Tickets",
-    "reports": "⚠️ Reports",
+    "all_courses": "All Courses",
+    "my_tickets": "My Tickets",
+    "reports": "Reports",
     "instructor_tools": "Instructor Tools",
-    "dashboard": "📊 Dashboard",
-    "manage_answers": "✏️ Manage Answers"
+    "dashboard": "Dashboard",
+    "manage_answers": "Manage Answers"
   },
   "home": {
     "browse_courses": "Browse Courses",
     "sign_in": "Sign In"
   },
   "login": {
-    "title": "Login to UniQAKNTU",
+    "title": "Login to AzmoonHub Nasir",
     "username": "Username",
     "password": "Password",
     "logging_in": "Logging in...",
