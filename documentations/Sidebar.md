@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `Sidebar.jsx` file implements a navigation sidebar component for the UniQAKNTU application. It provides organized navigation links for courses, support tickets, reports, and instructor-specific tools. The component uses placeholder links that will be connected to actual pages in future development phases.
+The `Sidebar.jsx` file implements a navigation sidebar component for the UniQAKNTU application. It provides organized navigation links for courses, support tickets, reports, and instructor-specific tools. The component uses i18n translations for all text content and supports both English (LTR) and Persian (RTL) languages.
 
 ## Key Components
 
@@ -10,6 +10,7 @@ The `Sidebar.jsx` file implements a navigation sidebar component for the UniQAKN
 
 ```javascript
 const Sidebar = () => {
+  const { t } = useTranslation();
   return (
     <div className="sidebar bg-light border-end" style={{ minHeight: 'calc(100vh - 56px)' }}>
       {/* Navigation content */}
@@ -18,9 +19,12 @@ const Sidebar = () => {
 };
 ```
 
-A functional React component that renders a vertical navigation sidebar with categorized links.
+A functional React component that renders a vertical navigation sidebar with categorized links using translated text.
 
 **Props:** None
+
+**State Management:**
+- Uses `useTranslation()` hook from react-i18next for translations
 
 **Styling:**
 - Fixed height calculation: `calc(100vh - 56px)` (accounts for navbar height)
@@ -31,57 +35,57 @@ A functional React component that renders a vertical navigation sidebar with cat
 
 ```jsx
 <h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3">
-  Navigation
+  {t('sidebar.navigation')}
 </h6>
 <ul className="nav flex-column">
   <li className="nav-item">
     <Link className="nav-link text-dark" to="/courses">
-      📚 All Courses
+      {t('sidebar.all_courses')}
     </Link>
   </li>
   <li className="nav-item">
     <Link className="nav-link text-dark" to="/tickets">
-      🎫 My Tickets
+      {t('sidebar.my_tickets')}
     </Link>
   </li>
   <li className="nav-item">
     <Link className="nav-link text-dark" to="/reports">
-      ⚠️ Reports
+      {t('sidebar.reports')}
     </Link>
   </li>
 </ul>
 ```
 
 **Navigation Links:**
-- **All Courses** (`/courses`): Browse available courses and exams
-- **My Tickets** (`/tickets`): View and manage support tickets
-- **Reports** (`/reports`): Access content reports
+- **All Courses** (`/courses`): Browse available courses and exams (translated via `sidebar.all_courses`)
+- **My Tickets** (`/tickets`): View and manage support tickets (translated via `sidebar.my_tickets`)
+- **Reports** (`/reports`): Access content reports (translated via `sidebar.reports`)
 
-Each link includes an emoji icon for visual identification.
+Each link includes an emoji icon for visual identification. The emoji icons are part of the translation strings.
 
 ### Instructor Tools Section
 
 ```jsx
 <h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3 mt-4">
-  Instructor Tools
+  {t('sidebar.instructor_tools')}
 </h6>
 <ul className="nav flex-column">
   <li className="nav-item">
     <Link className="nav-link text-dark" to="/instructor/dashboard">
-      📊 Dashboard
+      {t('sidebar.dashboard')}
     </Link>
   </li>
   <li className="nav-item">
     <Link className="nav-link text-dark" to="/instructor/answers">
-      ✏️ Manage Answers
+      {t('sidebar.manage_answers')}
     </Link>
   </li>
 </ul>
 ```
 
 **Instructor-Only Links:**
-- **Dashboard** (`/instructor/dashboard`): Instructor analytics and overview
-- **Manage Answers** (`/instructor/answers`): Create and edit exam answers
+- **Dashboard** (`/instructor/dashboard`): Instructor analytics and overview (translated via `sidebar.dashboard`)
+- **Manage Answers** (`/instructor/answers`): Create and edit exam answers (translated via `sidebar.manage_answers`)
 
 **Note:** Currently displays to all users. Future implementation should conditionally render this section based on `user.is_instructor` from AuthContext.
 
@@ -120,8 +124,18 @@ Uses `Link` component for client-side routing:
 import { Link } from 'react-router-dom';
 
 <Link className="nav-link text-dark" to="/courses">
-  📚 All Courses
+  {t('sidebar.all_courses')}
 </Link>
+```
+
+### i18n Integration
+
+Uses react-i18next for internationalization:
+```javascript
+import { useTranslation } from 'react-i18next';
+
+const { t } = useTranslation();
+// Usage: {t('sidebar.navigation')}, {t('sidebar.all_courses')}, etc.
 ```
 
 ### MainLayout Integration
@@ -227,6 +241,19 @@ Ensures sidebar extends full viewport height minus navbar (56px is standard Boot
 
 - **React**: Functional component
 - **react-router-dom**: `Link` component for navigation
+- **react-i18next**: `useTranslation` hook for translations
+
+## Translation Keys Used
+
+| Key | English | Persian |
+|-----|---------|---------|
+| `sidebar.navigation` | Navigation | ناوبری |
+| `sidebar.all_courses` | 📚 All Courses | 📚 همه درس‌ها |
+| `sidebar.my_tickets` | 🎫 My Tickets | 🎫 تیکت‌های من |
+| `sidebar.reports` | ⚠️ Reports | ⚠️ گزارش‌ها |
+| `sidebar.instructor_tools` | Instructor Tools | ابزارهای استاد |
+| `sidebar.dashboard` | 📊 Dashboard | 📊 داشبورد |
+| `sidebar.manage_answers` | ✏️ Manage Answers | ✏️ مدیریت پاسخ‌ها |
 
 ## Future Enhancements
 
@@ -239,3 +266,8 @@ Ensures sidebar extends full viewport height minus navbar (56px is standard Boot
 ## Change Log
 
 - **Initial Implementation**: Created sidebar with placeholder navigation links for courses, tickets, reports, and instructor tools
+- **Phase 7 - i18n Localization**:
+  - Integrated useTranslation hook for all text content
+  - Updated all hardcoded strings to use translation keys
+  - Emoji icons moved into translation JSON files for proper localization
+

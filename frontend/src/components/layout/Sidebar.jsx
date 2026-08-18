@@ -1,19 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Sidebar Component - Course and Exam Navigation
  * 
  * Provides navigation links for courses, exams, and support features.
- * Currently includes placeholder links for future functionality.
+ * Uses i18n translations for all text content.
  */
 
 const Sidebar = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="sidebar bg-light border-end" style={{ minHeight: 'calc(100vh - 56px)' }}>
       <div className="p-3">
         <h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3">
-          Navigation
+          {t('sidebar.navigation')}
         </h6>
         <ul className="nav flex-column">
           <li className="nav-item">
@@ -21,7 +24,7 @@ const Sidebar = () => {
               className="nav-link text-dark" 
               to="/courses"
             >
-              📚 All Courses
+              {t('sidebar.all_courses')}
             </Link>
           </li>
           <li className="nav-item">
@@ -29,7 +32,7 @@ const Sidebar = () => {
               className="nav-link text-dark" 
               to="/tickets"
             >
-              🎫 My Tickets
+              {t('sidebar.my_tickets')}
             </Link>
           </li>
           <li className="nav-item">
@@ -37,14 +40,14 @@ const Sidebar = () => {
               className="nav-link text-dark" 
               to="/reports"
             >
-              ⚠️ Reports
+              {t('sidebar.reports')}
             </Link>
           </li>
         </ul>
 
         {/* Instructor-only section */}
         <h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3 mt-4">
-          Instructor Tools
+          {t('sidebar.instructor_tools')}
         </h6>
         <ul className="nav flex-column">
           <li className="nav-item">
@@ -52,7 +55,7 @@ const Sidebar = () => {
               className="nav-link text-dark" 
               to="/instructor/dashboard"
             >
-              📊 Dashboard
+              {t('sidebar.dashboard')}
             </Link>
           </li>
           <li className="nav-item">
@@ -60,7 +63,7 @@ const Sidebar = () => {
               className="nav-link text-dark" 
               to="/instructor/answers"
             >
-              ✏️ Manage Answers
+              {t('sidebar.manage_answers')}
             </Link>
           </li>
         </ul>
