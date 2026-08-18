@@ -199,27 +199,23 @@ const SupportCenter = () => {
     <div className="container-fluid py-4">
       <div className="row">
         <div className="col-12">
-          <h2 className="mb-4">Support Center</h2>
+          <h2 className="page-heading mb-4">Support Center</h2>
           
-          {/* Tab Navigation */}
-          <ul className="nav nav-tabs mb-4">
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 'submit' ? 'active' : ''}`}
-                onClick={() => setActiveTab('submit')}
-              >
-                Submit Ticket
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 'my-tickets' ? 'active' : ''}`}
-                onClick={() => setActiveTab('my-tickets')}
-              >
-                My Tickets
-              </button>
-            </li>
-          </ul>
+          {/* Coursera-Style Tab Navigation */}
+          <div className="coursera-tabs mb-4">
+            <button
+              className={activeTab === 'submit' ? 'coursera-tab-active' : 'coursera-tab'}
+              onClick={() => setActiveTab('submit')}
+            >
+              Submit Ticket
+            </button>
+            <button
+              className={activeTab === 'my-tickets' ? 'coursera-tab-active' : 'coursera-tab'}
+              onClick={() => setActiveTab('my-tickets')}
+            >
+              My Tickets
+            </button>
+          </div>
 
           {/* Submit Ticket Tab */}
           {activeTab === 'submit' && (
