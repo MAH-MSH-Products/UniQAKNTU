@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "یونی‌قاکنتو",
+    "welcome": "به یونی‌قاکنتو خوش آمدید",
+    "description": "پلتفرم ویکی امتحانات برای اشتراک‌گذاری دانش و یادگیری مشارکتی",
+    "access_info": "دسترسی به مواد درسی، سوالات امتحانی و پاسخ‌های تایید شده توسط اساتید.",
+    "join_community": "به جامعه یادگیرندگان و مربیان ما بپیوندید."
+  },
+  "nav": {
+    "brand": "یونی‌قاکنتو",
+    "welcome": "خوش آمدید",
+    "instructor_badge": "استاد",
+    "login": "ورود",
+    "logout": "خروج",
+    "register": "ثبت‌نام",
+    "register_here": "اینجا ثبت‌نام کنید",
+    "dont_have_account": "حساب کاربری ندارید؟"
+  },
+  "sidebar": {
+    "navigation": "ناوبری",
+    "all_courses": "📚 همه درس‌ها",
+    "my_tickets": "🎫 تیکت‌های من",
+    "reports": "⚠️ گزارش‌ها",
+    "instructor_tools": "ابزارهای استاد",
+    "dashboard": "📊 داشبورد",
+    "manage_answers": "✏️ مدیریت پاسخ‌ها"
+  },
+  "home": {
+    "browse_courses": "مرور درس‌ها",
+    "sign_in": "ورود"
+  },
+  "login": {
+    "title": "ورود به یونی‌قاکنتو",
+    "username": "نام کاربری",
+    "password": "رمز عبور",
+    "logging_in": "در حال ورود...",
+    "login_button": "ورود"
+  },
+  "common": {
+    "loading": "در حال بارگذاری...",
+    "error": "خطا",
+    "submit": "ارسال",
+    "cancel": "لغو",
+    "save": "ذخیره",
+    "delete": "حذف",
+    "edit": "ویرایش",
+    "close": "بستن"
+  },
+  "pages": {
+    "courses": "صفحه درس‌ها",
+    "tickets": "صفحه تیکت‌های من",
+    "reports": "صفحه گزارش‌ها",
+    "instructor_dashboard": "داشبورد استاد",
+    "manage_answers": "مدیریت پاسخ‌ها",
+    "support_center": "مرکز پشتیبانی",
+    "admin_panel": "پنل پشتیبانی مدیر"
+  }
+}
