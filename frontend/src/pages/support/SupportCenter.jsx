@@ -11,7 +11,7 @@ import api from '../../services/api';
  */
 
 const SupportCenter = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('submit'); // 'submit' or 'my-tickets'
   const [tickets, setTickets] = useState([]);
   const [expandedTicket, setExpandedTicket] = useState(null);
@@ -37,10 +37,13 @@ const SupportCenter = () => {
 
   /**
    * Fetch user's tickets on component mount
+   * Only executes if user is authenticated to prevent 401 errors
    */
   useEffect(() => {
-    fetchUserTickets();
-  }, []);
+    if (isAuthenticated) {
+      fetchUserTickets();
+    }
+  }, [isAuthenticated]);
 
   /**
    * Fetch mock tickets for the current user

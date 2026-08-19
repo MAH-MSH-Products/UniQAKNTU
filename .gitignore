@@ -2,30 +2,33 @@
 # Dependencies
 node_modules/
 
-# Build outputs
+# Build artifacts
 dist/
 build/
+*.js.map
+*.css.map
 
-
-# Environment variables
+# Environment
 .env
 .env.local
 *.env.*
 
-# Logs
-*.log
-
-# Coverage reports
-coverage/
-htmlcov/
-*.coverage
-
-# IDE specific
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+
+# Logs
+*.log
+
+# Temp files
 *.tmp
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
 # Python
 __pycache__/
@@ -33,22 +36,57 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-*.so
-*.egg-info/
-.eggs/
-
-# Node.js
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# OS generated files
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.nox/
+*.cover
+*.log
 .DS_Store
 Thumbs.db
-```
 
-Wait, I need to reconsider. Looking at the file changes, they are all source code files (.md, .jsx, .css, .json) with no build artifacts, dependencies, or temporary files. According to rule #6, if the changes contain only source or config files and no build artifacts, dependencies, or temp files, I should output an empty .gitignore.
+# Compiled and binary files
+*.exe
+*.dll
+*.so
+*.a
+*.o
+*.obj
+*.out
+*.class
 
-```gitignore
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
 
+# Gradle
+.gradle/
+build/
+
+# MyPy
+.mypy_cache/
 ```
