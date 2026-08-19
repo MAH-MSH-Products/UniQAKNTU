@@ -101,3 +101,24 @@ Frontend: Mohammad Amin Haji Alirezaei | Backend: Mohammad Sajjad Hamidifard.
 - [ ] **[Frontend]** `WidgetsPanel` Component: Build a new UI component (`frontend/src/components/layout/WidgetsPanel.jsx`) that sits on the side (in desktop view) or bottom (in mobile view) of the layout.
 - [ ] **[Frontend]** Widget Integration: Connect `WidgetsPanel.jsx` to the new Backend APIs using `axios`, displaying clean lists of "Recent Answers", "Popular Courses", and "Latest Exams".
 - [ ] **[Frontend]** Documentation: Update all affected `.md` files in the `documentations/` directory to reflect the new brand name, new components (`WidgetsPanel.md`), and updated UI logic.
+
+## Phase 9: Landing Page Customization & UI Polish
+**Goal:** Enhance the home page with modern landing page sections (Hero, Features, CTA, FAQ), implement a comprehensive multi-column footer, apply subtle gradients, and configure a sticky navbar with the custom brand logo.
+
+### Frontend Tasks (Mohammad Amin)
+- [ ] **[Frontend]** Logo Integration & Sticky Navbar: 
+    - Replace the placeholder logo or text in `Navbar.jsx` and `Footer.jsx` with the actual `assets/azHubNasir.png` image.
+    - Make the Navbar sticky (`position: sticky` or `fixed-top`) and add a scroll-triggered drop-shadow effect to keep navigation accessible.
+- [ ] **[Frontend]** Global Gradients & Polish: 
+    - Update `index.css` to include subtle gradient variables (e.g., mixing primary Deep Blue with secondary Teal).
+    - Apply these gradients to primary buttons, CTA banners, and the top border/background of the footer to eliminate a flat, monotonous look.
+- [ ] **[Frontend]** Revamp `Home.jsx` (Landing Page):
+    - **Hero Section:** Upgrade the top banner with an engaging gradient and clear call-to-action buttons.
+    - **Features Section:** Add a 3-4 column grid highlighting platform features (e.g., MathJax Support, Verified Instructor Answers, PDF Uploads).
+    - **CTA Banner:** Implement a full-width call-to-action banner prompting users to "Join the Instructors" linking to the Role Request page.
+    - **FAQ Accordion:** Build a Frequently Asked Questions section using Bootstrap's accordion component for static Q&A (e.g., "How to get verified?", "How to write Math formulas?").
+- [ ] **[Frontend]** Implement `Footer.jsx`: 
+    - Create a dedicated multi-column footer component to replace the basic one in `MainLayout.jsx`.
+    - **Column 1 (Brand):** Logo (`azHubNasir.png`), brief platform description, and `react-icons` for social media links.
+    - **Column 2 (Quick Links):** Links to All Courses, My Tickets, and Reports.
+    - **Column 3 (Resources):** Links to Contact Us, FAQ, and Documentation/Terms.
