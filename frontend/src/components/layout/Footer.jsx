@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaTwitter, FaLinkedin, FaInstagram } from 'react-icons/fa';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import logo from '../../assets/azHubNasir.png'; 
+import logoWide from '../../assets/azHubNasir-wide.png'; 
 
 /**
  * Footer Component - Multi-column Responsive Footer
@@ -36,7 +36,7 @@ const Footer = () => {
           {/* Column 1: Brand Information */}
           <div className="col-md-4 mb-4 mb-md-0">
             <div className="d-flex align-items-center mb-3">
-              <img src={logo} alt="AzmoonHub Nasir" height="95" className="me-2" />
+              <img src={logoWide} alt="AzmoonHub Nasir" height="80" className="me-2" />
               <span className="fw-bold" style={{ color: 'var(--primary-color)' }}>
                 {t('footer.brand_name')}
               </span>
