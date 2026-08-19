@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTicket, FiFileText } from 'react-icons/fi';
+import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTag, FiFileText } from 'react-icons/fi';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import logo from '../../assets/azHubNasir.png';
 
@@ -153,7 +153,7 @@ const Navbar = () => {
                     {/* Navigation Links */}
                     <li>
                       <Link className="dropdown-item d-flex align-items-center gap-2" to="/tickets">
-                        <FiTicket />
+                        <FiTag />
                         {t('nav.my_tickets')}
                       </Link>
                     </li>
