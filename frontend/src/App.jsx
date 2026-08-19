@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
+import AuthLayout from './components/layout/AuthLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -54,9 +55,11 @@ function App() {
             <Route path="/instructor/answers" element={<div className="p-4"><h2>Manage Answers</h2></div>} />
           </Route>
           
-          {/* Standalone routes (no layout) */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          {/* Auth routes with AuthLayout (Navbar only) */}
+          <Route element={<AuthLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
         </Routes>
       </AuthProvider>
     </BrowserRouter>

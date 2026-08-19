@@ -50,6 +50,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  /* Account for absolute positioned navbar */
+  padding-top: 6rem;
 }
 
 .auth-box {
@@ -61,6 +63,8 @@ body {
   max-width: 420px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  /* Additional top margin to prevent navbar overlap */
+  margin-top: 2rem;
 }
 
 .auth-title {
