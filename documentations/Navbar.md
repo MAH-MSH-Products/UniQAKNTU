@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `Navbar.jsx` file implements a responsive navigation bar component for the UniQAKNTU application. It displays branding, user authentication status, role indicators, and provides navigation controls based on the user's authentication state. The component also includes a language switcher for English/Persian (EN/FA) with i18n support.
+The `Navbar.jsx` file implements a responsive navigation bar component for the AzmoonHub Nasir application. It displays branding with the official logo, user authentication status, role indicators, and provides navigation controls based on the user's authentication state. The component includes a language switcher for English/Persian (EN/FA), sticky positioning, and scroll-triggered shadow effects for enhanced UX.
 
 ## Key Components
 
@@ -13,11 +13,12 @@ const Navbar = () => {
   const { user, isAuthenticated, logout, isInstructor } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [isScrolled, setIsScrolled] = useState(false);
   // ...
 };
 ```
 
-A functional React component that renders a Bootstrap-styled navigation bar with dynamic content based on authentication state and selected language.
+A functional React component that renders a Bootstrap-styled navigation bar with dynamic content based on authentication state, selected language, and scroll position.
 
 **Props:** None (uses AuthContext via hook)
 
@@ -29,21 +30,46 @@ A functional React component that renders a Bootstrap-styled navigation bar with
   - `isInstructor`: Boolean indicating instructor role
 - Uses `useTranslation()` hook from react-i18next for translations
 - Uses `i18n` instance to detect current language and handle language changes
+- Uses `useState` to track scroll position for shadow effect
 
-### Branding Section
+### Sticky Positioning & Scroll Effect
+
+```javascript
+const [isScrolled, setIsScrolled] = useState(false);
+
+useEffect(() => {
+  const handleScroll = () => {
+    setIsScrolled(window.scrollY > 0);
+  };
+
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
+```
+
+**Functionality:**
+1. Tracks vertical scroll position
+2. Adds `shadow-sm` class when user scrolls down
+3. Removes shadow when at top of page
+4. Provides visual feedback and depth perception
+
+### Branding Section with Logo
 
 ```jsx
-<Link className="navbar-brand" to="/">
-  {t('nav.brand')}
+<Link className="navbar-brand d-flex align-items-center" to="/">
+  <img src={logo} alt="AzmoonHub Nasir" height="40" className="me-2" />
 </Link>
 ```
 
-Displays the application logo/brand that links to the home page. The text is translated using i18n.
+**Features:**
+- Uses `azHubNasir.png` logo image (40px height)
+- Links to home page (`/`)
+- Replaces text-based branding with visual identity
 
 ### Language Switcher
 
 ```jsx
-<li className="nav-item me-2">
+<li className="nav-item me-3">
   <div className="btn-group btn-group-sm" role="group">
     <button
       type="button"
@@ -87,7 +113,7 @@ const handleLanguageChange = (lng) => {
 
 ```jsx
 <button
-  className="navbar-toggler"
+  className="navbar-toggler border-0"
   type="button"
   data-bs-toggle="collapse"
   data-bs-target="#navbarNav"
@@ -107,10 +133,11 @@ Provides responsive collapse functionality for mobile devices using Bootstrap's 
 {isAuthenticated ? (
   <>
     <li className="nav-item me-3">
-      <span className="navbar-text text-white">
+      <span className="navbar-text text-white d-flex align-items-center">
+        <FiUser className="me-1" />
         {t('nav.welcome')}, {user?.username}
         {isInstructor && (
-          <span className="badge bg-warning text-dark ms-2">
+          <span className="badge ms-2" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
             {t('nav.instructor_badge')}
           </span>
         )}
@@ -118,19 +145,23 @@ Provides responsive collapse functionality for mobile devices using Bootstrap's 
     </li>
     <li className="nav-item">
       <button
-        className="btn btn-outline-light btn-sm"
+        className="btn btn-outline-light btn-sm d-flex align-items-center gap-1"
         onClick={handleLogout}
       >
+        <FiLogOut />
         {t('nav.logout')}
       </button>
     </li>
   </>
 ) : (
-  <li className="nav-item">
-    <Link className="btn btn-outline-light btn-sm" to="/login">
-      {t('nav.login')}
-    </Link>
-  </li>
+  <>
+    <li className="nav-item">
+      <Link className="btn btn-outline-light btn-sm d-flex align-items-center gap-1" to="/login">
+        <FiLogIn />
+        {t('nav.login')}
+      </Link>
+    </li>
+  </>
 )}
 ```
 
@@ -139,10 +170,10 @@ Provides responsive collapse functionality for mobile devices using Bootstrap's 
 **When Authenticated:**
 - Displays welcome message with username (translated)
 - Shows "Instructor" badge if `user.is_instructor` is true (translated)
-- Provides logout button that triggers `handleLogout()` (translated)
+- Provides logout button with icon that triggers `handleLogout()` (translated)
 
 **When Not Authenticated:**
-- Displays login button linking to `/login` route (translated)
+- Displays login button with icon linking to `/login` route (translated)
 
 ### handleLogout Function
 
@@ -217,6 +248,7 @@ const MainLayout = () => (
       <Sidebar />
       <main><Outlet /></main>
     </div>
+    <Footer />
   </div>
 );
 ```
@@ -238,8 +270,9 @@ navigate('/login');
 
 - **navbar**: Base navbar container
 - **navbar-expand-lg**: Responsive expansion at lg breakpoint
-- **navbar-dark**: Dark theme for navbar
-- **bg-primary**: Primary color background (blue)
+- **position-sticky**: Sticky positioning at top of viewport
+- **top-0**: Position at top (0px)
+- **shadow-sm**: Small shadow (conditionally applied on scroll)
 - **container-fluid**: Full-width container
 - **navbar-brand**: Brand/logo styling
 - **navbar-toggler**: Mobile toggle button
@@ -247,32 +280,49 @@ navigate('/login');
 - **nav-item**: Individual nav items
 - **navbar-text**: Text content in navbar
 - **badge**: Role indicator badge
-- **bg-warning**: Warning color for instructor badge
 - **btn-outline-light**: Outline button style
 - **btn-group**: Button group container
 - **btn-group-sm**: Small button size
 - **ms-auto**: Margin start (auto) for right alignment
 - **align-items-center**: Vertical center alignment
 - **me-2**, **me-3**: Margin end spacing
+- **d-flex**: Flexbox display
+- **gap-1**: Gap between flex children
+
+### Custom Inline Styles
+
+```javascript
+style={{ 
+  backgroundColor: 'var(--primary-color)', 
+  zIndex: 1030 
+}}
+```
+
+**Purpose:**
+- `backgroundColor`: Applies primary brand color (Deep Blue)
+- `zIndex: 1030`: Ensures navbar stays above other content (Bootstrap's default modal z-index is 1050)
 
 ### Responsive Behavior
 
-- **Desktop (≥992px)**: Full navbar displayed horizontally
-- **Mobile (<992px)**: Collapsible menu with toggle button
+- **Desktop (≥992px)**: Full navbar displayed horizontally with logo, language switcher, and auth controls
+- **Mobile (<992px)**: Collapsible menu with toggle button; items stack vertically when expanded
 
 ## Expected Structure in DOM
 
 ```html
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<nav class="navbar navbar-expand-lg position-sticky top-0 shadow-sm" 
+     style="background-color: var(--primary-color); z-index: 1030;">
   <div class="container-fluid">
-    <a class="navbar-brand" href="/">UniQAKNTU</a>
-    <button class="navbar-toggler" ...>
+    <a class="navbar-brand d-flex align-items-center" href="/">
+      <img src="azHubNasir.png" alt="AzmoonHub Nasir" height="40" />
+    </a>
+    <button class="navbar-toggler border-0" ...>
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto align-items-center">
         <!-- Language Switcher -->
-        <li class="nav-item me-2">
+        <li class="nav-item me-3">
           <div class="btn-group btn-group-sm">
             <button class="btn btn-light text-primary">EN</button>
             <button class="btn btn-outline-light">FA</button>
@@ -287,18 +337,19 @@ navigate('/login');
 
 ## Dependencies
 
-- **React**: Functional component
+- **React**: Functional component with hooks (`useState`, `useEffect`)
 - **react-router-dom**: `Link`, `useNavigate` for routing
 - **AuthContext**: `useAuth` hook for authentication state
 - **react-i18next**: `useTranslation` hook for translations
 - **i18next**: Core i18n instance for language detection and changes
+- **react-icons/fi**: Feather icons (`FiLogOut`, `FiLogIn`, `FiUser`)
 - **Bootstrap**: CSS framework for styling (`bootstrap/dist/css/bootstrap.min.css`)
 
 ## Translation Keys Used
 
 | Key | English | Persian |
 |-----|---------|---------|
-| `nav.brand` | UniQAKNTU | یونی‌قاکنتو |
+| `nav.brand` | AzmoonHub Nasir | آزمون‌هاب نصیر |
 | `nav.welcome` | Welcome | خوش آمدید |
 | `nav.instructor_badge` | Instructor | استاد |
 | `nav.login` | Login | ورود |
@@ -315,4 +366,12 @@ navigate('/login');
   - Integrated useTranslation hook for all text content
   - Implemented handleLanguageChange function for dynamic language switching
   - Updated all hardcoded strings to use translation keys
+- **Phase 9 - UI Polish**:
+  - Replaced text logo with `azHubNasir.png` image
+  - Added sticky positioning (`position-sticky top-0`)
+  - Implemented scroll listener with useEffect for shadow effect
+  - Added `zIndex: 1030` to ensure proper stacking context
+  - Updated instructor badge styling to use secondary color
+  - Enhanced icon integration with react-icons
+
 

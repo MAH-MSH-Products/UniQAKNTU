@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { FiLogOut, FiLogIn, FiUser } from 'react-icons/fi';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import logo from '../../assets/logo.svg';
+import logo from '../../assets/azHubNasir.png';
 
 /**
  * Navbar Component - Responsive Navigation Bar
@@ -14,12 +14,24 @@ import logo from '../../assets/logo.svg';
  * Conditionally renders content based on user authentication status and role.
  * Includes language switcher for English/Persian (EN/FA).
  * Uses react-icons for professional iconography.
+ * Features sticky positioning with scroll-triggered shadow effect.
  */
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, isInstructor } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Scroll listener for shadow effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -31,11 +43,14 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg" style={{ backgroundColor: 'var(--primary-color)' }}>
+    <nav 
+      className={`navbar navbar-expand-lg position-sticky top-0 ${isScrolled ? 'shadow-sm' : ''}`} 
+      style={{ backgroundColor: 'var(--primary-color)', zIndex: 1030 }}
+    >
       <div className="container-fluid">
         {/* Branding with Logo */}
         <Link className="navbar-brand d-flex align-items-center" to="/">
-          <img src={logo} alt="AzmoonHub Nasir" height="40" className="me-2" />
+          <img src={logo} alt="AzmoonHub Nasir" height="80" className="me-2" />
         </Link>
 
         {/* Toggle button for mobile */}

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiBook, FiTicket, FiAlertTriangle, FiPieChart, FiEdit } from 'react-icons/fi';
-
+import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit } from 'react-icons/fi';
 /**
  * Sidebar Component - Course and Exam Navigation
  * 
@@ -53,7 +52,7 @@ const Sidebar = () => {
               onMouseEnter={(e) => Object.assign(e.currentTarget.style, navLinkHoverStyle)}
               onMouseLeave={(e) => Object.assign(e.currentTarget.style, { backgroundColor: 'transparent', color: 'var(--text-secondary)' })}
             >
-              <FiTicket />
+              <FiTag />
               <span>{t('sidebar.my_tickets')}</span>
             </Link>
           </li>

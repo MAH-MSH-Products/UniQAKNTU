@@ -27,7 +27,28 @@
   },
   "home": {
     "browse_courses": "Browse Courses",
-    "sign_in": "Sign In"
+    "sign_in": "Sign In",
+    "hero_title": "Your Gateway to Academic Excellence",
+    "hero_subtitle": "Access verified exam solutions, collaborate with instructors, and excel in your studies with our comprehensive question archive.",
+    "features_title": "Why Choose AzmoonHub Nasir?",
+    "feature_1_title": "MathJax Support",
+    "feature_1_description": "Write and render complex mathematical formulas with precision using our integrated MathJax editor.",
+    "feature_2_title": "Verified Answers",
+    "feature_2_description": "All solutions are provided and verified by experienced instructors to ensure accuracy.",
+    "feature_3_title": "PDF Attachments",
+    "feature_3_description": "Upload and access detailed solution documents in PDF format for comprehensive learning.",
+    "cta_title": "Join Our Instructors Community",
+    "cta_subtitle": "Become a verified contributor and share your expertise with students across the university.",
+    "cta_button": "Request Instructor Role",
+    "faq_title": "Frequently Asked Questions",
+    "faq_1_question": "How do I become a verified instructor?",
+    "faq_1_answer": "Submit a role request through the Support Center with your academic credentials. Our admin team will review your application and verify your instructor status.",
+    "faq_2_question": "How can I write mathematical formulas?",
+    "faq_2_answer": "Our platform supports MathJax syntax. Simply use LaTeX notation within your answers, such as $E = mc^2$ for inline formulas or $$...$$ for displayed equations.",
+    "faq_3_question": "Can I upload solution documents?",
+    "faq_3_answer": "Yes! Verified instructors can attach PDF files and images to their answers, providing detailed step-by-step solutions.",
+    "faq_4_question": "What if I find an error in an answer?",
+    "faq_4_answer": "Use the Content Report feature on any question or answer to notify our team. We take accuracy seriously and will review reported content promptly."
   },
   "login": {
     "title": "Login to AzmoonHub Nasir",
@@ -54,5 +75,18 @@
     "manage_answers": "Manage Answers",
     "support_center": "Support Center",
     "admin_panel": "Admin Support Panel"
+  },
+  "footer": {
+    "brand_name": "AzmoonHub Nasir",
+    "description": "The premier platform for collaborative learning and exam preparation at KNTU.",
+    "quick_links_title": "Quick Links",
+    "all_courses": "All Courses",
+    "my_tickets": "My Tickets",
+    "reports": "Reports",
+    "resources_title": "Resources",
+    "faq": "FAQ",
+    "documentation": "Documentation",
+    "contact_us": "Contact Us",
+    "copyright": "© 2025 AzmoonHub Nasir. All rights reserved."
   }
 }

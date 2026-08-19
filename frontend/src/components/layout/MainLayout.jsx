@@ -3,17 +3,18 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import WidgetsPanel from './WidgetsPanel';
+import Footer from './Footer';
 
 /**
  * MainLayout Component - Application Shell
  * 
  * Wrapper component that provides the main application structure.
  * Includes Navbar, Sidebar, main content area with Outlet for routing,
- * and WidgetsPanel for dynamic side content.
+ * WidgetsPanel for dynamic side content, and Footer.
  * 
  * Layout Structure:
- * - Desktop: 3-column layout (Sidebar | Main Content | WidgetsPanel)
- * - Mobile: Stacked layout (WidgetsPanel at bottom)
+ * - Desktop: 3-column layout (Sidebar | Main Content | WidgetsPanel) + Footer
+ * - Mobile: Stacked layout (WidgetsPanel at bottom) + Footer
  */
 
 const MainLayout = () => {
@@ -41,6 +42,9 @@ const MainLayout = () => {
           <WidgetsPanel />
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
