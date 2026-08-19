@@ -11,6 +11,10 @@
   --hover-shadow: 0 4px 12px rgba(10, 37, 64, 0.15);
   --transition: all 0.2s ease-in-out;
 
+  /* Gradient Variables */
+  --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  --gradient-subtle: linear-gradient(135deg, rgba(10, 37, 64, 0.05), rgba(23, 162, 184, 0.05));
+  
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   letter-spacing: 0.18px;
   color-scheme: light;
@@ -33,6 +37,17 @@ body {
 /* ============================================
    Global Utility Classes - Academic Theme
    ============================================ */
+
+/**
+ * Background Gradient Utilities
+ */
+.bg-gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.bg-gradient-subtle {
+  background: var(--gradient-subtle);
+}
 
 /**
  * Academic Card Component
