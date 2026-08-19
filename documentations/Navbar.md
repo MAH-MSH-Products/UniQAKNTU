@@ -2,7 +2,9 @@
 
 ## Purpose
 
-The `Navbar.jsx` file implements a responsive navigation bar component for the AzmoonHub Nasir application. It displays branding with the official logo, user authentication status, role indicators, and provides navigation controls based on the user's authentication state. The component includes a language switcher for English/Persian (EN/FA), sticky positioning, and scroll-triggered shadow effects for enhanced UX.
+The `Navbar.jsx` file implements a responsive navigation bar component for the AzmoonHub Nasir application. It displays branding with the official logo, user authentication status, role indicators, and provides navigation controls based on the user's authentication state. The component includes a language switcher for English/Persian (EN/FA), sticky positioning, and scroll-triggered shadow effects for enhanced UX. 
+
+**Phase 11 Update:** The Navbar now features dynamic route-based styling that automatically adapts its appearance when rendered on authentication pages (`/login`, `/register`). On these pages, it applies a glassmorphism effect (semi-transparent background with blur) to blend seamlessly with the gradient auth backgrounds, while maintaining its solid professional appearance on all other pages.
 
 ## Key Components
 
@@ -12,13 +14,17 @@ The `Navbar.jsx` file implements a responsive navigation bar component for the A
 const Navbar = () => {
   const { user, isAuthenticated, logout, isInstructor } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
+  
+  // Check if current path is an auth page
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   // ...
 };
 ```
 
-A functional React component that renders a Bootstrap-styled navigation bar with dynamic content based on authentication state, selected language, and scroll position.
+A functional React component that renders a Bootstrap-styled navigation bar with dynamic content based on authentication state, selected language, scroll position, and current route.
 
 **Props:** None (uses AuthContext via hook)
 
@@ -31,6 +37,58 @@ A functional React component that renders a Bootstrap-styled navigation bar with
 - Uses `useTranslation()` hook from react-i18next for translations
 - Uses `i18n` instance to detect current language and handle language changes
 - Uses `useState` to track scroll position for shadow effect
+- Uses `useLocation()` hook from react-router-dom to detect current route
+
+### Dynamic Route Detection
+
+```javascript
+const location = useLocation();
+
+// Check if current path is an auth page
+const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+```
+
+**Functionality:**
+1. Accesses current location object via `useLocation()` hook
+2. Checks if pathname matches `/login` or `/register`
+3. Returns boolean `isAuthPage` for conditional styling
+4. Enables route-aware visual adaptations
+
+### getNavbarStyle Function
+
+```javascript
+const getNavbarStyle = () => {
+  if (isAuthPage) {
+    // Glassmorphism style for auth pages - blends with gradient background
+    return {
+      background: 'rgba(10, 37, 64, 0.4)',
+      backdropFilter: 'blur(10px)',
+      WebkitBackdropFilter: 'blur(10px)',
+      zIndex: 1030,
+      position: 'absolute',
+      width: '100%'
+    };
+  }
+  // Default solid primary color for other pages
+  return {
+    backgroundColor: 'var(--primary-color)',
+    zIndex: 1030
+  };
+};
+```
+
+**Functionality:**
+1. **Auth Pages (`/login`, `/register`):**
+   - Semi-transparent dark blue background (`rgba(10, 37, 64, 0.4)`)
+   - Backdrop blur effect (10px) for glassmorphism
+   - Absolute positioning to float over gradient background
+   - Full width to span viewport
+   - Allows auth container gradient to show through
+
+2. **Other Pages:**
+   - Solid primary color background
+   - Sticky positioning (via className)
+   - Professional, opaque appearance
 
 ### Sticky Positioning & Scroll Effect
 
@@ -49,20 +107,21 @@ useEffect(() => {
 
 **Functionality:**
 1. Tracks vertical scroll position
-2. Adds `shadow-sm` class when user scrolls down
+2. Adds `shadow-sm` class when user scrolls down (non-auth pages only)
 3. Removes shadow when at top of page
 4. Provides visual feedback and depth perception
+5. Disabled on auth pages to maintain clean floating appearance
 
 ### Branding Section with Logo
 
 ```jsx
 <Link className="navbar-brand d-flex align-items-center" to="/">
-  <img src={logo} alt="AzmoonHub Nasir" height="40" className="me-2" />
+  <img src={logo} alt="AzmoonHub Nasir" height="80" className="me-2" />
 </Link>
 ```
 
 **Features:**
-- Uses `azHubNasir.png` logo image (40px height)
+- Uses `azHubNasir.png` logo image (80px height)
 - Links to home page (`/`)
 - Replaces text-based branding with visual identity
 
@@ -205,6 +264,23 @@ const MainLayout = () => {
 };
 ```
 
+### Import in AuthLayout
+
+```javascript
+import Navbar from './Navbar';
+
+const AuthLayout = () => {
+  return (
+    <div className="auth-layout-wrapper">
+      <Navbar />
+      <main className="auth-main-content">
+        <Outlet />
+      </main>
+    </div>
+  );
+};
+```
+
 ### Bootstrap CSS Requirement
 
 Ensure Bootstrap CSS is imported (handled in component):
@@ -253,15 +329,37 @@ const MainLayout = () => (
 );
 ```
 
+### AuthLayout Integration
+
+Used as the top navigation component for authentication pages:
+```javascript
+import Navbar from './Navbar';
+import { Outlet } from 'react-router-dom';
+
+const AuthLayout = () => (
+  <div className="auth-layout-wrapper">
+    <Navbar />
+    <main className="auth-main-content">
+      <Outlet />
+    </main>
+  </div>
+);
+```
+
 ### react-router-dom Integration
 
-Uses routing hooks for navigation:
+Uses routing hooks for navigation and route detection:
 ```javascript
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const navigate = useNavigate();
+const location = useLocation();
+
 // Navigation after logout
 navigate('/login');
+
+// Route detection for dynamic styling
+const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 ```
 
 ## Styling
@@ -270,9 +368,10 @@ navigate('/login');
 
 - **navbar**: Base navbar container
 - **navbar-expand-lg**: Responsive expansion at lg breakpoint
-- **position-sticky**: Sticky positioning at top of viewport
+- **position-sticky**: Sticky positioning at top of viewport (non-auth pages)
+- **position-absolute**: Absolute positioning (auth pages)
 - **top-0**: Position at top (0px)
-- **shadow-sm**: Small shadow (conditionally applied on scroll)
+- **shadow-sm**: Small shadow (conditionally applied on scroll, non-auth pages only)
 - **container-fluid**: Full-width container
 - **navbar-brand**: Brand/logo styling
 - **navbar-toggler**: Mobile toggle button
@@ -291,6 +390,29 @@ navigate('/login');
 
 ### Custom Inline Styles
 
+**Dynamic Styling (getNavbarStyle function):**
+
+**For Auth Pages:**
+```javascript
+style={{ 
+  background: 'rgba(10, 37, 64, 0.4)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  zIndex: 1030,
+  position: 'absolute',
+  width: '100%'
+}}
+```
+
+**Purpose:**
+- `background`: Semi-transparent dark blue allowing gradient to show through
+- `backdropFilter`: Blur effect for glassmorphism appearance
+- `WebkitBackdropFilter`: Safari compatibility for blur effect
+- `zIndex: 1030`: Ensures navbar stays above other content
+- `position: 'absolute'`: Floats over auth container without affecting layout
+- `width: '100%'`: Spans full viewport width
+
+**For Other Pages:**
 ```javascript
 style={{ 
   backgroundColor: 'var(--primary-color)', 
@@ -299,8 +421,19 @@ style={{
 ```
 
 **Purpose:**
-- `backgroundColor`: Applies primary brand color (Deep Blue)
-- `zIndex: 1030`: Ensures navbar stays above other content (Bootstrap's default modal z-index is 1050)
+- `backgroundColor`: Applies solid primary brand color (Deep Blue)
+- `zIndex: 1030`: Ensures navbar stays above other content
+
+### Dynamic ClassName
+
+```javascript
+className={`navbar navbar-expand-lg ${isAuthPage ? 'position-absolute' : 'position-sticky'} top-0 ${isScrolled && !isAuthPage ? 'shadow-sm' : ''}`}
+```
+
+**Conditional Classes:**
+- **position-absolute**: Applied on auth pages for floating effect
+- **position-sticky**: Applied on other pages for scroll-following behavior
+- **shadow-sm**: Applied only when scrolled AND not on auth page
 
 ### Responsive Behavior
 
@@ -309,12 +442,14 @@ style={{
 
 ## Expected Structure in DOM
 
+### On Auth Pages (`/login`, `/register`)
+
 ```html
-<nav class="navbar navbar-expand-lg position-sticky top-0 shadow-sm" 
-     style="background-color: var(--primary-color); z-index: 1030;">
+<nav class="navbar navbar-expand-lg position-absolute top-0" 
+     style="background: rgba(10, 37, 64, 0.4); backdrop-filter: blur(10px); position: absolute; width: 100%;">
   <div class="container-fluid">
     <a class="navbar-brand d-flex align-items-center" href="/">
-      <img src="azHubNasir.png" alt="AzmoonHub Nasir" height="40" />
+      <img src="azHubNasir.png" alt="AzmoonHub Nasir" height="80" />
     </a>
     <button class="navbar-toggler border-0" ...>
       <span class="navbar-toggler-icon"></span>
@@ -328,17 +463,26 @@ style={{
             <button class="btn btn-outline-light">FA</button>
           </div>
         </li>
-        <!-- Authenticated or Login content -->
+        <!-- Login button (when not authenticated) -->
       </ul>
     </div>
   </div>
 </nav>
 ```
 
+### On Other Pages (`/`, `/courses`, etc.)
+
+```html
+<nav class="navbar navbar-expand-lg position-sticky top-0 shadow-sm" 
+     style="background-color: var(--primary-color); z-index: 1030;">
+  <!-- Same structure as above -->
+</nav>
+```
+
 ## Dependencies
 
 - **React**: Functional component with hooks (`useState`, `useEffect`)
-- **react-router-dom**: `Link`, `useNavigate` for routing
+- **react-router-dom**: `Link`, `useNavigate`, `useLocation` for routing and route detection
 - **AuthContext**: `useAuth` hook for authentication state
 - **react-i18next**: `useTranslation` hook for translations
 - **i18next**: Core i18n instance for language detection and changes
@@ -373,5 +517,17 @@ style={{
   - Added `zIndex: 1030` to ensure proper stacking context
   - Updated instructor badge styling to use secondary color
   - Enhanced icon integration with react-icons
+- **Phase 11 - Dynamic Auth Styling**:
+  - Added `useLocation()` hook import from react-router-dom
+  - Implemented `isAuthPage` detection logic for `/login` and `/register` routes
+  - Created `getNavbarStyle()` function for route-based dynamic styling
+  - Added glassmorphism effect for auth pages:
+    - Semi-transparent background: `rgba(10, 37, 64, 0.4)`
+    - Backdrop blur filter: `blur(10px)`
+    - Absolute positioning to float over gradient
+  - Updated className to conditionally apply `position-absolute` vs `position-sticky`
+  - Disabled shadow effect on auth pages (`isScrolled && !isAuthPage`)
+  - Maintained solid primary color styling for non-auth pages
+  - Preserved all existing scroll-listener and language-switcher functionality
 
 
