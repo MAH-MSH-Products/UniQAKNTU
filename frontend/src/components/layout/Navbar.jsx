@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -15,13 +15,18 @@ import logo from '../../assets/azHubNasir.png';
  * Includes language switcher for English/Persian (EN/FA).
  * Uses react-icons for professional iconography.
  * Features sticky positioning with scroll-triggered shadow effect.
+ * Dynamically adapts styling for auth pages (/login, /register) using glassmorphism effect.
  */
 
 const Navbar = () => {
   const { user, isAuthenticated, logout, isInstructor } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Check if current path is an auth page
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   // Scroll listener for shadow effect
   useEffect(() => {
@@ -42,10 +47,30 @@ const Navbar = () => {
     i18n.changeLanguage(lng);
   };
 
+  // Dynamic navbar styles based on current route
+  const getNavbarStyle = () => {
+    if (isAuthPage) {
+      // Glassmorphism style for auth pages - blends with gradient background
+      return {
+        background: 'rgba(10, 37, 64, 0.4)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        zIndex: 1030,
+        position: 'absolute',
+        width: '100%'
+      };
+    }
+    // Default solid primary color for other pages
+    return {
+      backgroundColor: 'var(--primary-color)',
+      zIndex: 1030
+    };
+  };
+
   return (
     <nav 
-      className={`navbar navbar-expand-lg position-sticky top-0 ${isScrolled ? 'shadow-sm' : ''}`} 
-      style={{ backgroundColor: 'var(--primary-color)', zIndex: 1030 }}
+      className={`navbar navbar-expand-lg ${isAuthPage ? 'position-absolute' : 'position-sticky'} top-0 ${isScrolled && !isAuthPage ? 'shadow-sm' : ''}`} 
+      style={getNavbarStyle()}
     >
       <div className="container-fluid">
         {/* Branding with Logo */}

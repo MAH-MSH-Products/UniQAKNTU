@@ -137,3 +137,14 @@ Frontend: Mohammad Amin Haji Alirezaei | Backend: Mohammad Sajjad Hamidifard.
     - Completely redesign the Authentication pages to match the provided modern, full-screen, gradient-based UI mockup.
     - Include a centered user avatar icon, clear input fields with placeholder icons (email, password), a "Remember me" checkbox, and a prominent "LOGIN / REGISTER" button.
 - [ ] **[Frontend]** Documentation Update: Update or create `.md` files for `Home.md`, `Login.md`, `Register.md`, and `Navbar.md` reflecting these UI changes and noting the new layout structures.
+
+
+## Phase 11: Auth Layout & Dynamic Navbar Styling
+**Goal:** Ensure the global `Navbar` is present across all authentication pages (Login/Register) while dynamically adapting its styling to blend with the modern gradient backgrounds of those pages.
+
+### Frontend Tasks (Mohammad Amin)
+- [ ] **[Frontend]** `AuthLayout` Component: Create `frontend/src/components/layout/AuthLayout.jsx` to wrap authentication routes. It should include the `Navbar` and an `<Outlet />` without the Sidebar, WidgetsPanel, or Footer.
+- [ ] **[Frontend]** Routing Update: Modify `App.jsx` to group the `/login` and `/register` routes under the newly created `<AuthLayout />`.
+- [ ] **[Frontend]** Dynamic Navbar Styling: Refactor `Navbar.jsx` to use `useLocation()` from `react-router-dom`. When the user is on `/login` or `/register`, apply a specific "glassmorphism" or blended gradient background (e.g., semi-transparent blue) to match the auth screens, rather than the default solid primary color.
+- [ ] **[Frontend]** CSS Adjustments: Update `index.css` to ensure the `.auth-container` accounts for the Navbar's height so it doesn't cause unwanted vertical scrolling, or position the Navbar absolutely over the auth gradient.
+- [ ] **[Frontend]** Documentation: Update `Navbar.md` and create `AuthLayout.md` in the `documentations/` directory detailing the dynamic route-based styling logic.
