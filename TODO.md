@@ -148,3 +148,30 @@ Frontend: Mohammad Amin Haji Alirezaei | Backend: Mohammad Sajjad Hamidifard.
 - [ ] **[Frontend]** Dynamic Navbar Styling: Refactor `Navbar.jsx` to use `useLocation()` from `react-router-dom`. When the user is on `/login` or `/register`, apply a specific "glassmorphism" or blended gradient background (e.g., semi-transparent blue) to match the auth screens, rather than the default solid primary color.
 - [ ] **[Frontend]** CSS Adjustments: Update `index.css` to ensure the `.auth-container` accounts for the Navbar's height so it doesn't cause unwanted vertical scrolling, or position the Navbar absolutely over the auth gradient.
 - [ ] **[Frontend]** Documentation: Update `Navbar.md` and create `AuthLayout.md` in the `documentations/` directory detailing the dynamic route-based styling logic.
+
+## Phase 12: Route Protection & RBAC UI Enforcement
+**Goal:** Secure client-side routes and dynamically render UI elements based on authentication and role state, preventing unauthorized component mounting and API calls.
+
+- [ ] **[Frontend]** `Auth Wrappers`: Create `RequireAuth.jsx` and `RequireInstructor.jsx` in `src/components/auth/`. These components must consume `AuthContext` and use `react-router-dom`'s `<Navigate to="/login" replace />` or `<Navigate to="/" replace />` if validation fails.
+- [ ] **[Frontend]** `App.jsx Routing`: Apply the wrappers to the existing `<Route>` definitions.
+    - **Public:** `/`, `/courses`, and `QuestionExplorer` components.
+    - **RequireAuth:** `/support`, `/tickets`, `/reports`.
+    - **RequireInstructor:** `/instructor/dashboard`, `/instructor/answers`.
+    - **RequireAdmin** (if applicable): `/admin/support`.
+- [ ] **[Frontend]** `Sidebar.jsx`: Import `useAuth()`.
+    - Wrap the `My Tickets` and `Reports` `<li>` elements inside `{isAuthenticated && (...) }`.
+    - Wrap the entire `Instructor Tools` section (heading and `<ul>` links) inside `{isInstructor && (...) }`.
+- [ ] **[Frontend]** `SupportCenter.jsx`: Add an authentication check inside the component mounting logic. Prevent `fetchUserTickets()` execution if `!isAuthenticated` to eliminate unhandled promises and 401 API errors.
+
+## Phase 13: Navbar Profile Dropdown & State Refactoring
+**Goal:** Refactor the Navbar to reflect accurate authentication states and implement a scalable dropdown profile menu.
+
+- [ ] **[Frontend]** `Navbar.jsx` (Guest State): Enforce that when `isAuthenticated === false`, strictly the "Login" and "Register" action buttons are rendered.
+- [ ] **[Frontend]** `Navbar.jsx` (Authenticated State): Remove the static inline "Welcome, username" text and the adjacent "Logout" button. Replace them with a standard Bootstrap Dropdown (`dropdown-toggle`, `dropdown-menu`).
+- [ ] **[Frontend]** `Profile Dropdown UI`: Construct the dropdown contents to include:
+    - A non-clickable header displaying the user's name (`user.username` or full name) alongside their role badge.
+    - A `<hr className="dropdown-divider" />`.
+    - Standard navigation list items (e.g., "My Tickets", "Reports").
+    - A final `<hr className="dropdown-divider" />`.
+    - A dedicated "Logout" button.
+- [ ] **[Frontend]** `Logout Action`: Bind the "Logout" button inside the dropdown strictly to the `logout()` method from `AuthContext`, followed immediately by `navigate('/login')`.

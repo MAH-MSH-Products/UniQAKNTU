@@ -123,6 +123,11 @@ const mockTickets = [
 
 ## Change Log
 
+- **Phase 12 - Route Protection & RBAC UI Enforcement**: 
+  - Added authentication check in `useEffect` hook to prevent `fetchUserTickets()` from executing when user is not authenticated
+  - This prevents unhandled promise rejections and 401 errors if the component mounts before router redirection
+  - Updated documentation to reflect auth-check implementation
+
 - **2026-08-17**: Initial creation of SupportCenter component for Phase 6
   - Implemented tab-based UI for submit tickets and view my tickets
   - Added support for instructor role requests with introduction field

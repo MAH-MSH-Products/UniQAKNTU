@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `Sidebar.jsx` file implements a navigation sidebar component for the UniQAKNTU application. It provides organized navigation links for courses, support tickets, reports, and instructor-specific tools. The component uses i18n translations for all text content and supports both English (LTR) and Persian (RTL) languages.
+The `Sidebar.jsx` file implements a navigation sidebar component for the AzmoonHub Nasir application. It provides organized navigation links for courses, support tickets, reports, and instructor-specific tools. The component uses i18n translations for all text content, supports both English (LTR) and Persian (RTL) languages, and dynamically renders navigation items based on user authentication state and role (RBAC - Role-Based Access Control).
 
 ## Key Components
 
@@ -11,20 +11,22 @@ The `Sidebar.jsx` file implements a navigation sidebar component for the UniQAKN
 ```javascript
 const Sidebar = () => {
   const { t } = useTranslation();
+  const { isAuthenticated, isInstructor } = useAuth();
   return (
     <div className="sidebar bg-light border-end" style={{ minHeight: 'calc(100vh - 56px)' }}>
-      {/* Navigation content */}
+      {/* Navigation content with conditional rendering */}
     </div>
   );
 };
 ```
 
-A functional React component that renders a vertical navigation sidebar with categorized links using translated text.
+A functional React component that renders a vertical navigation sidebar with categorized links using translated text and role-based visibility.
 
 **Props:** None
 
 **State Management:**
 - Uses `useTranslation()` hook from react-i18next for translations
+- Uses `useAuth()` hook from AuthContext for authentication and role state
 
 **Styling:**
 - Fixed height calculation: `calc(100vh - 56px)` (accounts for navbar height)
@@ -39,55 +41,70 @@ A functional React component that renders a vertical navigation sidebar with cat
 </h6>
 <ul className="nav flex-column">
   <li className="nav-item">
-    <Link className="nav-link text-dark" to="/courses">
+    <Link className="nav-link text-dark d-flex align-items-center gap-2" to="/courses">
+      <FiBook />
       {t('sidebar.all_courses')}
     </Link>
   </li>
-  <li className="nav-item">
-    <Link className="nav-link text-dark" to="/tickets">
-      {t('sidebar.my_tickets')}
-    </Link>
-  </li>
-  <li className="nav-item">
-    <Link className="nav-link text-dark" to="/reports">
-      {t('sidebar.reports')}
-    </Link>
-  </li>
+  {/* Show My Tickets and Reports only for authenticated users */}
+  {isAuthenticated && (
+    <>
+      <li className="nav-item">
+        <Link className="nav-link text-dark d-flex align-items-center gap-2" to="/tickets">
+          <FiTag />
+          {t('sidebar.my_tickets')}
+        </Link>
+      </li>
+      <li className="nav-item">
+        <Link className="nav-link text-dark d-flex align-items-center gap-2" to="/reports">
+          <FiAlertTriangle />
+          {t('sidebar.reports')}
+        </Link>
+      </li>
+    </>
+  )}
 </ul>
 ```
 
 **Navigation Links:**
-- **All Courses** (`/courses`): Browse available courses and exams (translated via `sidebar.all_courses`)
-- **My Tickets** (`/tickets`): View and manage support tickets (translated via `sidebar.my_tickets`)
-- **Reports** (`/reports`): Access content reports (translated via `sidebar.reports`)
+- **All Courses** (`/courses`): Browse available courses and exams (always visible, translated via `sidebar.all_courses`)
+- **My Tickets** (`/tickets`): View and manage support tickets (visible only when `isAuthenticated === true`, translated via `sidebar.my_tickets`)
+- **Reports** (`/reports`): Access content reports (visible only when `isAuthenticated === true`, translated via `sidebar.reports`)
 
-Each link includes an emoji icon for visual identification. The emoji icons are part of the translation strings.
+Each link includes a react-icons icon for visual identification. The "My Tickets" and "Reports" links are conditionally rendered based on authentication state.
 
 ### Instructor Tools Section
 
 ```jsx
-<h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3 mt-4">
-  {t('sidebar.instructor_tools')}
-</h6>
-<ul className="nav flex-column">
-  <li className="nav-item">
-    <Link className="nav-link text-dark" to="/instructor/dashboard">
-      {t('sidebar.dashboard')}
-    </Link>
-  </li>
-  <li className="nav-item">
-    <Link className="nav-link text-dark" to="/instructor/answers">
-      {t('sidebar.manage_answers')}
-    </Link>
-  </li>
-</ul>
+{/* Instructor-only section - Only visible to verified instructors */}
+{isInstructor && (
+  <>
+    <h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3 mt-4">
+      {t('sidebar.instructor_tools')}
+    </h6>
+    <ul className="nav flex-column">
+      <li className="nav-item">
+        <Link className="nav-link text-dark d-flex align-items-center gap-2" to="/instructor/dashboard">
+          <FiPieChart />
+          {t('sidebar.dashboard')}
+        </Link>
+      </li>
+      <li className="nav-item">
+        <Link className="nav-link text-dark d-flex align-items-center gap-2" to="/instructor/answers">
+          <FiEdit />
+          {t('sidebar.manage_answers')}
+        </Link>
+      </li>
+    </ul>
+  </>
+)}
 ```
 
 **Instructor-Only Links:**
 - **Dashboard** (`/instructor/dashboard`): Instructor analytics and overview (translated via `sidebar.dashboard`)
 - **Manage Answers** (`/instructor/answers`): Create and edit exam answers (translated via `sidebar.manage_answers`)
 
-**Note:** Currently displays to all users. Future implementation should conditionally render this section based on `user.is_instructor` from AuthContext.
+**RBAC Implementation:** The entire "Instructor Tools" section (heading and links) is wrapped in `{isInstructor && (...)}` condition, ensuring it only renders for users with `is_instructor === true`.
 
 ## Usage
 
@@ -162,19 +179,34 @@ const MainLayout = () => (
 
 ### Future AuthContext Integration
 
-For role-based link visibility:
+Role-based visibility is now fully implemented:
+
 ```javascript
 import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = () => {
-  const { isInstructor } = useAuth();
+  const { isAuthenticated, isInstructor } = useAuth();
   
   return (
     <>
-      {/* Common links */}
+      {/* Common links - always visible */}
+      <Link to="/courses">{t('sidebar.all_courses')}</Link>
       
+      {/* Auth-only links */}
+      {isAuthenticated && (
+        <>
+          <Link to="/tickets">{t('sidebar.my_tickets')}</Link>
+          <Link to="/reports">{t('sidebar.reports')}</Link>
+        </>
+      )}
+      
+      {/* Instructor-only section */}
       {isInstructor && (
-        {/* Instructor-only links */}
+        <>
+          <h6>{t('sidebar.instructor_tools')}</h6>
+          <Link to="/instructor/dashboard">{t('sidebar.dashboard')}</Link>
+          <Link to="/instructor/answers">{t('sidebar.manage_answers')}</Link>
+        </>
       )}
     </>
   );
@@ -269,5 +301,10 @@ Ensures sidebar extends full viewport height minus navbar (56px is standard Boot
 - **Phase 7 - i18n Localization**:
   - Integrated useTranslation hook for all text content
   - Updated all hardcoded strings to use translation keys
-  - Emoji icons moved into translation JSON files for proper localization
+  - Emoji icons replaced with react-icons (FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit)
+- **Phase 12 - Route Protection & RBAC UI Enforcement**:
+  - Added useAuth hook integration for authentication state
+  - Implemented conditional rendering for "My Tickets" and "Reports" links (visible only when isAuthenticated === true)
+  - Implemented conditional rendering for entire "Instructor Tools" section (visible only when isInstructor === true)
+  - Updated documentation to reflect RBAC implementation
 

@@ -3,19 +3,20 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { FiLogOut, FiLogIn, FiUser } from 'react-icons/fi';
+import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTag, FiFileText } from 'react-icons/fi';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import logo from '../../assets/azHubNasir.png';
 
 /**
  * Navbar Component - Responsive Navigation Bar
- * 
+ *
  * Displays branding with AzmoonHub Nasir logo, user information, and authentication controls.
  * Conditionally renders content based on user authentication status and role.
  * Includes language switcher for English/Persian (EN/FA).
  * Uses react-icons for professional iconography.
  * Features sticky positioning with scroll-triggered shadow effect.
  * Dynamically adapts styling for auth pages (/login, /register) using glassmorphism effect.
+ * Phase 13: Implements Bootstrap profile dropdown for authenticated users with navigation links.
  */
 
 const Navbar = () => {
@@ -68,8 +69,8 @@ const Navbar = () => {
   };
 
   return (
-    <nav 
-      className={`navbar navbar-expand-lg ${isAuthPage ? 'position-absolute' : 'position-sticky'} top-0 ${isScrolled && !isAuthPage ? 'shadow-sm' : ''}`} 
+    <nav
+      className={`navbar navbar-expand-lg ${isAuthPage ? 'position-absolute' : 'position-sticky'} top-0 ${isScrolled && !isAuthPage ? 'shadow-sm' : ''}`}
       style={getNavbarStyle()}
     >
       <div className="container-fluid">
@@ -116,37 +117,83 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <>
-                {/* Welcome message */}
-                <li className="nav-item me-3">
-                  <span className="navbar-text text-white d-flex align-items-center">
-                    <FiUser className="me-1" />
-                    {t('nav.welcome')}, {user?.username}
+                {/* Profile Dropdown */}
+                <li className="nav-item dropdown">
+                  <a
+                    className="nav-link dropdown-toggle d-flex align-items-center gap-2 text-white"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                    <FiUser size={20} />
+                    <span>{user?.username}</span>
                     {isInstructor && (
-                      <span className="badge ms-2" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
+                      <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
                         {t('nav.instructor_badge')}
                       </span>
                     )}
-                  </span>
-                </li>
-                
-                {/* Logout button */}
-                <li className="nav-item">
-                  <button
-                    className="btn btn-outline-light btn-sm d-flex align-items-center gap-1"
-                    onClick={handleLogout}
-                  >
-                    <FiLogOut />
-                    {t('nav.logout')}
-                  </button>
+                  </a>
+                  <ul className="dropdown-menu dropdown-menu-end shadow-sm">
+                    {/* Header with username and role badge */}
+                    <li>
+                      <h6 className="dropdown-header d-flex align-items-center gap-2">
+                        <span>{user?.username}</span>
+                        {isInstructor && (
+                          <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
+                            {t('nav.instructor_badge')}
+                          </span>
+                        )}
+                      </h6>
+                    </li>
+                    
+                    {/* Divider */}
+                    <li><hr className="dropdown-divider" /></li>
+                    
+                    {/* Navigation Links */}
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2" to="/tickets">
+                        <FiTag />
+                        {t('nav.my_tickets')}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2" to="/reports">
+                        <FiFileText />
+                        {t('nav.reports')}
+                      </Link>
+                    </li>
+                    
+                    {/* Divider */}
+                    <li><hr className="dropdown-divider" /></li>
+                    
+                    {/* Logout Action */}
+                    <li>
+                      <button
+                        className="dropdown-item text-danger d-flex align-items-center gap-2"
+                        onClick={handleLogout}
+                      >
+                        <FiLogOut />
+                        {t('nav.logout')}
+                      </button>
+                    </li>
+                  </ul>
                 </li>
               </>
             ) : (
               <>
-                {/* Login link for unauthenticated users */}
-                <li className="nav-item">
+                {/* Login button for unauthenticated users */}
+                <li className="nav-item me-2">
                   <Link className="btn btn-outline-light btn-sm d-flex align-items-center gap-1" to="/login">
                     <FiLogIn />
                     {t('nav.login')}
+                  </Link>
+                </li>
+                {/* Register button for unauthenticated users */}
+                <li className="nav-item">
+                  <Link className="btn btn-outline-light btn-sm d-flex align-items-center gap-1" to="/register">
+                    <FiUserPlus />
+                    {t('nav.register')}
                   </Link>
                 </li>
               </>
