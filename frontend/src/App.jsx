@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import Home from './pages/Home';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import SupportCenter from './pages/support/SupportCenter';
 import AdminSupportPanel from './pages/admin/AdminSupportPanel';
 import './i18n';
@@ -55,7 +56,7 @@ function App() {
           
           {/* Standalone routes (no layout) */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<div className="container mt-5"><h2>Register Page</h2></div>} />
+          <Route path="/register" element={<Register />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

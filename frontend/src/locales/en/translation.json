@@ -14,7 +14,9 @@
     "logout": "Logout",
     "register": "Register",
     "register_here": "Register here",
-    "dont_have_account": "Don't have an account?"
+    "dont_have_account": "Don't have an account?",
+    "already_have_account": "Already have an account?",
+    "login_here": "Login here"
   },
   "sidebar": {
     "navigation": "Navigation",
@@ -52,10 +54,24 @@
   },
   "login": {
     "title": "Login to AzmoonHub Nasir",
-    "username": "Username",
+    "title_short": "LOGIN",
+    "username": "Username or Email",
     "password": "Password",
     "logging_in": "Logging in...",
-    "login_button": "Login"
+    "login_button": "LOGIN",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot Password?"
+  },
+  "register": {
+    "title": "Register for AzmoonHub Nasir",
+    "title_short": "REGISTER",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirm_password": "Confirm Password",
+    "registering": "Registering...",
+    "register_button": "REGISTER",
+    "passwords_mismatch": "Passwords do not match"
   },
   "common": {
     "loading": "Loading...",

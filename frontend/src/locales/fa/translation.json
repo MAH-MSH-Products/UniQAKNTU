@@ -14,7 +14,9 @@
     "logout": "خروج",
     "register": "ثبت‌نام",
     "register_here": "اینجا ثبت‌نام کنید",
-    "dont_have_account": "حساب کاربری ندارید؟"
+    "dont_have_account": "حساب کاربری ندارید؟",
+    "already_have_account": "قبلاً ثبت‌نام کرده‌اید؟",
+    "login_here": "اینجا وارد شوید"
   },
   "sidebar": {
     "navigation": "ناوبری",
@@ -52,10 +54,24 @@
   },
   "login": {
     "title": "ورود به آزمون‌هاب نصیر",
-    "username": "نام کاربری",
+    "title_short": "ورود",
+    "username": "نام کاربری یا ایمیل",
     "password": "رمز عبور",
     "logging_in": "در حال ورود...",
-    "login_button": "ورود"
+    "login_button": "ورود",
+    "remember_me": "مرا به خاطر بسپار",
+    "forgot_password": "رمز عبور را فراموش کرده‌اید؟"
+  },
+  "register": {
+    "title": "ثبت‌نام در آزمون‌هاب نصیر",
+    "title_short": "ثبت‌نام",
+    "username": "نام کاربری",
+    "email": "ایمیل",
+    "password": "رمز عبور",
+    "confirm_password": "تایید رمز عبور",
+    "registering": "در حال ثبت‌نام...",
+    "register_button": "ثبت‌نام",
+    "passwords_mismatch": "رمزهای عبور مطابقت ندارند"
   },
   "common": {
     "loading": "در حال بارگذاری...",
