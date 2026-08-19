@@ -56,8 +56,10 @@ function App() {
           <Route element={<RequireAuth />}>
             <Route element={<MainLayout />}>
               <Route path="/support" element={<SupportCenter />} />
+              <Route path="/support/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
               <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
               <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
+              <Route path="/admin/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
               <Route path="/admin/support" element={<AdminSupportPanel />} />
             </Route>
           </Route>
