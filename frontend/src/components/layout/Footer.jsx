@@ -1,9 +1,10 @@
+// C:/Users/Mohammad/Desktop/UniQAKNTU/frontend/src/components/layout/Footer.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FaTwitter, FaLinkedin, FaInstagram } from 'react-icons/fa';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import logo from '../assets/azHubNasir.png';
+import logo from '../../assets/azHubNasir.png'; 
 
 /**
  * Footer Component - Multi-column Responsive Footer
@@ -35,7 +36,7 @@ const Footer = () => {
           {/* Column 1: Brand Information */}
           <div className="col-md-4 mb-4 mb-md-0">
             <div className="d-flex align-items-center mb-3">
-              <img src={logo} alt="AzmoonHub Nasir" height="35" className="me-2" />
+              <img src={logo} alt="AzmoonHub Nasir" height="95" className="me-2" />
               <span className="fw-bold" style={{ color: 'var(--primary-color)' }}>
                 {t('footer.brand_name')}
               </span>
@@ -146,7 +147,7 @@ const Footer = () => {
                   onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}
                 >
                   {t('footer.documentation')}
-                </Link>
+                </a>
               </li>
               <li className="mb-2">
                 <Link 

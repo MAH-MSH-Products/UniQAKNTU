@@ -50,7 +50,7 @@ const Navbar = () => {
       <div className="container-fluid">
         {/* Branding with Logo */}
         <Link className="navbar-brand d-flex align-items-center" to="/">
-          <img src={logo} alt="AzmoonHub Nasir" height="40" className="me-2" />
+          <img src={logo} alt="AzmoonHub Nasir" height="80" className="me-2" />
         </Link>
 
         {/* Toggle button for mobile */}
