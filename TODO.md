@@ -122,3 +122,18 @@ Frontend: Mohammad Amin Haji Alirezaei | Backend: Mohammad Sajjad Hamidifard.
     - **Column 1 (Brand):** Logo (`azHubNasir.png`), brief platform description, and `react-icons` for social media links.
     - **Column 2 (Quick Links):** Links to All Courses, My Tickets, and Reports.
     - **Column 3 (Resources):** Links to Contact Us, FAQ, and Documentation/Terms.
+
+## Phase 10: Landing Page Customization, Auth Redesign & Advanced UI
+**Goal:** Redesign the Home page (Hero, Features, FAQ), implement a completely new and modern Login/Register interface based on provided mockups, apply advanced CSS gradients, and configure the custom logo across the application.
+
+### Frontend Tasks (Mohammad Amin)
+- [ ] **[Frontend]** Logo Integration & Fallback: Replace the placeholder `assets/logo.svg` with the newly provided `assets/azHubNasir.png`. Ensure it is scaled properly in the `Navbar` and `Footer`.
+- [ ] **[Frontend]** Advanced CSS Gradients & Polish: Update `index.css` to include sophisticated gradients (e.g., mixing primary and secondary colors) to remove the flat/monotonous look across Hero sections, CTA buttons, and Auth screens.
+- [ ] **[Frontend]** Revamp `Home.jsx` (Landing Page):
+    - **Hero Section:** Build a large, centered hero section with a subtle background image/gradient, a strong hook ("Boost your learning today"), and an eye-catching CTA button (e.g., "Getting Started").
+    - **Features Grid:** Implement a clean grid highlighting platform features (MathJax, PDFs, Verified Instructors).
+    - **FAQ Section:** Implement a highly polished Accordion-style FAQ section matching the provided reference design (centered title, clear open/close toggles, thin borders).
+- [ ] **[Frontend]** Auth Pages Redesign (`Login.jsx` & `Register.jsx`):
+    - Completely redesign the Authentication pages to match the provided modern, full-screen, gradient-based UI mockup.
+    - Include a centered user avatar icon, clear input fields with placeholder icons (email, password), a "Remember me" checkbox, and a prominent "LOGIN / REGISTER" button.
+- [ ] **[Frontend]** Documentation Update: Update or create `.md` files for `Home.md`, `Login.md`, `Register.md`, and `Navbar.md` reflecting these UI changes and noting the new layout structures.
