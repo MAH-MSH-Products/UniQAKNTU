@@ -1,7 +1,5 @@
-# backend/requirements.txt
-
 # Core Django
-Django>=4.2,<5.0
+Django>=4.2
 
 # REST API & Cross-Origin
 djangorestframework>=3.14.0
@@ -23,3 +21,4 @@ gunicorn>=21.2.0
 # Development & Testing Tools
 flake8>=6.0.0
 black>=23.0.0
+jdatetime>=4.1.1
