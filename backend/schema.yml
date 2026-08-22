@@ -1,0 +1,1343 @@
+openapi: 3.0.3
+info:
+  title: UniQAKNTU API
+  version: 1.0.0
+  description: API for crowdsourced Q&A platform
+paths:
+  /api/answers/:
+    get:
+      operationId: answers_list
+      summary: List all approved answers
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAnswerList'
+          description: ''
+    post:
+      operationId: answers_create
+      summary: Submit a new answer (Defaults to PENDING status)
+      tags:
+      - answers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Answer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Answer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Answer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+          description: ''
+  /api/answers/{id}/:
+    get:
+      operationId: answers_retrieve
+      summary: Get details of a specific answer
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+          description: ''
+    put:
+      operationId: answers_update
+      summary: '[Admins/Moderators Only] Instantly update an answer'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Answer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Answer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Answer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+          description: ''
+    patch:
+      operationId: answers_partial_update
+      summary: '[Admins/Moderators Only] Instantly partially update an answer'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAnswer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAnswer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAnswer'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Answer'
+          description: ''
+    delete:
+      operationId: answers_destroy
+      summary: '[Admins/Moderators Only] Hard delete an answer'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/answers/{id}/suggest_edit/:
+    post:
+      operationId: answers_suggest_edit_create
+      summary: '[Students/Authors] Suggest an edit to an existing answer'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnswerSuggestEditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AnswerSuggestEditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AnswerSuggestEditRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnswerSuggestEditResponse'
+          description: ''
+  /api/auth/token/:
+    post:
+      operationId: auth_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/questions/:
+    get:
+      operationId: questions_list
+      summary: List all approved questions
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - questions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedQuestionList'
+          description: ''
+    post:
+      operationId: questions_create
+      summary: Create a new question (Defaults to PENDING status)
+      tags:
+      - questions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Question'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Question'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Question'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+  /api/questions/{id}/:
+    get:
+      operationId: questions_retrieve
+      summary: Get details of a specific question
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+    put:
+      operationId: questions_update
+      summary: '[Admins/Moderators Only] Instantly update a question'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Question'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Question'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Question'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+    patch:
+      operationId: questions_partial_update
+      summary: '[Admins/Moderators Only] Instantly partially update a question'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestion'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestion'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedQuestion'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Question'
+          description: ''
+    delete:
+      operationId: questions_destroy
+      summary: '[Admins/Moderators Only] Hard delete a question'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/questions/{id}/suggest_edit/:
+    post:
+      operationId: questions_suggest_edit_create
+      summary: '[Students/Authors] Suggest an edit to an existing question'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionSuggestEditRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuestionSuggestEditRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuestionSuggestEditRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionSuggestEditResponse'
+          description: ''
+  /api/source-materials/:
+    get:
+      operationId: source_materials_list
+      summary: List all source materials (e.g. exams)
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - source-materials
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSourceMaterialList'
+          description: ''
+    post:
+      operationId: source_materials_create
+      summary: Create a new source material
+      tags:
+      - source-materials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceMaterial'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SourceMaterial'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SourceMaterial'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceMaterial'
+          description: ''
+  /api/source-materials/{id}/:
+    get:
+      operationId: source_materials_retrieve
+      summary: Get details of a specific source material
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this source material.
+        required: true
+      tags:
+      - source-materials
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceMaterial'
+          description: ''
+    put:
+      operationId: source_materials_update
+      summary: Update a source material
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this source material.
+        required: true
+      tags:
+      - source-materials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceMaterial'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SourceMaterial'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SourceMaterial'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceMaterial'
+          description: ''
+    patch:
+      operationId: source_materials_partial_update
+      summary: Partially update a source material
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this source material.
+        required: true
+      tags:
+      - source-materials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSourceMaterial'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSourceMaterial'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSourceMaterial'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceMaterial'
+          description: ''
+    delete:
+      operationId: source_materials_destroy
+      summary: Delete a source material
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this source material.
+        required: true
+      tags:
+      - source-materials
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/suggested-edits/:
+    get:
+      operationId: suggested_edits_list
+      summary: '[Admins/Moderators Only] List all pending edit suggestions'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - suggested-edits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSuggestedEditList'
+          description: ''
+  /api/suggested-edits/{id}/:
+    get:
+      operationId: suggested_edits_retrieve
+      summary: '[Admins/Moderators Only] Get details of a specific edit suggestion'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this suggested edit.
+        required: true
+      tags:
+      - suggested-edits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestedEdit'
+          description: ''
+  /api/suggested-edits/{id}/approve/:
+    post:
+      operationId: suggested_edits_approve_create
+      summary: '[Admins/Moderators Only] Approve a suggested edit and apply its text
+        to the live post'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this suggested edit.
+        required: true
+      tags:
+      - suggested-edits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveEditResponse'
+          description: ''
+  /api/suggested-edits/{id}/reject/:
+    post:
+      operationId: suggested_edits_reject_create
+      summary: '[Admins/Moderators Only] Reject a suggested edit'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this suggested edit.
+        required: true
+      tags:
+      - suggested-edits
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectEditResponse'
+          description: ''
+  /api/tags/:
+    get:
+      operationId: tags_list
+      summary: List all tags
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - tags
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTagList'
+          description: ''
+  /api/tags/{id}/:
+    get:
+      operationId: tags_retrieve
+      summary: Get details of a specific tag
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag.
+        required: true
+      tags:
+      - tags
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+          description: ''
+  /api/tags/categories/:
+    get:
+      operationId: tags_categories_list
+      summary: List all tag categories
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - tags
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTagCategoryList'
+          description: ''
+  /api/tags/categories/{id}/:
+    get:
+      operationId: tags_categories_retrieve
+      summary: Get details of a specific tag category
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag category.
+        required: true
+      tags:
+      - tags
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagCategory'
+          description: ''
+components:
+  schemas:
+    Answer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        question:
+          type: integer
+        body:
+          type: string
+          nullable: true
+        score:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        author:
+          type: integer
+          readOnly: true
+          nullable: true
+        is_accepted:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - created_at
+      - created_at_jalali
+      - id
+      - question
+      - score
+      - status
+      - updated_at
+      - updated_at_jalali
+    AnswerSuggestEditRequest:
+      type: object
+      properties:
+        proposed_text:
+          type: string
+        removed_attachment_ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - proposed_text
+    AnswerSuggestEditResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        suggested_edit_id:
+          type: integer
+      required:
+      - message
+      - suggested_edit_id
+    ApproveEditResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    PaginatedAnswerList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Answer'
+    PaginatedQuestionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+    PaginatedSourceMaterialList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceMaterial'
+    PaginatedSuggestedEditList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuggestedEdit'
+    PaginatedTagCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagCategory'
+    PaginatedTagList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+    PatchedAnswer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        question:
+          type: integer
+        body:
+          type: string
+          nullable: true
+        score:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        author:
+          type: integer
+          readOnly: true
+          nullable: true
+        is_accepted:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedQuestion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        source_material:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 255
+        body:
+          type: string
+          nullable: true
+        score:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        author:
+          type: integer
+          readOnly: true
+          nullable: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedSourceMaterial:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          description: e.g., '2024 OS Exam'
+          maxLength: 255
+        question_pdf:
+          type: string
+          format: uri
+          nullable: true
+        answer_pdf:
+          type: string
+          format: uri
+          nullable: true
+        year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+    Question:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        source_material:
+          type: integer
+          nullable: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 255
+        body:
+          type: string
+          nullable: true
+        score:
+          type: integer
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        author:
+          type: integer
+          readOnly: true
+          nullable: true
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - created_at
+      - created_at_jalali
+      - id
+      - score
+      - status
+      - tags
+      - updated_at
+      - updated_at_jalali
+    QuestionSuggestEditRequest:
+      type: object
+      properties:
+        proposed_text:
+          type: string
+        removed_attachment_ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - proposed_text
+    QuestionSuggestEditResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        suggested_edit_id:
+          type: integer
+      required:
+      - message
+      - suggested_edit_id
+    RejectEditResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    SourceMaterial:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          description: e.g., '2024 OS Exam'
+          maxLength: 255
+        question_pdf:
+          type: string
+          format: uri
+          nullable: true
+        answer_pdf:
+          type: string
+          format: uri
+          nullable: true
+        year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - created_at_jalali
+      - id
+      - title
+    StatusEnum:
+      enum:
+      - PENDING
+      - APPROVED
+      - REJECTED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `APPROVED` - Approved
+        * `REJECTED` - Rejected
+    SuggestedEdit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        proposed_text:
+          type: string
+          description: The new markdown body proposed by the student.
+        removed_attachment_ids:
+          description: List of FileAttachment IDs to delete upon approval.
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        author:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - created_at
+      - created_at_jalali
+      - id
+      - proposed_text
+      - status
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/TagCategory'
+          readOnly: true
+        category_id:
+          type: integer
+          writeOnly: true
+        value:
+          type: string
+          description: e.g., 'Operating Systems', '2024'
+          maxLength: 100
+      required:
+      - category
+      - category_id
+      - id
+      - value
+    TagCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: e.g., 'Subject', 'Chapter', 'Year'
+          maxLength: 50
+      required:
+      - id
+      - name
+    TokenObtainPair:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - password
+      - refresh
+      - username
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
