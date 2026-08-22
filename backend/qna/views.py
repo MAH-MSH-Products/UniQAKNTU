@@ -252,3 +252,42 @@ class SuggestedEditViewSet(viewsets.ReadOnlyModelViewSet):
         suggested_edit.status = PostStatus.REJECTED
         suggested_edit.save()
         return Response({"message": "Edit rejected."}, status=status.HTTP_200_OK)
+
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import mixins
+
+@extend_schema_view(
+    list=extend_schema(summary="List all uploaded attachments"),
+    retrieve=extend_schema(summary="Get a specific attachment"),
+    create=extend_schema(
+        summary="Upload a new attachment (multipart/form-data)",
+        request={
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {
+                    "file": {"type": "string", "format": "binary", "description": "The binary file to upload"},
+                    "model_name": {"type": "string", "description": "The target model (e.g., 'question', 'answer','suggestededit')"},
+                    "object_id": {"type": "integer", "description": "ID of the specific post"}
+                },
+                "required": ["file", "model_name", "object_id"]
+            }
+        }
+    ),
+    destroy=extend_schema(summary="[Authors/Admins Only] Delete an attachment")
+)
+class FileAttachmentViewSet(mixins.CreateModelMixin,
+                            mixins.RetrieveModelMixin,
+                            mixins.DestroyModelMixin,
+                            mixins.ListModelMixin,
+                            viewsets.GenericViewSet):
+    """
+    Files can only be uploaded (created), retrieved, listed, and deleted.
+    They cannot be edited (updated) once uploaded.
+    """
+    queryset = FileAttachment.objects.all()
+    serializer_class = FileAttachmentSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrModerator]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def perform_create(self, serializer):
+        serializer.save(uploader=self.request.user)
