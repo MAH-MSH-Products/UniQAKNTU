@@ -56,11 +56,17 @@ class Vote(models.Model):
         # Prevent multiple votes by the same user on the same object
         unique_together = ('user', 'content_type', 'object_id')
 
+class PostStatus(models.TextChoices):
+    PENDING = 'PENDING', 'Pending'
+    APPROVED = 'APPROVED', 'Approved'
+    REJECTED = 'REJECTED', 'Rejected'
+
 class Question(models.Model):
     source_material = models.ForeignKey(SourceMaterial, on_delete=models.SET_NULL, null=True, blank=True, related_name='questions')
     title = models.CharField(max_length=255, blank=True, null=True)
     body = models.TextField(blank=True, null=True)
     score = models.IntegerField(default=0)
+    status = models.CharField(max_length=15, choices=PostStatus.choices, default=PostStatus.PENDING)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='questions')
     tags = models.ManyToManyField(Tag, blank=True, related_name='questions')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -80,6 +86,7 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     body = models.TextField(blank=True, null=True)
     score = models.IntegerField(default=0)
+    status = models.CharField(max_length=15, choices=PostStatus.choices, default=PostStatus.PENDING)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='answers')
     is_accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -94,3 +101,21 @@ class Answer(models.Model):
 
     def __str__(self):
         return f"Answer to {self.question}"
+
+class SuggestedEdit(models.Model):
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    proposed_text = models.TextField(help_text="The new markdown body proposed by the student.")
+    removed_attachment_ids = models.JSONField(default=list, blank=True, help_text="List of FileAttachment IDs to delete upon approval.")
+    status = models.CharField(max_length=15, choices=PostStatus.choices, default=PostStatus.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Generic FK to target either a Question or Answer
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    attachments = GenericRelation('FileAttachment')
+
+    def __str__(self):
+        return f"Suggested Edit by {self.author} on {self.content_type.name} {self.object_id}"
+
