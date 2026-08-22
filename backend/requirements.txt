@@ -1,7 +1,5 @@
-# backend/requirements.txt
-
 # Core Django
-Django>=4.2,<5.0
+Django>=4.2
 
 # REST API & Cross-Origin
 djangorestframework>=3.14.0
