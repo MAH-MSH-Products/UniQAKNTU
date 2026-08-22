@@ -90,3 +90,4 @@ build/
 # MyPy
 .mypy_cache/
 ```
+backend/db.sqlite3

@@ -21,3 +21,4 @@ gunicorn>=21.2.0
 # Development & Testing Tools
 flake8>=6.0.0
 black>=23.0.0
+jdatetime>=4.1.1
