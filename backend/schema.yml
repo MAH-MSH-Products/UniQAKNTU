@@ -192,6 +192,115 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnswerSuggestEditResponse'
           description: ''
+  /api/attachments/:
+    get:
+      operationId: attachments_list
+      description: |-
+        Files can only be uploaded (created), retrieved, listed, and deleted.
+        They cannot be edited (updated) once uploaded.
+      summary: List all uploaded attachments
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - attachments
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFileAttachmentList'
+          description: ''
+    post:
+      operationId: attachments_create
+      description: |-
+        Files can only be uploaded (created), retrieved, listed, and deleted.
+        They cannot be edited (updated) once uploaded.
+      summary: Upload a new attachment (multipart/form-data)
+      tags:
+      - attachments
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The binary file to upload
+                model_name:
+                  type: string
+                  description: The target model (e.g., 'question', 'answer','suggestededit')
+                object_id:
+                  type: integer
+                  description: ID of the specific post
+              required:
+              - file
+              - model_name
+              - object_id
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileAttachment'
+          description: ''
+  /api/attachments/{id}/:
+    get:
+      operationId: attachments_retrieve
+      description: |-
+        Files can only be uploaded (created), retrieved, listed, and deleted.
+        They cannot be edited (updated) once uploaded.
+      summary: Get a specific attachment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this file attachment.
+        required: true
+      tags:
+      - attachments
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileAttachment'
+          description: ''
+    delete:
+      operationId: attachments_destroy
+      description: |-
+        Files can only be uploaded (created), retrieved, listed, and deleted.
+        They cannot be edited (updated) once uploaded.
+      summary: '[Authors/Admins Only] Delete an attachment'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this file attachment.
+        required: true
+      tags:
+      - attachments
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/auth/token/:
     post:
       operationId: auth_token_create
@@ -788,7 +897,8 @@ components:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         author:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
           nullable: true
         is_accepted:
@@ -847,6 +957,58 @@ components:
           type: string
       required:
       - message
+    FileAttachment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        file:
+          type: string
+          format: uri
+        model_name:
+          allOf:
+          - $ref: '#/components/schemas/ModelNameEnum'
+          writeOnly: true
+          description: |-
+            The model you are attaching the file to (e.g., 'question')
+
+            * `question` - question
+            * `answer` - answer
+            * `suggestededit` - suggestededit
+        object_id:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        attached_to_model:
+          type: string
+          readOnly: true
+        uploaded_at:
+          type: string
+          format: date-time
+          readOnly: true
+        uploaded_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - attached_to_model
+      - file
+      - id
+      - model_name
+      - object_id
+      - uploaded_at
+      - uploaded_at_jalali
+    ModelNameEnum:
+      enum:
+      - question
+      - answer
+      - suggestededit
+      type: string
+      description: |-
+        * `question` - question
+        * `answer` - answer
+        * `suggestededit` - suggestededit
     PaginatedAnswerList:
       type: object
       required:
@@ -870,6 +1032,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Answer'
+    PaginatedFileAttachmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAttachment'
     PaginatedQuestionList:
       type: object
       required:
@@ -1004,7 +1189,8 @@ components:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         author:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
           nullable: true
         is_accepted:
@@ -1049,7 +1235,8 @@ components:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         author:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
           nullable: true
         tags:
@@ -1128,7 +1315,8 @@ components:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         author:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
           nullable: true
         tags:
@@ -1252,7 +1440,8 @@ components:
           - $ref: '#/components/schemas/StatusEnum'
           readOnly: true
         author:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
         created_at:
           type: string

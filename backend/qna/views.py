@@ -66,6 +66,30 @@ class QuestionViewSet(viewsets.ModelViewSet):
         if not (user.is_moderator() or user.is_admin()):
             raise PermissionDenied("Only admins and moderators can delete posts.")
         return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="[Admins/Moderators Only] Approve a pending question",
+        request=None,
+        responses={200: inline_serializer(name="ApproveQuestionResponse", fields={"message": serializers.CharField()})}
+    )
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsModeratorOrAdmin])
+    def approve(self, request, pk=None):
+        question = self.get_object()
+        question.status = PostStatus.APPROVED
+        question.save()
+        return Response({"message": "Question approved."}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="[Admins/Moderators Only] Reject a pending question",
+        request=None,
+        responses={200: inline_serializer(name="RejectQuestionResponse", fields={"message": serializers.CharField()})}
+    )
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsModeratorOrAdmin])
+    def reject(self, request, pk=None):
+        question = self.get_object()
+        question.status = PostStatus.REJECTED
+        question.save()
+        return Response({"message": "Question rejected."}, status=status.HTTP_200_OK)
     @extend_schema(
         summary="[Students/Authors] Suggest an edit to an existing question",
         request=inline_serializer(
@@ -145,6 +169,30 @@ class AnswerViewSet(viewsets.ModelViewSet):
         if not (user.is_moderator() or user.is_admin()):
             raise PermissionDenied("Only admins and moderators can delete posts.")
         return super().destroy(request, *args, **kwargs)
+
+    @extend_schema(
+        summary="[Admins/Moderators Only] Approve a pending answer",
+        request=None,
+        responses={200: inline_serializer(name="ApproveAnswerResponse", fields={"message": serializers.CharField()})}
+    )
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsModeratorOrAdmin])
+    def approve(self, request, pk=None):
+        answer = self.get_object()
+        answer.status = PostStatus.APPROVED
+        answer.save()
+        return Response({"message": "Answer approved."}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="[Admins/Moderators Only] Reject a pending answer",
+        request=None,
+        responses={200: inline_serializer(name="RejectAnswerResponse", fields={"message": serializers.CharField()})}
+    )
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsModeratorOrAdmin])
+    def reject(self, request, pk=None):
+        answer = self.get_object()
+        answer.status = PostStatus.REJECTED
+        answer.save()
+        return Response({"message": "Answer rejected."}, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="[Students/Authors] Suggest an edit to an existing answer",

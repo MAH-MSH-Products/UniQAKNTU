@@ -91,3 +91,4 @@ build/
 .mypy_cache/
 ```
 backend/db.sqlite3
+backend/attachments/*
