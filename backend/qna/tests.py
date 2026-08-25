@@ -71,3 +71,33 @@ class QnAAPITests(APITestCase):
         
         # 5. Verify history was created (simple_history)
         self.assertTrue(self.question.history.count() > 1)
+
+
+    def test_vote_scoring(self):
+        self.client.force_authenticate(user=self.student)
+        url = f'/api/questions/{self.question.id}/vote/'
+        self.client.post(url, {'value': 1})
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.score, 1)
+        # Change vote
+        self.client.post(url, {'value': -1})
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.score, -1)
+
+    def test_comments(self):
+        self.client.force_authenticate(user=self.student)
+        url = f'/api/questions/{self.question.id}/comments/'
+        self.client.post(url, {'body': 'Nice!'})
+        response = self.client.get(url)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['body'], 'Nice!')
+
+    def test_accept_answer(self):
+        answer = Answer.objects.create(question=self.question, author=self.admin, body='Ans', status=PostStatus.APPROVED)
+        self.client.force_authenticate(user=self.student) # Question author
+        url = f'/api/answers/{answer.id}/accept/'
+        response = self.client.post(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        answer.refresh_from_db()
+        self.assertTrue(answer.is_accepted)
+

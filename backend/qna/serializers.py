@@ -35,26 +35,54 @@ class SourceMaterialSerializer(serializers.ModelSerializer):
         model = SourceMaterial
         fields = ['id', 'title', 'question_pdf', 'answer_pdf', 'year', 'created_at', 'created_at_jalali']
 
+class CommentSerializer(serializers.ModelSerializer):
+    created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
+    updated_at_jalali = JalaliDateTimeField(source='updated_at', read_only=True)
+    author_name = serializers.CharField(source='author.username', read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'author', 'author_name', 'body', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        read_only_fields = ['author']
+
 class QuestionSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
     updated_at_jalali = JalaliDateTimeField(source='updated_at', read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     attachments = FileAttachmentSerializer(many=True, read_only=True)
+    user_vote = serializers.SerializerMethodField()
     
     class Meta:
         model = Question
-        fields = ['id', 'source_material', 'title', 'body', 'score', 'status', 'author', 'tags', 'attachments', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        fields = ['id', 'source_material', 'title', 'body', 'score', 'user_vote', 'status', 'author', 'tags', 'attachments', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
         read_only_fields = ['score', 'status', 'author']
+
+    def get_user_vote(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            vote = obj.votes.filter(user=request.user).first()
+            if vote:
+                return vote.value
+        return 0
 
 class AnswerSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
     updated_at_jalali = JalaliDateTimeField(source='updated_at', read_only=True)
     attachments = FileAttachmentSerializer(many=True, read_only=True)
+    user_vote = serializers.SerializerMethodField()
 
     class Meta:
         model = Answer
-        fields = ['id', 'question', 'body', 'score', 'status', 'author', 'is_accepted', 'attachments', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        fields = ['id', 'question', 'body', 'score', 'user_vote', 'status', 'author', 'is_accepted', 'attachments', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
         read_only_fields = ['score', 'status', 'author', 'is_accepted']
+
+    def get_user_vote(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            vote = obj.votes.filter(user=request.user).first()
+            if vote:
+                return vote.value
+        return 0
 
 class SuggestedEditSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)

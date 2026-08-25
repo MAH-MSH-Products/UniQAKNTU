@@ -3,19 +3,76 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.exceptions import PermissionDenied
-from .models import SourceMaterial, Question, Answer, FileAttachment, SuggestedEdit, PostStatus
+from .models import SourceMaterial, Question, Answer, FileAttachment, SuggestedEdit, PostStatus, Comment, Vote
 from .serializers import (
     SourceMaterialSerializer, 
     QuestionSerializer, 
     AnswerSerializer, 
     FileAttachmentSerializer, 
-    SuggestedEditSerializer
+    SuggestedEditSerializer,
+    CommentSerializer
 )
 from .permissions import IsAuthorOrModerator, IsModeratorOrAdmin
 
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample, inline_serializer
 from drf_spectacular.types import OpenApiTypes
 from rest_framework import serializers
+
+class PostActionMixin:
+    @extend_schema(
+        summary="Get or create comments for this post",
+        methods=['GET', 'POST'],
+        request=inline_serializer("CommentCreate", fields={"body": serializers.CharField()}),
+        responses={200: CommentSerializer(many=True), 201: CommentSerializer}
+    )
+    @action(detail=True, methods=['get', 'post'], permission_classes=[permissions.IsAuthenticatedOrReadOnly])
+    def comments(self, request, pk=None):
+        instance = self.get_object()
+        ctype = ContentType.objects.get_for_model(instance)
+        
+        if request.method == 'GET':
+            comments = Comment.objects.filter(content_type=ctype, object_id=instance.id).order_by('created_at')
+            return Response(CommentSerializer(comments, many=True).data)
+            
+        elif request.method == 'POST':
+            body = request.data.get('body')
+            if not body:
+                return Response({"error": "body is required"}, status=status.HTTP_400_BAD_REQUEST)
+            comment = Comment.objects.create(author=request.user, body=body, content_type=ctype, object_id=instance.id)
+            return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Vote on this post",
+        methods=['POST'],
+        request=inline_serializer("VoteRequest", fields={"value": serializers.ChoiceField(choices=[1, -1])}),
+        responses={200: inline_serializer("VoteResponse", fields={"message": serializers.CharField(), "new_score": serializers.IntegerField()})}
+    )
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def vote(self, request, pk=None):
+        instance = self.get_object()
+        value = request.data.get('value')
+        if value not in [1, -1, '1', '-1']:
+            return Response({"error": "value must be 1 or -1"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        value = int(value)
+        ctype = ContentType.objects.get_for_model(instance)
+        
+        vote_obj, created = Vote.objects.get_or_create(
+            user=request.user, content_type=ctype, object_id=instance.id,
+            defaults={'value': value}
+        )
+        
+        if not created and vote_obj.value != value:
+            # Changed their vote (e.g. 1 to -1, difference is -2)
+            instance.score += (value - vote_obj.value)
+            vote_obj.value = value
+            vote_obj.save()
+            instance.save()
+        elif created:
+            instance.score += value
+            instance.save()
+            
+        return Response({"message": "Vote recorded.", "new_score": instance.score})
 
 @extend_schema_view(
     list=extend_schema(summary="List all source materials (e.g. exams)"),
@@ -38,10 +95,16 @@ class SourceMaterialViewSet(viewsets.ModelViewSet):
     partial_update=extend_schema(summary="[Admins/Moderators Only] Instantly partially update a question"),
     destroy=extend_schema(summary="[Admins/Moderators Only] Hard delete a question")
 )
-class QuestionViewSet(viewsets.ModelViewSet):
+class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
     queryset = Question.objects.filter(status='APPROVED')
     serializer_class = QuestionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrModerator]
+    
+    from django_filters.rest_framework import DjangoFilterBackend
+    from rest_framework.filters import SearchFilter
+    filter_backends = [DjangoFilterBackend, SearchFilter]
+    filterset_fields = ['tags', 'source_material']
+    search_fields = ['title', 'body']
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -112,6 +175,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def suggest_edit(self, request, pk=None):
         instance = self.get_object()
+            
         proposed_text = request.data.get('proposed_text')
         if not proposed_text:
             return Response({"error": "proposed_text is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -141,10 +205,14 @@ class QuestionViewSet(viewsets.ModelViewSet):
     partial_update=extend_schema(summary="[Admins/Moderators Only] Instantly partially update an answer"),
     destroy=extend_schema(summary="[Admins/Moderators Only] Hard delete an answer")
 )
-class AnswerViewSet(viewsets.ModelViewSet):
+class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
     queryset = Answer.objects.filter(status='APPROVED')
     serializer_class = AnswerSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrModerator]
+    
+    from django_filters.rest_framework import DjangoFilterBackend
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['question']
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -195,6 +263,28 @@ class AnswerViewSet(viewsets.ModelViewSet):
         return Response({"message": "Answer rejected."}, status=status.HTTP_200_OK)
 
     @extend_schema(
+        summary="[Question Author Only] Accept this answer",
+        request=None,
+        responses={200: inline_serializer(name="AcceptAnswerResponse", fields={"message": serializers.CharField()})}
+    )
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def accept(self, request, pk=None):
+        answer = self.get_object()
+        
+        # Only the author of the question can accept an answer
+        if answer.question.author != request.user:
+            return Response({"error": "Only the author of the question can accept an answer."}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Un-accept all other answers for this question
+        answer.question.answers.update(is_accepted=False)
+        
+        # Accept this one
+        answer.is_accepted = True
+        answer.save()
+        
+        return Response({"message": "Answer accepted."}, status=status.HTTP_200_OK)
+
+    @extend_schema(
         summary="[Students/Authors] Suggest an edit to an existing answer",
         request=inline_serializer(
             name="AnswerSuggestEditRequest",
@@ -216,6 +306,7 @@ class AnswerViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def suggest_edit(self, request, pk=None):
         instance = self.get_object()
+            
         proposed_text = request.data.get('proposed_text')
         if not proposed_text:
             return Response({"error": "proposed_text is required"}, status=status.HTTP_400_BAD_REQUEST)
