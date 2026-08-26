@@ -157,8 +157,13 @@ class AnswerSerializer(serializers.ModelSerializer):
 class SuggestedEditSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
     attachments = FileAttachmentSerializer(many=True, read_only=True)
+    target_type = serializers.SerializerMethodField()
+    target_id = serializers.IntegerField(source='object_id', read_only=True)
     
     class Meta:
         model = SuggestedEdit
-        fields = ['id', 'proposed_text', 'removed_attachment_ids', 'status', 'author', 'attachments', 'created_at', 'created_at_jalali']
+        fields = ['id', 'target_type', 'target_id', 'proposed_text', 'removed_attachment_ids', 'status', 'author', 'attachments', 'created_at', 'created_at_jalali']
         read_only_fields = ['status', 'author']
+
+    def get_target_type(self, obj):
+        return obj.content_type.model if obj.content_type else None
