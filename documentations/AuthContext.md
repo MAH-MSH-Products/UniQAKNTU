@@ -2,270 +2,280 @@
 
 ## Purpose
 
-The `AuthContext.jsx` file provides a centralized authentication state management system for the UniQAKNTU React application. It manages user sessions, authentication tokens, and role-based access control throughout the application using React Context API.
+The `AuthContext.jsx` file provides a React Context for managing authentication state throughout the UniQAKNTU frontend application. It handles JWT token lifecycle management, user session state, and role-based access control (RBAC) by decoding JWT tokens to extract user information.
 
 ## Key Components
 
-### AuthContext
+### Context and Provider
 
 ```javascript
 const AuthContext = createContext(null);
-```
 
-A React Context object that holds authentication state and methods, accessible throughout the component tree.
-
-### AuthProvider Component
-
-The main provider component that wraps the application and exposes authentication state:
-
-```javascript
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   // ...
 };
 ```
 
-**State Management:**
-- **user**: Object containing user data (username, is_instructor, is_staff, etc.) or null
-- **token**: Authentication token string or null
-- **isLoading**: Boolean indicating if auth state is being initialized
+**State Variables:**
+- `user`: User object containing `{ id, username, role }` extracted from JWT
+- `accessToken`: Current JWT access token
+- `isLoading`: Loading state during auth context initialization
 
-**Initialization Logic:**
-On mount, checks `localStorage` for existing `authToken` and `authUser`:
+### Role-Based Access Control Helpers
+
+```javascript
+export const canModerate = (role) => ['MODERATOR', 'ADMIN'].includes(role);
+export const isAdmin = (role) => role === 'ADMIN';
+```
+
+**Exported Functions:**
+- `canModerate(role)`: Returns true if role is MODERATOR or ADMIN
+- `isAdmin(role)`: Returns true if role is ADMIN
+
+### JWT Token Decoding
+
+```javascript
+const decodeUserFromToken = (token) => {
+  try {
+    const decoded = jwtDecode(token);
+    return {
+      id: decoded.user_id || decoded.id,
+      username: decoded.username,
+      role: decoded.role || 'STUDENT',
+    };
+  } catch (error) {
+    console.error('Failed to decode JWT token:', error);
+    return null;
+  }
+};
+```
+
+**Functionality:**
+- Uses `jwt-decode` library to decode JWT access tokens
+- Extracts `user_id`, `username`, and `role` from token payload
+- Defaults role to `'STUDENT'` if not present in token
+- Handles decoding errors gracefully
+
+### Initialization Effect
+
 ```javascript
 useEffect(() => {
-  const storedToken = localStorage.getItem('authToken');
-  const storedUser = localStorage.getItem('authUser');
+  const storedToken = localStorage.getItem('accessToken');
   
-  if (storedToken && storedUser) {
-    setToken(storedToken);
-    setUser(JSON.parse(storedUser));
+  if (storedToken) {
+    setAccessToken(storedToken);
+    const userData = decodeUserFromToken(storedToken);
+    if (userData) {
+      setUser(userData);
+    }
   }
   setIsLoading(false);
 }, []);
 ```
 
-### login Function
+**Functionality:**
+- Runs once on component mount
+- Checks localStorage for existing `accessToken`
+- Decodes user information from stored token
+- Sets loading state to false after initialization
 
-Authenticates user and stores session data:
+### Login Function
 
 ```javascript
 const login = async (username, password) => {
   try {
-    const response = await api.post('/auth/login/', { username, password });
-    const { token: authToken, user: userData } = response.data;
+    const response = await api.post('/auth/token/', { username, password });
+    const { access, refresh } = response.data;
+
+    localStorage.setItem('accessToken', access);
+    localStorage.setItem('refreshToken', refresh);
     
-    setToken(authToken);
+    setAccessToken(access);
+    
+    const userData = decodeUserFromToken(access);
     setUser(userData);
-    localStorage.setItem('authToken', authToken);
-    localStorage.setItem('authUser', JSON.stringify(userData));
-    
+
     return { success: true, data: response.data };
   } catch (error) {
-    return { success: false, error: error.response?.data?.message || 'Login failed' };
+    return { 
+      success: false, 
+      error: error.response?.data?.message || 'Login failed' 
+    };
   }
 };
 ```
 
-**Parameters:**
-- `username` (string): User's username
-- `password` (string): User's password
+**Functionality:**
+- Calls `POST /api/auth/token/` with username and password
+- Receives `{ access, refresh }` JWT tokens from backend
+- Stores both tokens in localStorage
+- Decodes user information from access token
+- Returns success status and data/error message
 
-**Returns:**
-- Promise resolving to object with `success` boolean and either `data` or `error`
-
-**Side Effects:**
-- Updates React state (`user`, `token`)
-- Persists to `localStorage` (`authToken`, `authUser`)
-
-### logout Function
-
-Clears all authentication data:
+### Logout Function
 
 ```javascript
 const logout = () => {
-  setToken(null);
+  setAccessToken(null);
   setUser(null);
-  localStorage.removeItem('authToken');
-  localStorage.removeItem('authUser');
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
 };
 ```
 
-**Side Effects:**
-- Clears React state
-- Removes data from `localStorage`
+**Functionality:**
+- Clears all authentication state
+- Removes both tokens from localStorage
+- Triggers redirect to login page (handled by routing)
 
-### Helper Properties
+### Computed Properties
 
-**isInstructor:**
 ```javascript
-const isInstructor = user?.is_instructor || false;
+const userRole = user?.role || 'STUDENT';
+const canModerateFlag = canModerate(userRole);
+const isAuthenticated = !!accessToken && !!user;
 ```
-Returns true if user has instructor role.
 
-**isAuthenticated:**
-```javascript
-const isAuthenticated = !!token && !!user;
-```
-Returns true if user is logged in.
+**Derived Values:**
+- `userRole`: Current user's role (defaults to 'STUDENT')
+- `canModerateFlag`: Boolean indicating moderator/admin privileges
+- `isAuthenticated`: Boolean indicating authenticated state
 
-### useAuth Custom Hook
-
-Provides easy access to authentication context:
+### Context Value
 
 ```javascript
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+const value = {
+  user,
+  accessToken,
+  isLoading,
+  login,
+  logout,
+  userRole,
+  canModerate: canModerateFlag,
+  isAdmin: isAdmin(userRole),
+  isAuthenticated,
 };
 ```
-
-**Returns:**
-- `user`: Current user object or null
-- `token`: Authentication token or null
-- `isLoading`: Loading state boolean
-- `login(username, password)`: Login function
-- `logout()`: Logout function
-- `isInstructor`: Boolean helper
-- `isAuthenticated`: Boolean helper
 
 ## Usage
 
-### Wrap Application with AuthProvider
+### Wrapping Application with AuthProvider
 
-In `App.jsx`:
 ```javascript
+// In main.jsx or App.jsx
 import { AuthProvider } from './context/AuthContext';
 
-function App() {
-  return (
-    <AuthProvider>
-      {/* Your routes and components */}
-    </AuthProvider>
-  );
-}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <AuthProvider>
+    <App />
+  </AuthProvider>
+);
 ```
 
-### Access Auth State in Components
+### Using useAuth Hook in Components
 
 ```javascript
 import { useAuth } from '../context/AuthContext';
 
 const MyComponent = () => {
-  const { user, token, login, logout, isInstructor, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, canModerate, logout } = useAuth();
   
   return (
     <div>
       {isAuthenticated ? (
-        <p>Welcome, {user.username} {isInstructor && '(Instructor)'}</p>
+        <p>Welcome, {user.username}! Role: {user.role}</p>
       ) : (
-        <button onClick={() => login('username', 'password')}>Login</button>
+        <p>Please log in</p>
       )}
+      
+      {canModerate && <button>Moderate Content</button>}
     </div>
   );
 };
 ```
 
-### Implement Login Form
+### Login Form Integration
 
 ```javascript
-const Login = () => {
+const LoginForm = () => {
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const [credentials, setCredentials] = useState({ username: '', password: '' });
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await login(username, password);
+    const result = await login(credentials.username, credentials.password);
     
     if (result.success) {
-      navigate('/');
+      // Redirect to dashboard
     } else {
-      setError(result.error);
+      // Show error message
     }
   };
-  
-  // ... render form
-};
-```
-
-### Conditional Rendering Based on Role
-
-```javascript
-const AnswerButton = () => {
-  const { isInstructor } = useAuth();
-  
-  return (
-    <>
-      {isInstructor && (
-        <button>Create Answer</button>
-      )}
-    </>
-  );
 };
 ```
 
 ## Integration Points
 
-### api.js Integration
+### Backend API Endpoints
 
-Uses the configured axios instance for login requests:
+- **Token Obtain**: `POST /api/auth/token/`
+  - Request: `{ username, password }`
+  - Response: `{ access, refresh }`
+  - Used by: `login()` function
+
+- **Token Refresh**: `POST /api/auth/token/refresh/`
+  - Request: `{ refresh }`
+  - Response: `{ access }`
+  - Used by: api.js response interceptor (automatic)
+
+### JWT Token Structure
+
+Expected token payload:
 ```javascript
-import api from '../services/api';
-
-const login = async (username, password) => {
-  const response = await api.post('/auth/login/', { username, password });
-  // ...
-};
-```
-
-### Navbar Component
-
-Displays user info and logout button:
-```javascript
-const { user, isAuthenticated, logout, isInstructor } = useAuth();
-```
-
-### Protected Routes
-
-Can be extended to create protected route components:
-```javascript
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) return <Loading />;
-  if (!isAuthenticated) return <Navigate to="/login" />;
-  
-  return children;
-};
-```
-
-## Dependencies
-
-- **React**: `createContext`, `useState`, `useContext`, `useEffect`
-- **api.js**: Configured axios instance for API calls
-- **localStorage**: Browser storage for token persistence
-
-## Expected API Response Format
-
-The login endpoint `/auth/login/` should return:
-```json
 {
-  "token": "abc123...",
-  "user": {
-    "id": 1,
-    "username": "john_doe",
-    "email": "john@example.com",
-    "is_instructor": true,
-    "is_staff": false
-  }
+  "user_id": 123,
+  "username": "john_doe",
+  "role": "STUDENT", // or "MODERATOR" or "ADMIN"
+  "exp": 1234567890,
+  "iat": 1234567000
 }
 ```
 
+### Role Hierarchy
+
+| Role | canModerate | isAdmin | Permissions |
+|------|-------------|---------|-------------|
+| STUDENT | false | false | View approved content, create questions/answers |
+| MODERATOR | true | false | Approve/reject content, manage users |
+| ADMIN | true | true | Full system access, role management |
+
+### localStorage Keys
+
+- `accessToken`: JWT access token (short-lived)
+- `refreshToken`: JWT refresh token (long-lived)
+
+## Dependencies
+
+- **react**: Core React library
+- **jwt-decode**: Library for decoding JWT tokens without verification
+- **axios** (via api.js): HTTP client for API requests
+
 ## Change Log
 
-- **Initial Implementation**: Created AuthContext with login/logout functionality, localStorage persistence, and role-based helpers
+### Phase 1 - JWT Migration (Current)
+- Replaced boolean `is_instructor` flag with enum-based `role` field
+- Implemented JWT token decoding using `jwt-decode` library
+- Changed from single `authToken` to separate `accessToken`/`refreshToken`
+- Updated login endpoint from `/auth/login/` to `/api/auth/token/`
+- Added `canModerate` and `isAdmin` helper functions for RBAC
+- Exported RBAC helpers for use in other components
+- Changed user extraction from server response to JWT decoding
+
+### Initial Implementation (Previous)
+- Created AuthContext with basic authentication state
+- Implemented login/logout functionality
+- Used boolean `is_instructor` flag for role checking
+- Stored `authToken` and `authUser` in localStorage

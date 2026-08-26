@@ -3,18 +3,18 @@ import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 /**
- * RequireInstructor Component - Instructor Role Route Wrapper
+ * RequireInstructor Component - Moderator/Admin Role Route Wrapper
  * 
- * Protects routes that require instructor privileges.
- * Checks both authentication state and instructor role status.
- * Redirects non-instructors to home page and unauthenticated users to login.
+ * Protects routes that require moderator or admin privileges.
+ * Checks both authentication state and user role (MODERATOR or ADMIN).
+ * Redirects non-moderators to home page and unauthenticated users to login.
  * Handles loading state to prevent premature redirects during auth context initialization.
  * 
- * @returns {React.Element} Outlet component if instructor, Navigate to home if not instructor, Navigate to login if not authenticated, or loading indicator
+ * @returns {React.Element} Outlet component if moderator/admin, Navigate to home if not, Navigate to login if not authenticated, or loading indicator
  */
 
 const RequireInstructor = () => {
-  const { isAuthenticated, isInstructor, isLoading } = useAuth();
+  const { isAuthenticated, canModerate, isLoading } = useAuth();
 
   // Show loading state while auth context is initializing
   // This prevents premature redirects on page reloads
@@ -33,12 +33,12 @@ const RequireInstructor = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // Redirect to home if authenticated but not an instructor
-  if (!isInstructor) {
+  // Redirect to home if authenticated but not a moderator/admin
+  if (!canModerate) {
     return <Navigate to="/" replace />;
   }
 
-  // Render child routes if user is a verified instructor
+  // Render child routes if user has moderator or admin role
   return <Outlet />;
 };
 

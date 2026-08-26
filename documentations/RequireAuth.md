@@ -2,175 +2,179 @@
 
 ## Purpose
 
-The `RequireAuth.jsx` file provides a route protection wrapper component that ensures only authenticated users can access protected routes. It consumes the `AuthContext` to check authentication state and redirects unauthenticated users to the login page. The component properly handles the loading state to prevent premature redirects during authentication context initialization.
+The `RequireAuth.jsx` file provides a route protection component that ensures only authenticated users can access protected routes. It wraps around child routes and redirects unauthenticated users to the login page while displaying a loading state during authentication initialization.
 
 ## Key Components
 
-### RequireAuth Component
+### Component Structure
 
 ```javascript
 const RequireAuth = () => {
   const { isAuthenticated, isLoading } = useAuth();
-
-  // Show loading state while auth context is initializing
+  
   if (isLoading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
-
-  // Redirect to login if not authenticated
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-
-  // Render child routes if authenticated
+  
   return <Outlet />;
 };
 ```
 
-**State Management:**
-- **isLoading**: Boolean from AuthContext indicating if authentication state is being initialized
-- **isAuthenticated**: Boolean from AuthContext indicating if user is logged in
+**Props:** None - Uses `useAuth` hook internally
 
-**Rendering Logic:**
-1. **Loading State**: Displays a centered Bootstrap spinner while `isLoading` is true
-2. **Unauthenticated**: Redirects to `/login` using `<Navigate replace />`
-3. **Authenticated**: Renders child routes via `<Outlet />`
+**Returns:**
+- Loading spinner during auth initialization
+- Navigate redirect to `/login` if not authenticated
+- Outlet component for child routes if authenticated
 
-### Loading Indicator
-
-The loading state prevents premature redirects when:
-- User refreshes the page on a protected route
-- AuthContext is initializing from localStorage
-- Authentication token is being validated
+### Loading State Handling
 
 ```javascript
-<div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-  <div className="spinner-border text-primary" role="status">
-    <span className="visually-hidden">Loading...</span>
-  </div>
-</div>
+if (isLoading) {
+  return (
+    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
+}
 ```
+
+**Purpose:**
+- Prevents premature redirects during auth context initialization
+- Shows Bootstrap spinner centered on viewport
+- Ensures smooth user experience on page reloads
+
+### Authentication Check
+
+```javascript
+if (!isAuthenticated) {
+  return <Navigate to="/login" replace />;
+}
+```
+
+**Purpose:**
+- Redirects unauthenticated users to login page
+- Uses `replace` to prevent back button navigation to protected route
+- Preserves intended destination in app state (if implemented)
+
+### Child Route Rendering
+
+```javascript
+return <Outlet />;
+```
+
+**Purpose:**
+- Renders child routes when user is authenticated
+- Works with React Router's nested routing
+- Allows multiple levels of route protection
 
 ## Usage
 
 ### Protecting Routes in App.jsx
 
-Wrap protected routes with `<RequireAuth />`:
-
 ```javascript
+import { Routes, Route } from 'react-router-dom';
 import RequireAuth from './components/auth/RequireAuth';
+import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
 
-<Routes>
-  {/* Public Routes */}
-  <Route path="/" element={<Home />} />
-  <Route path="/courses" element={<Courses />} />
-  
-  {/* Protected Routes - Require Authentication */}
-  <Route element={<RequireAuth />}>
-    <Route path="/support" element={<SupportCenter />} />
-    <Route path="/tickets" element={<MyTickets />} />
-    <Route path="/reports" element={<Reports />} />
-    <Route path="/admin/support" element={<AdminSupportPanel />} />
-  </Route>
-  
-  {/* Auth Routes */}
-  <Route path="/login" element={<Login />} />
-  <Route path="/register" element={<Register />} />
-</Routes>
+function App() {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      
+      {/* Protected routes */}
+      <Route element={<RequireAuth />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/profile" element={<Profile />} />
+      </Route>
+    </Routes>
+  );
+}
 ```
 
-### Combining with Layout Components
-
-Can be nested with layout components for consistent UI:
+### Nested Protected Routes
 
 ```javascript
 <Route element={<RequireAuth />}>
-  <Route element={<MainLayout />}>
-    <Route path="/support" element={<SupportCenter />} />
-    <Route path="/tickets" element={<MyTickets />} />
-  </Route>
+  <Route path="/questions" element={<QuestionExplorer />} />
+  <Route path="/questions/:id" element={<QuestionDetail />} />
+  <Route path="/tickets" element={<MyTickets />} />
 </Route>
 ```
 
 ## Integration Points
 
-### AuthContext Integration
+### AuthContext Dependency
 
-Consumes authentication state via custom hook:
-
-```javascript
-import { useAuth } from '../../context/AuthContext';
-
-const RequireAuth = () => {
-  const { isAuthenticated, isLoading } = useAuth();
-  // ...
-};
-```
-
-### React Router DOM Integration
-
-Uses router components for navigation and rendering:
+Requires `AuthProvider` to be present in the component tree:
 
 ```javascript
-import { Navigate, Outlet } from 'react-router-dom';
+// In main.jsx
+import { AuthProvider } from './context/AuthContext';
 
-// Navigate for redirection
-<Navigate to="/login" replace />
-
-// Outlet for rendering child routes
-return <Outlet />;
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <AuthProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </AuthProvider>
+);
 ```
 
-### MainLayout Integration
+### useAuth Hook
 
-Protected routes are wrapped within MainLayout to maintain consistent navigation:
+Accesses authentication state from context:
 
 ```javascript
-<Route element={<RequireAuth />}>
-  <Route element={<MainLayout />}>
-    <Route path="/support" element={<SupportCenter />} />
-  </Route>
-</Route>
+const { isAuthenticated, isLoading } = useAuth();
 ```
 
-## Dependencies
+**Required Values:**
+- `isAuthenticated`: Boolean indicating if user has valid session
+- `isLoading`: Boolean indicating if auth state is being initialized
 
-- **React**: Core component library
-- **react-router-dom**: `<Navigate>`, `<Outlet />` components
-- **AuthContext**: `useAuth` hook providing `isAuthenticated` and `isLoading`
+### React Router Dependencies
 
-## Security Considerations
+- **Navigate**: For programmatic redirects
+- **Outlet**: For rendering child routes in nested routing
 
-### Client-Side Protection Only
+## Styling
 
-This component provides **client-side route protection only**. All sensitive operations must be verified server-side:
+### Loading Spinner
 
-- API endpoints must validate authentication tokens
-- Backend must enforce RBAC permissions
-- Never trust client-side checks for sensitive operations
+Uses Bootstrap 5 classes:
+- `d-flex`: Flexbox container
+- `justify-content-center`: Horizontal centering
+- `align-items-center`: Vertical centering
+- `spinner-border`: Bootstrap spinner animation
+- `text-primary`: Primary color theme
+- `visually-hidden`: Accessibility text
 
-### Loading State Handling
+### Custom Styles
 
-Properly handling `isLoading` prevents:
-- Premature redirects on page refresh
-- Flash of unauthenticated content
-- Poor user experience during auth initialization
+```javascript
+style={{ minHeight: '100vh' }}
+```
 
-## Expected Behavior
-
-| Scenario | Behavior |
-|----------|----------|
-| User is authenticated | Child routes render normally |
-| User is not authenticated | Redirects to `/login` |
-| Auth context is loading | Shows spinner, waits for initialization |
-| Page refresh on protected route | Waits for localStorage check, then decides |
+Ensures loading state covers full viewport height.
 
 ## Change Log
 
-- **Phase 12 Implementation**: Created RequireAuth component with loading state handling and authentication checks
+### Phase 1 - JWT Migration (Current)
+- No changes required - component structure remains the same
+- Now relies on updated `isAuthenticated` logic from AuthContext (JWT-based)
+
+### Initial Implementation
+- Created route protection wrapper component
+- Implemented loading state to prevent premature redirects
+- Added authentication check with redirect to login
+- Integrated with AuthContext via useAuth hook

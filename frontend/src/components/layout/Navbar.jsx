@@ -20,7 +20,7 @@ import logo from '../../assets/azHubNasir.png';
  */
 
 const Navbar = () => {
-  const { user, isAuthenticated, logout, isInstructor } = useAuth();
+  const { user, isAuthenticated, logout, canModerate, userRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
@@ -66,6 +66,24 @@ const Navbar = () => {
       backgroundColor: 'var(--primary-color)',
       zIndex: 1030
     };
+  };
+
+  // Role badge display logic
+  const renderRoleBadge = () => {
+    if (userRole === 'ADMIN') {
+      return (
+        <span className="badge" style={{ backgroundColor: '#dc3545', color: 'white' }}>
+          {t('nav.admin_badge') || 'Admin'}
+        </span>
+      );
+    } else if (userRole === 'MODERATOR') {
+      return (
+        <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
+          {t('nav.moderator_badge') || 'Moderator'}
+        </span>
+      );
+    }
+    return null;
   };
 
   return (
@@ -128,22 +146,14 @@ const Navbar = () => {
                   >
                     <FiUser size={20} />
                     <span>{user?.username}</span>
-                    {isInstructor && (
-                      <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
-                        {t('nav.instructor_badge')}
-                      </span>
-                    )}
+                    {renderRoleBadge()}
                   </a>
                   <ul className="dropdown-menu dropdown-menu-end shadow-sm">
                     {/* Header with username and role badge */}
                     <li>
                       <h6 className="dropdown-header d-flex align-items-center gap-2">
                         <span>{user?.username}</span>
-                        {isInstructor && (
-                          <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
-                            {t('nav.instructor_badge')}
-                          </span>
-                        )}
+                        {renderRoleBadge()}
                       </h6>
                     </li>
                     
