@@ -9,12 +9,39 @@ paths:
       operationId: answers_list
       summary: List all approved answers
       parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: author__username
+        schema:
+          type: string
+      - in: query
+        name: created_at__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at__lte
+        schema:
+          type: string
+          format: date-time
       - name: page
         required: false
         in: query
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - in: query
+        name: question
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
       tags:
       - answers
       security:
@@ -158,6 +185,206 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/answers/{id}/accept/:
+    post:
+      operationId: answers_accept_create
+      summary: '[Question Author Only] Accept this answer'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptAnswerResponse'
+          description: ''
+  /api/answers/{id}/approve/:
+    post:
+      operationId: answers_approve_create
+      summary: '[Admins/Moderators Only] Approve a pending answer'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveAnswerResponse'
+          description: ''
+  /api/answers/{id}/comments/:
+    get:
+      operationId: answers_comments_list
+      summary: Get or create comments for this post
+      parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: author__username
+        schema:
+          type: string
+      - in: query
+        name: created_at__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at__lte
+        schema:
+          type: string
+          format: date-time
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: question
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommentList'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+    post:
+      operationId: answers_comments_create
+      summary: Get or create comments for this post
+      parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: author__username
+        schema:
+          type: string
+      - in: query
+        name: created_at__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at__lte
+        schema:
+          type: string
+          format: date-time
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: question
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - answers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommentList'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+  /api/answers/{id}/reject/:
+    post:
+      operationId: answers_reject_create
+      summary: '[Admins/Moderators Only] Reject a pending answer'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectAnswerResponse'
+          description: ''
   /api/answers/{id}/suggest_edit/:
     post:
       operationId: answers_suggest_edit_create
@@ -192,36 +419,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnswerSuggestEditResponse'
           description: ''
-  /api/attachments/:
-    get:
-      operationId: attachments_list
-      description: |-
-        Files can only be uploaded (created), retrieved, listed, and deleted.
-        They cannot be edited (updated) once uploaded.
-      summary: List all uploaded attachments
+  /api/answers/{id}/vote/:
+    post:
+      operationId: answers_vote_create
+      summary: Vote on this post
       parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+      - in: path
+        name: id
         schema:
           type: integer
+        description: A unique integer value identifying this answer.
+        required: true
       tags:
-      - attachments
+      - answers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+        required: true
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedFileAttachmentList'
+                $ref: '#/components/schemas/VoteResponse'
           description: ''
+  /api/attachments/:
     post:
       operationId: attachments_create
       description: |-
-        Files can only be uploaded (created), retrieved, listed, and deleted.
+        Files can only be uploaded (created), retrieved, and deleted.
         They cannot be edited (updated) once uploaded.
       summary: Upload a new attachment (multipart/form-data)
       tags:
@@ -236,16 +472,8 @@ paths:
                   type: string
                   format: binary
                   description: The binary file to upload
-                model_name:
-                  type: string
-                  description: The target model (e.g., 'question', 'answer','suggestededit')
-                object_id:
-                  type: integer
-                  description: ID of the specific post
               required:
               - file
-              - model_name
-              - object_id
       security:
       - jwtAuth: []
       responses:
@@ -259,7 +487,7 @@ paths:
     get:
       operationId: attachments_retrieve
       description: |-
-        Files can only be uploaded (created), retrieved, listed, and deleted.
+        Files can only be uploaded (created), retrieved, and deleted.
         They cannot be edited (updated) once uploaded.
       summary: Get a specific attachment
       parameters:
@@ -284,7 +512,7 @@ paths:
     delete:
       operationId: attachments_destroy
       description: |-
-        Files can only be uploaded (created), retrieved, listed, and deleted.
+        Files can only be uploaded (created), retrieved, and deleted.
         They cannot be edited (updated) once uploaded.
       summary: '[Authors/Admins Only] Delete an attachment'
       parameters:
@@ -360,12 +588,54 @@ paths:
       operationId: questions_list
       summary: List all approved questions
       parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: author__username
+        schema:
+          type: string
+      - in: query
+        name: created_at__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at__lte
+        schema:
+          type: string
+          format: date-time
       - name: page
         required: false
         in: query
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source_material
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: tags
+        schema:
+          type: array
+          items:
+            type: string
+        description: e.g., 'Operating Systems', '2024'
+        explode: true
+        style: form
       tags:
       - questions
       security:
@@ -507,6 +777,214 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/questions/{id}/approve/:
+    post:
+      operationId: questions_approve_create
+      summary: '[Admins/Moderators Only] Approve a pending question'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApproveQuestionResponse'
+          description: ''
+  /api/questions/{id}/comments/:
+    get:
+      operationId: questions_comments_list
+      summary: Get or create comments for this post
+      parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: author__username
+        schema:
+          type: string
+      - in: query
+        name: created_at__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at__lte
+        schema:
+          type: string
+          format: date-time
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source_material
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: tags
+        schema:
+          type: array
+          items:
+            type: string
+        description: e.g., 'Operating Systems', '2024'
+        explode: true
+        style: form
+      tags:
+      - questions
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommentList'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+    post:
+      operationId: questions_comments_create
+      summary: Get or create comments for this post
+      parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: author__username
+        schema:
+          type: string
+      - in: query
+        name: created_at__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at__lte
+        schema:
+          type: string
+          format: date-time
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: source_material
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: tags
+        schema:
+          type: array
+          items:
+            type: string
+        description: e.g., 'Operating Systems', '2024'
+        explode: true
+        style: form
+      tags:
+      - questions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommentList'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+  /api/questions/{id}/reject/:
+    post:
+      operationId: questions_reject_create
+      summary: '[Admins/Moderators Only] Reject a pending question'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RejectQuestionResponse'
+          description: ''
   /api/questions/{id}/suggest_edit/:
     post:
       operationId: questions_suggest_edit_create
@@ -540,6 +1018,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/QuestionSuggestEditResponse'
+          description: ''
+  /api/questions/{id}/vote/:
+    post:
+      operationId: questions_vote_create
+      summary: Vote on this post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VoteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoteResponse'
           description: ''
   /api/source-materials/:
     get:
@@ -799,13 +1311,38 @@ paths:
       - tags
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedTagList'
+          description: ''
+    post:
+      operationId: tags_create
+      summary: '[Admins/Moderators Only] Create a new tag'
+      tags:
+      - tags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Tag'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
           description: ''
   /api/tags/{id}/:
     get:
@@ -822,7 +1359,6 @@ paths:
       - tags
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -830,6 +1366,88 @@ paths:
               schema:
                 $ref: '#/components/schemas/Tag'
           description: ''
+    put:
+      operationId: tags_update
+      summary: '[Admins/Moderators Only] Update a tag'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag.
+        required: true
+      tags:
+      - tags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tag'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Tag'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+          description: ''
+    patch:
+      operationId: tags_partial_update
+      summary: '[Admins/Moderators Only] Partially update a tag'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag.
+        required: true
+      tags:
+      - tags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTag'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTag'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTag'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+          description: ''
+    delete:
+      operationId: tags_destroy
+      summary: '[Admins/Moderators Only] Delete a tag'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag.
+        required: true
+      tags:
+      - tags
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/tags/categories/:
     get:
       operationId: tags_categories_list
@@ -845,13 +1463,38 @@ paths:
       - tags
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedTagCategoryList'
+          description: ''
+    post:
+      operationId: tags_categories_create
+      summary: '[Admins/Moderators Only] Create a new tag category'
+      tags:
+      - tags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TagCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TagCategory'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagCategory'
           description: ''
   /api/tags/categories/{id}/:
     get:
@@ -868,7 +1511,6 @@ paths:
       - tags
       security:
       - jwtAuth: []
-      - {}
       responses:
         '200':
           content:
@@ -876,8 +1518,97 @@ paths:
               schema:
                 $ref: '#/components/schemas/TagCategory'
           description: ''
+    put:
+      operationId: tags_categories_update
+      summary: '[Admins/Moderators Only] Update a tag category'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag category.
+        required: true
+      tags:
+      - tags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TagCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TagCategory'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagCategory'
+          description: ''
+    patch:
+      operationId: tags_categories_partial_update
+      summary: '[Admins/Moderators Only] Partially update a tag category'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag category.
+        required: true
+      tags:
+      - tags
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTagCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTagCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTagCategory'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagCategory'
+          description: ''
+    delete:
+      operationId: tags_categories_destroy
+      summary: '[Admins/Moderators Only] Delete a tag category'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this tag category.
+        required: true
+      tags:
+      - tags
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
 components:
   schemas:
+    AcceptAnswerResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
     Answer:
       type: object
       properties:
@@ -892,6 +1623,9 @@ components:
         score:
           type: integer
           readOnly: true
+        user_vote:
+          type: integer
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
@@ -903,6 +1637,103 @@ components:
           nullable: true
         is_accepted:
           type: boolean
+          readOnly: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAttachment'
+          readOnly: true
+        attachment_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at_jalali:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - attachments
+      - author
+      - created_at
+      - created_at_jalali
+      - id
+      - is_accepted
+      - question
+      - score
+      - status
+      - updated_at
+      - updated_at_jalali
+      - user_vote
+    AnswerSuggestEditRequest:
+      type: object
+      properties:
+        proposed_text:
+          type: string
+        attachment_ids:
+          type: array
+          items:
+            type: integer
+      required:
+      - proposed_text
+    AnswerSuggestEditResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        suggested_edit_id:
+          type: integer
+      required:
+      - message
+      - suggested_edit_id
+    ApproveAnswerResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    ApproveEditResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    ApproveQuestionResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          type: string
+          format: uuid
+          readOnly: true
+        author_name:
+          type: string
+          readOnly: true
+        body:
+          type: string
         created_at:
           type: string
           format: date-time
@@ -921,42 +1752,20 @@ components:
           readOnly: true
       required:
       - author
+      - author_name
+      - body
       - created_at
       - created_at_jalali
       - id
-      - question
-      - score
-      - status
       - updated_at
       - updated_at_jalali
-    AnswerSuggestEditRequest:
+    CommentCreate:
       type: object
       properties:
-        proposed_text:
-          type: string
-        removed_attachment_ids:
-          type: array
-          items:
-            type: integer
-      required:
-      - proposed_text
-    AnswerSuggestEditResponse:
-      type: object
-      properties:
-        message:
-          type: string
-        suggested_edit_id:
-          type: integer
-      required:
-      - message
-      - suggested_edit_id
-    ApproveEditResponse:
-      type: object
-      properties:
-        message:
+        body:
           type: string
       required:
-      - message
+      - body
     FileAttachment:
       type: object
       properties:
@@ -966,20 +1775,10 @@ components:
         file:
           type: string
           format: uri
-        model_name:
-          allOf:
-          - $ref: '#/components/schemas/ModelNameEnum'
-          writeOnly: true
-          description: |-
-            The model you are attaching the file to (e.g., 'question')
-
-            * `question` - question
-            * `answer` - answer
-            * `suggestededit` - suggestededit
         object_id:
           type: integer
-          maximum: 2147483647
-          minimum: 0
+          readOnly: true
+          nullable: true
         attached_to_model:
           type: string
           readOnly: true
@@ -995,20 +1794,9 @@ components:
       - attached_to_model
       - file
       - id
-      - model_name
       - object_id
       - uploaded_at
       - uploaded_at_jalali
-    ModelNameEnum:
-      enum:
-      - question
-      - answer
-      - suggestededit
-      type: string
-      description: |-
-        * `question` - question
-        * `answer` - answer
-        * `suggestededit` - suggestededit
     PaginatedAnswerList:
       type: object
       required:
@@ -1032,7 +1820,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Answer'
-    PaginatedFileAttachmentList:
+    PaginatedCommentList:
       type: object
       required:
       - count
@@ -1054,7 +1842,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/FileAttachment'
+            $ref: '#/components/schemas/Comment'
     PaginatedQuestionList:
       type: object
       required:
@@ -1184,6 +1972,9 @@ components:
         score:
           type: integer
           readOnly: true
+        user_vote:
+          type: integer
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
@@ -1195,6 +1986,17 @@ components:
           nullable: true
         is_accepted:
           type: boolean
+          readOnly: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAttachment'
+          readOnly: true
+        attachment_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -1230,6 +2032,9 @@ components:
         score:
           type: integer
           readOnly: true
+        user_vote:
+          type: integer
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
@@ -1244,6 +2049,21 @@ components:
           items:
             $ref: '#/components/schemas/Tag'
           readOnly: true
+        tag_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAttachment'
+          readOnly: true
+        attachment_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -1291,6 +2111,33 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedTag:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/TagCategory'
+          readOnly: true
+        category_id:
+          type: integer
+          writeOnly: true
+        value:
+          type: string
+          description: e.g., 'Operating Systems', '2024'
+          maxLength: 100
+    PatchedTagCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: e.g., 'Subject', 'Chapter', 'Year'
+          maxLength: 50
     Question:
       type: object
       properties:
@@ -1310,6 +2157,9 @@ components:
         score:
           type: integer
           readOnly: true
+        user_vote:
+          type: integer
+          readOnly: true
         status:
           allOf:
           - $ref: '#/components/schemas/StatusEnum'
@@ -1324,6 +2174,21 @@ components:
           items:
             $ref: '#/components/schemas/Tag'
           readOnly: true
+        tag_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAttachment'
+          readOnly: true
+        attachment_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
         created_at:
           type: string
           format: date-time
@@ -1341,6 +2206,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - attachments
       - author
       - created_at
       - created_at_jalali
@@ -1350,12 +2216,13 @@ components:
       - tags
       - updated_at
       - updated_at_jalali
+      - user_vote
     QuestionSuggestEditRequest:
       type: object
       properties:
         proposed_text:
           type: string
-        removed_attachment_ids:
+        attachment_ids:
           type: array
           items:
             type: integer
@@ -1371,7 +2238,21 @@ components:
       required:
       - message
       - suggested_edit_id
+    RejectAnswerResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
     RejectEditResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+    RejectQuestionResponse:
       type: object
       properties:
         message:
@@ -1430,6 +2311,12 @@ components:
         id:
           type: integer
           readOnly: true
+        target_type:
+          type: string
+          readOnly: true
+        target_id:
+          type: integer
+          readOnly: true
         proposed_text:
           type: string
           description: The new markdown body proposed by the student.
@@ -1443,6 +2330,11 @@ components:
           type: string
           format: uuid
           readOnly: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAttachment'
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -1452,12 +2344,15 @@ components:
           format: date-time
           readOnly: true
       required:
+      - attachments
       - author
       - created_at
       - created_at_jalali
       - id
       - proposed_text
       - status
+      - target_id
+      - target_type
     Tag:
       type: object
       properties:
@@ -1525,6 +2420,31 @@ components:
       required:
       - access
       - refresh
+    ValueEnum:
+      enum:
+      - 1
+      - -1
+      type: integer
+      description: |-
+        * `1` - 1
+        * `-1` - -1
+    VoteRequest:
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/ValueEnum'
+      required:
+      - value
+    VoteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        new_score:
+          type: integer
+      required:
+      - message
+      - new_score
   securitySchemes:
     jwtAuth:
       type: http

@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
+from drf_spectacular.types import OpenApiTypes
 from .models import SourceMaterial, Question, Answer, FileAttachment, Comment, Vote, SuggestedEdit
 from tags.serializers import TagSerializer
 from core.utils import JalaliDateTimeField
@@ -14,6 +16,7 @@ class FileAttachmentSerializer(serializers.ModelSerializer):
         fields = ['id', 'file', 'object_id', 'attached_to_model', 'uploaded_at', 'uploaded_at_jalali']
         read_only_fields = ['id', 'object_id', 'uploaded_at', 'attached_to_model']
 
+    @extend_schema_field(serializers.ChoiceField(choices=['question', 'answer', 'suggestededit']))
     def get_attached_to_model(self, obj):
         return obj.content_type.model if obj.content_type else None
 
@@ -48,6 +51,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         fields = ['id', 'source_material', 'title', 'body', 'score', 'user_vote', 'status', 'author', 'tags', 'tag_ids', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
         read_only_fields = ['score', 'status', 'author']
 
+    @extend_schema_field(OpenApiTypes.INT)
     def get_user_vote(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -146,6 +150,7 @@ class AnswerSerializer(serializers.ModelSerializer):
             ).update(content_type=ctype, object_id=answer.id)
         return answer
 
+    @extend_schema_field(OpenApiTypes.INT)
     def get_user_vote(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -165,5 +170,6 @@ class SuggestedEditSerializer(serializers.ModelSerializer):
         fields = ['id', 'target_type', 'target_id', 'proposed_text', 'removed_attachment_ids', 'status', 'author', 'attachments', 'created_at', 'created_at_jalali']
         read_only_fields = ['status', 'author']
 
+    @extend_schema_field(serializers.ChoiceField(choices=['question', 'answer']))
     def get_target_type(self, obj):
         return obj.content_type.model if obj.content_type else None
