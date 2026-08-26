@@ -2,206 +2,212 @@
 
 ## Purpose
 
-The `RequireInstructor.jsx` file provides a route protection wrapper component that ensures only authenticated users with instructor privileges can access instructor-specific routes. It extends the basic authentication check by also verifying the user's role status, redirecting non-instructors to the home page while maintaining proper loading state handling.
+The `RequireInstructor.jsx` file provides a route protection component that ensures only users with moderator or admin privileges can access protected routes. It wraps around child routes and redirects non-privileged users to the home page while redirecting unauthenticated users to the login page.
 
 ## Key Components
 
-### RequireInstructor Component
+### Component Structure
 
 ```javascript
 const RequireInstructor = () => {
-  const { isAuthenticated, isInstructor, isLoading } = useAuth();
-
-  // Show loading state while auth context is initializing
+  const { isAuthenticated, canModerate, isLoading } = useAuth();
+  
   if (isLoading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
-
-  // Redirect to login if not authenticated
+  
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-
-  // Redirect to home if authenticated but not an instructor
-  if (!isInstructor) {
+  
+  if (!canModerate) {
     return <Navigate to="/" replace />;
   }
-
-  // Render child routes if user is a verified instructor
+  
   return <Outlet />;
 };
 ```
 
-**State Management:**
-- **isLoading**: Boolean from AuthContext indicating if authentication state is being initialized
-- **isAuthenticated**: Boolean from AuthContext indicating if user is logged in
-- **isInstructor**: Boolean from AuthContext indicating if user has instructor role
+**Props:** None - Uses `useAuth` hook internally
 
-**Rendering Logic:**
-1. **Loading State**: Displays a centered Bootstrap spinner while `isLoading` is true
-2. **Unauthenticated**: Redirects to `/login` using `<Navigate replace />`
-3. **Not Instructor**: Redirects to `/` (home page) using `<Navigate replace />`
-4. **Verified Instructor**: Renders child routes via `<Outlet />`
+**Returns:**
+- Loading spinner during auth initialization
+- Navigate redirect to `/login` if not authenticated
+- Navigate redirect to `/` if authenticated but not moderator/admin
+- Outlet component for child routes if user has moderator/admin role
 
-### Loading Indicator
-
-The loading state prevents premature redirects when:
-- User refreshes the page on an instructor route
-- AuthContext is initializing from localStorage
-- Authentication token and role status are being validated
+### Loading State Handling
 
 ```javascript
-<div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
-  <div className="spinner-border text-primary" role="status">
-    <span className="visually-hidden">Loading...</span>
-  </div>
-</div>
+if (isLoading) {
+  return (
+    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  );
+}
 ```
 
-## Usage
+**Purpose:**
+- Prevents premature redirects during auth context initialization
+- Shows Bootstrap spinner centered on viewport
+- Ensures smooth user experience on page reloads
 
-### Protecting Instructor Routes in App.jsx
-
-Wrap instructor-specific routes with `<RequireInstructor />`:
+### Authentication Check
 
 ```javascript
-import RequireInstructor from './components/auth/RequireInstructor';
-
-<Routes>
-  {/* Public Routes */}
-  <Route path="/" element={<Home />} />
-  <Route path="/courses" element={<Courses />} />
-  
-  {/* Instructor Routes - Require Instructor Role */}
-  <Route element={<RequireInstructor />}>
-    <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
-    <Route path="/instructor/answers" element={<ManageAnswers />} />
-  </Route>
-  
-  {/* Auth Routes */}
-  <Route path="/login" element={<Login />} />
-  <Route path="/register" element={<Register />} />
-</Routes>
+if (!isAuthenticated) {
+  return <Navigate to="/login" replace />;
+}
 ```
 
-### Combining with Layout Components
+**Purpose:**
+- Redirects unauthenticated users to login page
+- Uses `replace` to prevent back button navigation to protected route
+- First check in the authorization chain
 
-Can be nested with layout components for consistent UI:
+### Role-Based Access Control Check
 
 ```javascript
-<Route element={<RequireInstructor />}>
-  <Route element={<MainLayout />}>
-    <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
-    <Route path="/instructor/answers" element={<ManageAnswers />} />
-  </Route>
-</Route>
+if (!canModerate) {
+  return <Navigate to="/" replace />;
+}
 ```
 
-### Stacking with RequireAuth
+**Purpose:**
+- Redirects authenticated users without moderator/admin role to home page
+- Enforces RBAC policy: only MODERATOR and ADMIN roles can access
+- Uses `canModerate` boolean from AuthContext (derived from user.role)
 
-For routes requiring both authentication and instructor role:
-
-```javascript
-<Route element={<RequireAuth />}>
-  <Route element={<RequireInstructor />}>
-    <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
-  </Route>
-</Route>
-```
-
-Note: In practice, RequireInstructor already checks authentication, so stacking is optional.
-
-## Integration Points
-
-### AuthContext Integration
-
-Consumes authentication and role state via custom hook:
+### Child Route Rendering
 
 ```javascript
-import { useAuth } from '../../context/AuthContext';
-
-const RequireInstructor = () => {
-  const { isAuthenticated, isInstructor, isLoading } = useAuth();
-  // ...
-};
-```
-
-### React Router DOM Integration
-
-Uses router components for navigation and rendering:
-
-```javascript
-import { Navigate, Outlet } from 'react-router-dom';
-
-// Navigate for redirection to different targets
-<Navigate to="/login" replace />  // Unauthenticated users
-<Navigate to="/" replace />       // Non-instructor users
-
-// Outlet for rendering child routes
 return <Outlet />;
 ```
 
-### MainLayout Integration
+**Purpose:**
+- Renders child routes when user has moderator/admin privileges
+- Works with React Router's nested routing
+- Allows multiple levels of role-protected routes
 
-Protected instructor routes are wrapped within MainLayout to maintain consistent navigation:
+## Usage
+
+### Protecting Moderator/Admin Routes in App.jsx
+
+```javascript
+import { Routes, Route } from 'react-router-dom';
+import RequireInstructor from './components/auth/RequireInstructor';
+import AdminPanel from './pages/admin/AdminPanel';
+import UserManagement from './pages/admin/UserManagement';
+
+function App() {
+  return (
+    <Routes>
+      {/* Public and general protected routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      
+      {/* Moderator/Admin only routes */}
+      <Route element={<RequireInstructor />}>
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin/users" element={<UserManagement />} />
+        <Route path="/moderation" element={<ModerationQueue />} />
+      </Route>
+    </Routes>
+  );
+}
+```
+
+### Nested Role-Protected Routes
 
 ```javascript
 <Route element={<RequireInstructor />}>
-  <Route element={<MainLayout />}>
-    <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
+  <Route path="/admin" element={<AdminDashboard />}>
+    <Route path="users" element={<UserManagement />} />
+    <Route path="content" element={<ContentModeration />} />
+    <Route path="settings" element={<SystemSettings />} />
   </Route>
 </Route>
 ```
 
-## Dependencies
+## Integration Points
 
-- **React**: Core component library
-- **react-router-dom**: `<Navigate>`, `<Outlet />` components
-- **AuthContext**: `useAuth` hook providing `isAuthenticated`, `isInstructor`, and `isLoading`
+### AuthContext Dependency
 
-## Security Considerations
+Requires `AuthProvider` to be present in the component tree:
 
-### Client-Side Protection Only
+```javascript
+// In main.jsx
+import { AuthProvider } from './context/AuthContext';
 
-This component provides **client-side route protection only**. All sensitive operations must be verified server-side:
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <AuthProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </AuthProvider>
+);
+```
 
-- API endpoints must validate authentication tokens
-- Backend must enforce RBAC permissions for instructor actions
-- Never trust client-side role checks for sensitive operations (creating/editing answers, bulk uploads)
+### useAuth Hook
 
-### Role Verification Flow
+Accesses authentication and authorization state from context:
 
-The component implements a strict verification order:
-1. Check loading state first (prevents race conditions)
-2. Verify authentication (unauthenticated → login)
-3. Verify instructor role (non-instructor → home)
-4. Allow access (verified instructor → render)
+```javascript
+const { isAuthenticated, canModerate, isLoading } = useAuth();
+```
 
-## Expected Behavior
+**Required Values:**
+- `isAuthenticated`: Boolean indicating if user has valid session
+- `canModerate`: Boolean indicating if user has MODERATOR or ADMIN role
+- `isLoading`: Boolean indicating if auth state is being initialized
 
-| Scenario | Behavior |
-|----------|----------|
-| User is authenticated instructor | Child routes render normally |
-| User is authenticated but not instructor | Redirects to `/` (home) |
-| User is not authenticated | Redirects to `/login` |
-| Auth context is loading | Shows spinner, waits for initialization |
-| Page refresh on instructor route | Waits for localStorage check, then decides |
+### Role Hierarchy
 
-## Protected Routes
+| Role | canModerate | Access to RequireInstructor Routes |
+|------|-------------|-----------------------------------|
+| STUDENT | false | ❌ Denied - redirected to home |
+| MODERATOR | true | ✅ Granted |
+| ADMIN | true | ✅ Granted |
 
-The following routes should be protected with RequireInstructor:
+### React Router Dependencies
 
-| Route | Component | Purpose |
-|-------|-----------|---------|
-| `/instructor/dashboard` | InstructorDashboard | View instructor analytics and stats |
-| `/instructor/answers` | ManageAnswers | Create, edit, and manage exam answers |
+- **Navigate**: For programmatic redirects
+- **Outlet**: For rendering child routes in nested routing
+
+## Styling
+
+### Loading Spinner
+
+Uses Bootstrap 5 classes:
+- `d-flex`: Flexbox container
+- `justify-content-center`: Horizontal centering
+- `align-items-center`: Vertical centering
+- `spinner-border`: Bootstrap spinner animation
+- `text-primary`: Primary color theme
+- `visually-hidden`: Accessibility text
+
+### Custom Styles
+
+```javascript
+style={{ minHeight: '100vh' }}
+```
+
+Ensures loading state covers full viewport height.
 
 ## Change Log
 
-- **Phase 12 Implementation**: Created RequireInstructor component with loading state handling, authentication checks, and role-based access control
+### Phase 1 - JWT Migration (Current)
+- Changed from checking `isInstructor` boolean to `canModerate` boolean
+- Now uses enum-based role system (STUDENT, MODERATOR, ADMIN) instead of boolean flags
+- Updated documentation to reflect moderator/admin terminology
+- Component logic updated to use `canModerate` from AuthContext
+
+### Initial Implementation (Previous)
+- Created role-based route protection wrapper component
+- Implemented loading state to prevent premature redirects
+- Added authentication check with redirect to login
+- Added instructor role check with redirect to home
+- Integrated with AuthContext via useAuth hook using `isInstructor` flag

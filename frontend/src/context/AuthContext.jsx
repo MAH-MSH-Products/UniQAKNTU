@@ -1,52 +1,82 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../services/api';
+import { jwtDecode } from 'jwt-decode';
 
 /**
  * AuthContext - Authentication State Management
  * 
  * Provides authentication state and methods throughout the application.
- * Manages user session, token storage, and role-based access.
+ * Manages user session with JWT tokens (access/refresh), and role-based access control.
+ * Decodes JWT tokens to extract user information (user_id, role, username).
  */
 
 const AuthContext = createContext(null);
 
+// Role-based access control helpers
+export const canModerate = (role) => ['MODERATOR', 'ADMIN'].includes(role);
+export const isAdmin = (role) => role === 'ADMIN';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [accessToken, setAccessToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  /**
+   * Decode JWT token to extract user information
+   * @param {string} token - JWT access token
+   * @returns {Object|null} - Decoded user info or null if invalid
+   */
+  const decodeUserFromToken = (token) => {
+    try {
+      const decoded = jwtDecode(token);
+      return {
+        id: decoded.user_id || decoded.id,
+        username: decoded.username,
+        role: decoded.role || 'STUDENT',
+      };
+    } catch (error) {
+      console.error('Failed to decode JWT token:', error);
+      return null;
+    }
+  };
 
   /**
    * Initialize auth state from localStorage on mount
    */
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-    const storedUser = localStorage.getItem('authUser');
-
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    const storedToken = localStorage.getItem('accessToken');
+    
+    if (storedToken) {
+      setAccessToken(storedToken);
+      const userData = decodeUserFromToken(storedToken);
+      if (userData) {
+        setUser(userData);
+      }
     }
     setIsLoading(false);
   }, []);
 
   /**
-   * Login function - authenticates user and stores token
+   * Login function - authenticates user and stores JWT tokens
    * @param {string} username - User's username
    * @param {string} password - User's password
-   * @returns {Promise<Object>} - Login response data
+   * @returns {Promise<Object>} - Login result with success status
    */
   const login = async (username, password) => {
     try {
-      const response = await api.post('/auth/login/', { username, password });
-      const { token: authToken, user: userData } = response.data;
+      const response = await api.post('/auth/token/', { username, password });
+      const { access, refresh } = response.data;
 
-      // Save to state
-      setToken(authToken);
+      // Store tokens in localStorage
+      localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
+      
+      // Set access token in state
+      setAccessToken(access);
+      
+      // Decode user info from JWT token
+      const userData = decodeUserFromToken(access);
       setUser(userData);
-
-      // Save to localStorage
-      localStorage.setItem('authToken', authToken);
-      localStorage.setItem('authUser', JSON.stringify(userData));
 
       return { success: true, data: response.data };
     } catch (error) {
@@ -58,32 +88,35 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
-   * Logout function - clears all auth data
+   * Logout function - clears all auth data including both tokens
    */
   const logout = () => {
-    setToken(null);
+    setAccessToken(null);
     setUser(null);
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
   };
 
   /**
-   * Helper to check if user is an instructor
+   * Helper to check if user has moderator or admin role
    */
-  const isInstructor = user?.is_instructor || false;
-
+  const userRole = user?.role || 'STUDENT';
+  const canModerateFlag = canModerate(userRole);
+  
   /**
    * Helper to check if user is authenticated
    */
-  const isAuthenticated = !!token && !!user;
+  const isAuthenticated = !!accessToken && !!user;
 
   const value = {
     user,
-    token,
+    accessToken,
     isLoading,
     login,
     logout,
-    isInstructor,
+    userRole,
+    canModerate: canModerateFlag,
+    isAdmin: isAdmin(userRole),
     isAuthenticated,
   };
 

@@ -4,26 +4,29 @@ import axios from 'axios';
  * API Service - Configured Axios Instance
  * 
  * This module provides a pre-configured axios instance for all API requests.
- * It automatically handles authentication tokens and error responses.
+ * It automatically handles JWT authentication tokens with request/response interceptors.
+ * Implements automatic token refresh on 401 Unauthorized responses.
  */
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: '/api/v1/',
+  baseURL: '/api/',
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: false, // JWT is stateless; CORS handles cross-origin
 });
 
 /**
  * Request Interceptor
- * Attaches authentication token to outgoing requests if available in localStorage
+ * Attaches JWT access token to outgoing requests if available in localStorage
+ * Uses Bearer token format as per backend specification
  */
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('accessToken');
     if (token) {
-      config.headers.Authorization = `Token ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -33,20 +36,36 @@ api.interceptors.request.use(
 );
 
 /**
- * Response Interceptor
- * Handles 401 Unauthorized responses by clearing auth data and redirecting to login
+ * Response Interceptor - Auto-Refresh Token
+ * Handles 401 Unauthorized responses by attempting to refresh the access token
+ * If refresh fails, clears all auth data and redirects to login
  */
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      // Clear authentication data
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('authUser');
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
       
-      // Redirect to login page
-      window.location.href = '/login';
+      try {
+        const refresh = localStorage.getItem('refreshToken');
+        const { data } = await api.post('/auth/token/refresh/', { refresh });
+        
+        // Store new access token
+        localStorage.setItem('accessToken', data.access);
+        
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${data.access}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed - clear all auth data and redirect to login
+        localStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
+    
     return Promise.reject(error);
   }
 );
