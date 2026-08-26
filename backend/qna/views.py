@@ -13,6 +13,7 @@ from .serializers import (
     CommentSerializer
 )
 from .permissions import IsAuthorOrModerator, IsModeratorOrAdmin
+from .filters import QuestionFilter, AnswerFilter
 
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample, inline_serializer
 from drf_spectacular.types import OpenApiTypes
@@ -103,7 +104,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
     from django_filters.rest_framework import DjangoFilterBackend
     from rest_framework.filters import SearchFilter
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['tags', 'source_material']
+    filterset_class = QuestionFilter
     search_fields = ['title', 'body']
 
     def perform_create(self, serializer):
@@ -111,8 +112,14 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated and (user.is_moderator() or user.is_admin()):
-            return Question.objects.all()
+        if user.is_authenticated:
+            if user.is_moderator() or user.is_admin():
+                return Question.objects.all()
+            
+            # Students see all approved posts, PLUS their own pending/rejected posts
+            from django.db.models import Q
+            return Question.objects.filter(Q(status='APPROVED') | Q(author=user))
+            
         return super().get_queryset()
 
     def update(self, request, *args, **kwargs):
@@ -212,15 +219,20 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
     
     from django_filters.rest_framework import DjangoFilterBackend
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['question']
+    filterset_class = AnswerFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated and (user.is_moderator() or user.is_admin()):
-            return Answer.objects.all()
+        if user.is_authenticated:
+            if user.is_moderator() or user.is_admin():
+                return Answer.objects.all()
+            
+            from django.db.models import Q
+            return Answer.objects.filter(Q(status='APPROVED') | Q(author=user))
+            
         return super().get_queryset()
 
     def update(self, request, *args, **kwargs):

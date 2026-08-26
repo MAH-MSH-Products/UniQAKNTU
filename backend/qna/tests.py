@@ -101,3 +101,55 @@ class QnAAPITests(APITestCase):
         answer.refresh_from_db()
         self.assertTrue(answer.is_accepted)
 
+
+    def test_visibility_of_pending_posts(self):
+        # Admin creates an approved post
+        approved_question = Question.objects.create(author=self.admin, title='Q', body='Q', status=PostStatus.APPROVED)
+        # Student creates a pending post
+        pending_question_own = Question.objects.create(author=self.student, title='P', body='P', status=PostStatus.PENDING)
+        # Another student creates a pending post
+        other_student = User.objects.create_user(username='other', password='password', role=UserRole.STUDENT)
+        pending_question_other = Question.objects.create(author=other_student, title='O', body='O', status=PostStatus.PENDING)
+        
+        # Unauthenticated user should only see approved
+        self.client.logout()
+        response = self.client.get('/api/questions/')
+        ids = [q['id'] for q in response.data['results']]
+        self.assertIn(approved_question.id, ids)
+        self.assertNotIn(pending_question_own.id, ids)
+        self.assertNotIn(pending_question_other.id, ids)
+
+        # Student should see approved + own pending
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get('/api/questions/')
+        ids = [q['id'] for q in response.data['results']]
+        self.assertIn(approved_question.id, ids)
+        self.assertIn(pending_question_own.id, ids)
+        self.assertNotIn(pending_question_other.id, ids)
+
+        # Admin should see everything
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get('/api/questions/')
+        ids = [q['id'] for q in response.data['results']]
+        self.assertIn(approved_question.id, ids)
+        self.assertIn(pending_question_own.id, ids)
+        self.assertIn(pending_question_other.id, ids)
+
+    def test_filters(self):
+        # Admin testing filters
+        self.client.force_authenticate(user=self.admin)
+        # Filter by status
+        response = self.client.get('/api/questions/?status=PENDING')
+        self.assertEqual(len(response.data['results']), 0) # from setup there's 1 approved question
+        # Change setup question to pending to test
+        self.question.status = PostStatus.PENDING
+        self.question.save()
+        response = self.client.get('/api/questions/?status=PENDING')
+        self.assertEqual(len(response.data['results']), 1)
+        # Filter by author UUID
+        response = self.client.get(f'/api/questions/?author={self.student.id}')
+        self.assertEqual(len(response.data['results']), 1)
+        # Filter by author username
+        response = self.client.get('/api/questions/?author__username=student')
+        self.assertEqual(len(response.data['results']), 1)
+
