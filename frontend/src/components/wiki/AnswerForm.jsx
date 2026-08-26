@@ -1,49 +1,34 @@
 import React, { useState } from 'react';
 import MarkdownEditor from '../editor/MarkdownEditor';
+import api from '../../services/api';
 
 /**
  * AnswerForm Component
  * 
  * Form component for instructors to submit answers to questions.
- * Supports markdown text with MathJax formulas, image uploads, and PDF uploads.
+ * Implements the two-step Orphan Claiming pattern for attachments.
+ * Supports markdown text with MathJax formulas and inline image attachments.
  * 
  * @param {number} questionId - The ID of the question to answer
  * @param {function} onSubmit - Callback function when form is submitted (optional)
  */
 const AnswerForm = ({ questionId, onSubmit }) => {
   const [markdownText, setMarkdownText] = useState('');
-  const [imageFile, setImageFile] = useState(null);
-  const [pdfFile, setPdfFile] = useState(null);
+  const [attachmentIds, setAttachmentIds] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
 
   /**
-   * Handle image file selection
-   * @param {Event} e - File input change event
+   * Handle attachment upload from MarkdownEditor
+   * @param {{id: number, url: string}} attachment - Uploaded attachment info
    */
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-    }
-  };
-
-  /**
-   * Handle PDF file selection
-   * @param {Event} e - File input change event
-   */
-  const handlePdfChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setPdfFile(file);
-    } else {
-      alert('Please select a valid PDF file.');
-    }
+  const handleAttachmentUpload = ({ id, url }) => {
+    setAttachmentIds(prev => [...prev, id]);
   };
 
   /**
    * Handle form submission
-   * Constructs FormData matching API Endpoint 3.2 specification
+   * Uses application/json content type with attachment_ids array
    * @param {Event} e - Submit event
    */
   const handleSubmit = async (e) => {
@@ -51,61 +36,30 @@ const AnswerForm = ({ questionId, onSubmit }) => {
     setIsSubmitting(true);
     setSubmitMessage('');
 
-    // Construct FormData object matching Endpoint 3.2
-    const formData = new FormData();
-    formData.append('current_body', markdownText);
-    if (imageFile) {
-      formData.append('image', imageFile);
-    }
-    if (pdfFile) {
-      formData.append('pdf_file', pdfFile);
-    }
+    // Construct JSON payload matching API spec
+    const payload = {
+      question: questionId,
+      body: markdownText,
+      attachment_ids: attachmentIds
+    };
 
-    // Log FormData entries for debugging
-    console.log('=== FormData Entries ===');
-    for (let pair of formData.entries()) {
-      console.log(`${pair[0]}:`, pair[1]);
-    }
-    console.log('========================');
+    console.log('=== Submission Payload ===');
+    console.log(JSON.stringify(payload, null, 2));
+    console.log('==========================');
 
-    // Mock API call - Backend endpoint not ready yet
-    // باید چک شود - Real API integration needed once backend Phase 3 is complete
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      console.log('Mock submission successful for question:', questionId);
-      setSubmitMessage('✅ Answer submitted successfully! (Mock - Backend not connected)');
-      
-      // Reset form after successful submission
-      setMarkdownText('');
-      setImageFile(null);
-      setPdfFile(null);
-      
-      if (onSubmit) {
-        onSubmit({ success: true, mock: true });
-      }
-    } catch (error) {
-      console.error('Submission error:', error);
-      setSubmitMessage('❌ Failed to submit answer. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-
-    // باید چک شود - Uncomment below when backend is ready:
-    /*
-    try {
-      const response = await api.post(`/questions/${questionId}/answers/`, formData, {
+      const response = await api.post('/answers/', payload, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
       });
       
       if (response.data) {
-        setSubmitMessage('✅ Answer submitted successfully!');
+        setSubmitMessage('✅ Answer submitted successfully! Pending approval.');
+        
+        // Reset form on successful submission
         setMarkdownText('');
-        setImageFile(null);
-        setPdfFile(null);
+        setAttachmentIds([]);
         
         if (onSubmit) {
           onSubmit({ success: true, data: response.data });
@@ -113,11 +67,11 @@ const AnswerForm = ({ questionId, onSubmit }) => {
       }
     } catch (error) {
       console.error('API Error:', error);
-      setSubmitMessage('❌ Failed to submit answer: ' + (error.response?.data?.message || error.message));
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to submit answer';
+      setSubmitMessage('❌ Failed to submit answer: ' + errorMessage);
     } finally {
       setIsSubmitting(false);
     }
-    */
   };
 
   return (
@@ -127,43 +81,24 @@ const AnswerForm = ({ questionId, onSubmit }) => {
       </div>
       <div className="card-body">
         <form onSubmit={handleSubmit}>
-          {/* Markdown Editor */}
+          {/* Markdown Editor with Attachment Support */}
           <div className="mb-3">
             <MarkdownEditor 
               value={markdownText} 
-              onChange={setMarkdownText} 
+              onChange={setMarkdownText}
+              onAttachmentUpload={handleAttachmentUpload}
             />
           </div>
 
-          {/* File Uploads */}
-          <div className="row mb-3">
-            <div className="col-md-6">
-              <label className="form-label fw-bold">Upload Image (Optional)</label>
-              <input
-                type="file"
-                className="form-control"
-                accept="image/*"
-                onChange={handleImageChange}
-                disabled={isSubmitting}
-              />
-              {imageFile && (
-                <small className="text-muted">Selected: {imageFile.name}</small>
-              )}
+          {/* Attachment Info */}
+          {attachmentIds.length > 0 && (
+            <div className="alert alert-info mb-3">
+              <strong>📎 Attached Files:</strong> {attachmentIds.length} file(s) uploaded
+              <small className="d-block text-muted">
+                Attachments are embedded in the markdown text as ![attachment](url)
+              </small>
             </div>
-            <div className="col-md-6">
-              <label className="form-label fw-bold">Upload PDF (Optional)</label>
-              <input
-                type="file"
-                className="form-control"
-                accept="application/pdf"
-                onChange={handlePdfChange}
-                disabled={isSubmitting}
-              />
-              {pdfFile && (
-                <small className="text-muted">Selected: {pdfFile.name}</small>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* Submit Button */}
           <div className="d-grid gap-2">
@@ -190,11 +125,11 @@ const AnswerForm = ({ questionId, onSubmit }) => {
             </div>
           )}
 
-          {/* Backend Integration Notice */}
+          {/* Integration Notice */}
           <div className="alert alert-warning mt-3 mb-0">
-            <strong>⚠️ باید چک شود:</strong> This form currently uses mock submission. 
-            Real API integration requires backend Endpoint 3.2 (<code>POST /api/v1/questions/:id/answers/</code>) 
-            to be implemented and tested.
+            <strong>⚠️ باید چک شود:</strong> This form uses the two-step orphan claiming pattern.
+            Images dropped/pasted into the editor are uploaded immediately to <code>POST /api/attachments/</code>,
+            then the attachment IDs are sent with the answer submission.
           </div>
         </form>
       </div>

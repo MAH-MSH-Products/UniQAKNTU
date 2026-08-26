@@ -1,12 +1,12 @@
 # AnswerForm.md Documentation
 
 ## Purpose
-The `AnswerForm.jsx` file implements a comprehensive form component for instructors to submit answers to exam questions in the UniQAKNTU platform. It supports multi-modal answer submission including Markdown text with MathJax formulas, image attachments, and PDF file uploads. The component constructs FormData objects matching the API Endpoint 3.2 specification for multipart form submissions.
+The `AnswerForm.jsx` file implements a comprehensive form component for instructors to submit answers to exam questions in the UniQAKNTU platform. It supports multi-modal answer submission using the **two-step Orphan Claiming pattern** as specified in the backend API documentation. The component sends JSON payloads with `application/json` content type, replacing the previous `multipart/form-data` approach.
 
 ## Key Components
 
 ### Component: AnswerForm
-A functional React component that provides a complete answer submission interface with file upload capabilities.
+A functional React component that provides a complete answer submission interface with inline markdown editor and attachment support.
 
 ### Props
 | Prop | Type | Required | Description |
@@ -16,47 +16,39 @@ A functional React component that provides a complete answer submission interfac
 
 ### Internal State
 - `markdownText` (string): The current content of the markdown editor
-- `imageFile` (File|null): Selected image file for attachment
-- `pdfFile` (File|null): Selected PDF file for attachment
+- `attachmentIds` (Array<number>): Array of uploaded attachment IDs to be claimed on submission
 - `isSubmitting` (boolean): Loading state during submission
 - `submitMessage` (string): Status message displayed after submission attempt
 
 ### Key Functions
 
-#### `handleImageChange(e)`
-Event handler for image file input.
-- **Parameter**: File input change event
-- Extracts selected file from `e.target.files[0]`
-- Validates file selection
-- Updates `imageFile` state
-
-#### `handlePdfChange(e)`
-Event handler for PDF file input with validation.
-- **Parameter**: File input change event
-- Validates file type is `application/pdf`
-- Displays alert if invalid file type selected
-- Updates `pdfFile` state
+#### `handleAttachmentUpload({id, url})`
+Callback handler for attachment uploads from MarkdownEditor component.
+- **Parameter**: Object containing `id` (attachment ID) and `url` (file URL)
+- Appends the attachment ID to the `attachmentIds` state array
+- Called automatically when user drops or pastes an image into the editor
 
 #### `handleSubmit(e)`
-Main form submission handler that constructs and processes FormData.
+Main form submission handler that constructs and processes JSON payload.
 - **Parameter**: Submit event
 - Prevents default form submission behavior
-- Constructs `FormData` object matching API Endpoint 3.2:
+- Constructs JSON payload matching API specification:
   ```javascript
-  formData.append('current_body', markdownText);
-  formData.append('image', imageFile);      // if exists
-  formData.append('pdf_file', pdfFile);     // if exists
+  {
+    "question": 42,
+    "body": "markdown text with ![img](url)...",
+    "attachment_ids": [105, 106]
+  }
   ```
-- Logs all FormData entries to console for debugging
-- Simulates API call with mock success response
+- Sends POST request to `/api/answers/` with `application/json` content type
 - Resets form on successful submission
 - Displays appropriate status messages
 
 ### Dependencies
 - React (`useState`)
 - `MarkdownEditor` component (../editor/MarkdownEditor)
+- `api` service (../../services/api) for HTTP requests
 - Bootstrap CSS classes for styling
-- **API Service**: Requires `api` from `../services/api` for production use (currently mocked)
 
 ## Usage
 
@@ -93,89 +85,94 @@ The `AnswerForm` is designed to be used within:
 - `QuestionExplorer.jsx`: Displays form below each question for authenticated instructors
 - Future: Standalone answer creation pages
 
-### API Endpoint Specification (Endpoint 3.2)
-**Must be verified once backend is complete - باید چک شود**
+### API Endpoint Specification
+**Endpoint:** `POST /api/answers/`
+**Content-Type:** `application/json`
+**Authorization:** `Bearer <JWT_ACCESS_TOKEN>`
 
-```
-POST /api/v1/questions/:id/answers/
-Content-Type: multipart/form-data
-Authorization: Token <user_token>
+```json
+Request Body:
+{
+  "question": 42,
+  "body": "markdown text with embedded images...",
+  "attachment_ids": [105, 106]
+}
 
-Request Body (FormData):
-- current_body: string (Markdown text)
-- image: file (optional, image/*)
-- pdf_file: file (optional, application/pdf)
-
-Response (Expected):
+Response (Expected - 201 Created):
 {
   "id": 123,
-  "author": { "name": "...", "title": "..." },
-  "current_body": "...",
-  "is_verified": false,
-  "image": "/media/answers/...",
-  "pdf_file": "/media/answers/...",
-  "created_at": "2026-08-18T..."
+  "question": 42,
+  "author": { "id": "uuid", "username": "...", "role": "MODERATOR" },
+  "body": "markdown text...",
+  "status": "PENDING",
+  "score": 0,
+  "user_vote": 0,
+  "is_accepted": false,
+  "attachments": [
+    { "id": 105, "file": "https://..." },
+    { "id": 106, "file": "https://..." }
+  ],
+  "created_at_jalali": "1403/08/15 14:32"
 }
 ```
 
-### Current Mock Implementation
-⚠️ **باید چک شود**: The component currently uses mock submission logic. Real API integration requires:
+### Orphan Claiming Pattern
+⚠️ **باید چک شود**: This component implements the two-step orphan claiming flow:
 
-1. Uncomment the API call section in `handleSubmit()`:
-   ```javascript
-   const response = await api.post(`/questions/${questionId}/answers/`, formData, {
-     headers: { 'Content-Type': 'multipart/form-data' }
-   });
-   ```
+1. **Step 1 - Upload (Immediate):** When user drops/pastes an image in the editor:
+   - `POST /api/attachments/` with `FormData` containing only `file`
+   - Response returns `{ id, file: url }`
+   - Image URL is injected into markdown as `![attachment](url)`
+   - Attachment ID is stored in local state
 
-2. Backend Endpoint 3.2 must be implemented with:
-   - Multipart form data parsing
-   - File upload handling (images and PDFs)
-   - RBAC verification (`is_instructor` check)
-   - Answer model creation with file associations
+2. **Step 2 - Claim (On Submit):** When user submits the answer:
+   - JSON payload includes `attachment_ids: [105, 106]`
+   - Backend claims the orphaned attachments and associates them with the answer
+   - Attachments are validated to ensure they exist and belong to the user
 
 ### Authentication Requirements
 - User must be authenticated (token attached via axios interceptor)
-- User must have `is_instructor = true` (enforced by parent component visibility)
-- Server-side RBAC verification required (must be implemented in backend)
+- User must have role `MODERATOR` or `ADMIN` (enforced by parent component visibility)
+- Server-side RBAC verification required (backend enforces permissions)
 
 ## Styling
 The component uses Bootstrap 5 utility classes:
 - Card layout with header (`card`, `card-header`, `card-body`)
-- Responsive grid for file inputs (`row`, `col-md-6`)
 - Form controls (`form-control`, `form-label`)
 - Button states (loading spinner, disabled state)
-- Alert components for status messages
+- Alert components for status messages and info/warning notices
 
 ## Error Handling
-- Client-side PDF validation (file type check)
 - Submission disabled during processing (`isSubmitting` state)
 - Error messages displayed in danger alerts
-- Console logging for debugging FormData contents
+- Console logging for debugging payload contents
+- Graceful handling of API errors with user-friendly messages
 
 ## Change Log
 
-### Initial Implementation - August 2026
-- Created instructor answer submission form
-- Integrated MarkdownEditor component
-- Implemented dual file upload (image + PDF)
-- Added FormData construction matching API spec
-- Built mock submission flow with console logging
-- Added comprehensive status messaging
-- Included backend integration warnings (باید چک شود)
+### Phase 3 Implementation - August 2026
+- **Removed:** `multipart/form-data` submission logic
+- **Removed:** `formData.append('image')`, `formData.append('pdf_file')`, `formData.append('current_body')`
+- **Added:** Two-step orphan claiming pattern implementation
+- **Added:** `attachmentIds` state array for tracking uploaded attachments
+- **Added:** `handleAttachmentUpload` callback for receiving attachment info from MarkdownEditor
+- **Changed:** Content-Type from `multipart/form-data` to `application/json`
+- **Changed:** Payload structure to match API spec with `attachment_ids` array
+- **Updated:** Integration notice to reflect new workflow
 
 ## Notes
-- **Backend Dependency**: This component cannot function fully until Backend Phase 3 completes Endpoint 3.2
-- **File Size Limits**: Consider implementing client-side file size validation (not yet implemented)
-- **Progress Indicators**: Future enhancement could add upload progress bars for large files
-- **Multiple Images**: Current spec supports single image; backend may need modification for multiple attachments
-- **Security**: Server must validate file types and sizes regardless of client-side checks
+- **Backend Dependency:** Requires `POST /api/attachments/` endpoint for orphan uploads
+- **Image Support:** Currently supports image files dropped/pasted into editor
+- **Validation:** Backend validates attachment IDs exist and belong to submitting user
+- **Security:** Server must validate file types regardless of client-side handling
 
 ## Verification Checklist
 Before marking this component as complete, verify:
-- [ ] Backend Endpoint 3.2 is implemented and tested
-- [ ] Multipart form parsing works correctly on server
-- [ ] File uploads are stored and URLs returned properly
-- [ ] RBAC permissions prevent non-instructors from submitting
-- [ ] Image and PDF files are accessible via returned URLs
+- [ ] Backend `/api/attachments/` endpoint accepts multipart form data
+- [ ] Backend `/api/answers/` endpoint accepts JSON with `attachment_ids`
+- [ ] Orphaned attachments are properly claimed on answer creation
+- [ ] RBAC permissions prevent non-moderators from submitting answers
+- [ ] Uploaded attachments are accessible via returned URLs
 - [ ] Error responses are properly handled and displayed
+- [ ] ⚠️ باید چک شود - Full integration testing with backend
+
