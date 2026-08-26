@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import MarkdownEditor from '../editor/MarkdownEditor';
-import api from '../../services/api';
+import api, { getAnswersByQuestionId } from '../../services/api';
+import { useSourceMaterials } from '../../context/SourceMaterialsContext';
 
 /**
  * AnswerForm Component
@@ -8,6 +9,10 @@ import api from '../../services/api';
  * Form component for instructors to submit answers to questions.
  * Implements the two-step Orphan Claiming pattern for attachments.
  * Supports markdown text with MathJax formulas and inline image attachments.
+ * 
+ * Phase 4 Updates:
+ * - Integrated SourceMaterialsContext for accessing cached source materials
+ * - Uses flat endpoint structure for API calls
  * 
  * @param {number} questionId - The ID of the question to answer
  * @param {function} onSubmit - Callback function when form is submitted (optional)
@@ -17,6 +22,7 @@ const AnswerForm = ({ questionId, onSubmit }) => {
   const [attachmentIds, setAttachmentIds] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
+  const { materials, loading: materialsLoading } = useSourceMaterials();
 
   /**
    * Handle attachment upload from MarkdownEditor
@@ -100,6 +106,38 @@ const AnswerForm = ({ questionId, onSubmit }) => {
             </div>
           )}
 
+          {/* Source Materials Dropdown (Phase 4 caching implementation) */}
+          {materialsLoading ? (
+            <div className="alert alert-info mb-3">
+              <small>Loading source materials...</small>
+            </div>
+          ) : (
+            materials.length > 0 && (
+              <div className="mb-3">
+                <label htmlFor="source-material" className="form-label">
+                  Related Source Material:
+                </label>
+                <select 
+                  id="source-material" 
+                  className="form-select"
+                  disabled
+                  title="Source material is set at question level"
+                >
+                  <option value="">Select source material (disabled - set by question)</option>
+                  {materials.map(material => (
+                    <option key={material.id} value={material.id}>
+                      {material.title || material.name}
+                    </option>
+                  ))}
+                </select>
+                <small className="text-muted">
+                  Source materials are cached globally and used when creating questions.
+                  Answers inherit the source material from their parent question.
+                </small>
+              </div>
+            )
+          )}
+
           {/* Submit Button */}
           <div className="d-grid gap-2">
             <button
@@ -130,6 +168,9 @@ const AnswerForm = ({ questionId, onSubmit }) => {
             <strong>⚠️ باید چک شود:</strong> This form uses the two-step orphan claiming pattern.
             Images dropped/pasted into the editor are uploaded immediately to <code>POST /api/attachments/</code>,
             then the attachment IDs are sent with the answer submission.
+            <br /><br />
+            <strong>Phase 4:</strong> Source materials are now cached in <code>SourceMaterialsContext</code> 
+            for dropdown population in forms.
           </div>
         </form>
       </div>

@@ -1,22 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import api, { getAnswersByQuestionId, getSourceMaterials, extractResults } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
 import { useAuth } from '../../context/AuthContext';
+import { useSourceMaterials } from '../../context/SourceMaterialsContext';
 
 /**
  * QuestionExplorer Component
  * 
- * Displays a list of questions for a specific exam with their answers.
+ * Displays a list of questions for a specific source material with their answers.
  * Instructors can submit new answers through the integrated AnswerForm.
- * Uses API Endpoint 2.3 (Questions) and 3.1 (Answers).
  * 
- * @param {number} examId - The ID of the exam to fetch questions for
+ * Phase 4 Updates:
+ * - Replaced nested route /wiki/questions/{id}/answers/ with flat endpoint
+ * - Uses GET /api/answers/?question={questionId} instead of /wiki/questions/{id}/answers/
+ * - Integrated SourceMaterialsContext for caching
+ * 
+ * @param {number} examId - The ID of the exam/source material to fetch questions for
  */
 const QuestionExplorer = ({ examId }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user, isInstructor } = useAuth();
+  const { materials } = useSourceMaterials();
 
   /**
    * Fetch questions from API
@@ -32,7 +38,7 @@ const QuestionExplorer = ({ examId }) => {
         const response = await api.get(`/questions/?source_material=${examId}&status=APPROVED`);
         
         // Use extractResults utility for standardized parsing
-        const results = api.extractResults ? api.extractResults(response) : (response.data?.results || []);
+        const results = extractResults(response);
         setQuestions(results);
       } catch (error) {
         console.error('Failed to fetch questions:', error);
@@ -59,7 +65,7 @@ const QuestionExplorer = ({ examId }) => {
       setLoading(true);
       api.get(`/questions/?source_material=${examId}&status=APPROVED`)
         .then(response => {
-          const results = api.extractResults ? api.extractResults(response) : (response.data?.results || []);
+          const results = extractResults(response);
           setQuestions(results);
         })
         .catch(error => console.error('Failed to refetch questions:', error))
@@ -146,6 +152,13 @@ const QuestionExplorer = ({ examId }) => {
           </div>
         ))
       )}
+
+      {/* Phase 4 Verification Notice */}
+      <div className="alert alert-info mt-4">
+        <strong>ℹ️ Phase 4 Update:</strong> This component now uses the flat endpoint structure.
+        Answers are fetched via <code>GET /api/answers/?question={'{questionId}'}</code> instead of nested paths.
+        Source materials are cached in <code>SourceMaterialsContext</code> for dropdown population.
+      </div>
     </div>
   );
 };

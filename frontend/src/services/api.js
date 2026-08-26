@@ -94,4 +94,45 @@ export const getPaginationMeta = (response) => ({
   previous: response.data?.previous || null,
 });
 
+// ============================================
+// Phase 4: Routing & Query Parameter Alignment
+// Replace nested REST paths with flat endpoints + query parameters
+// ============================================
+
+/**
+ * Source Materials API (replaces /curriculum/courses/)
+ * GET /api/source-materials/ - List all source materials
+ * GET /api/source-materials/?id={id} - Get single source material by ID
+ */
+export const getSourceMaterials = (params = {}) => {
+  return api.get('/source-materials', { params });
+};
+
+/**
+ * Get single source material by ID
+ * Uses query parameter instead of path parameter
+ * @param {number} id - Source material ID
+ */
+export const getSourceMaterialById = (id) => {
+  return api.get('/source-materials', { params: { id } });
+};
+
+/**
+ * Answers API (replaces /wiki/questions/{id}/answers/)
+ * GET /api/answers/?question={questionId} - Get answers for a specific question
+ * @param {number} questionId - Question ID to fetch answers for
+ */
+export const getAnswersByQuestionId = (questionId) => {
+  return api.get('/answers', { params: { question: questionId } });
+};
+
+/**
+ * Get single answer by ID
+ * GET /api/answers/{id}/ - Path parameter for single answer
+ * @param {number} id - Answer ID
+ */
+export const getAnswerById = (id) => {
+  return api.get(`/answers/${id}/`);
+};
+
 export default api;
