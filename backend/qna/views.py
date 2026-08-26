@@ -166,7 +166,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
             name="QuestionSuggestEditRequest",
             fields={
                 "proposed_text": serializers.CharField(required=True),
-                "removed_attachment_ids": serializers.ListField(child=serializers.IntegerField(), required=False)
+                "attachment_ids": serializers.ListField(child=serializers.IntegerField(), required=False)
             }
         ),
         responses={
@@ -315,7 +315,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
             name="AnswerSuggestEditRequest",
             fields={
                 "proposed_text": serializers.CharField(required=True),
-                "removed_attachment_ids": serializers.ListField(child=serializers.IntegerField(), required=False)
+                "attachment_ids": serializers.ListField(child=serializers.IntegerField(), required=False)
             }
         ),
         responses={
