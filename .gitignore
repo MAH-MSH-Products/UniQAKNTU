@@ -91,3 +91,6 @@ build/
 .mypy_cache/
 ```
 backend/db.sqlite3
+backend/attachments/*
+backend/media/attachments/*
+backend/media/exams/questions/*

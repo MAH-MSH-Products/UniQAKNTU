@@ -44,15 +44,35 @@ INSTALLED_APPS = [
 
     # Third Party Apps
     'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_spectacular',
     'simple_history',
-
+    'django_filters',
     # Local Apps
     'users.apps.UsersConfig',
     'qna.apps.QnaConfig',
     'tags.apps.TagsConfig',
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 AUTH_USER_MODEL = 'users.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'UniQAKNTU API',
+    'DESCRIPTION': 'API for crowdsourced Q&A platform',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -145,3 +165,14 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Simple JWT Settings
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
+}
+
