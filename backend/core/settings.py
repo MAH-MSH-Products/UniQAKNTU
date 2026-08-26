@@ -48,11 +48,11 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'simple_history',
     'django_filters',
-
     # Local Apps
     'users.apps.UsersConfig',
     'qna.apps.QnaConfig',
     'tags.apps.TagsConfig',
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 AUTH_USER_MODEL = 'users.User'

@@ -24,3 +24,12 @@ class IsModeratorOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and (request.user.is_moderator() or request.user.is_admin())
 
+class IsModeratorOrAdminOrReadOnly(permissions.BasePermission):
+    """
+    Custom permission to allow read-only access to anyone,
+    but only allow moderators or admins to perform writes.
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user and request.user.is_authenticated and (request.user.is_moderator() or request.user.is_admin())

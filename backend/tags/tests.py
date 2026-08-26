@@ -20,3 +20,35 @@ class TagsAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 1)
         self.assertEqual(response.data['results'][0]['value'], "Operating Systems")
+from rest_framework.test import APITestCase
+from rest_framework import status
+from django.contrib.auth import get_user_model
+from users.models import UserRole
+from .models import TagCategory
+
+User = get_user_model()
+
+class TagAPITests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(username='admin', password='password', role=UserRole.ADMIN)
+        self.student = User.objects.create_user(username='student', password='password', role=UserRole.STUDENT)
+        self.cat = TagCategory.objects.create(name='Subject')
+
+    def test_tag_creation_permissions(self):
+        url = '/api/tags/'
+        data = {'category_id': self.cat.id, 'value': 'NewTag'}
+
+        # 1. Unauthenticated
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # 2. Student (Forbidden)
+        self.client.force_authenticate(user=self.student)
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # 3. Admin (Allowed)
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+

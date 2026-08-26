@@ -187,7 +187,11 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
         if not proposed_text:
             return Response({"error": "proposed_text is required"}, status=status.HTTP_400_BAD_REQUEST)
             
-        removed_attachment_ids = request.data.get('removed_attachment_ids', [])
+        attachment_ids = request.data.get('attachment_ids', [])
+        
+        # Declarative syncing: compute which existing attachments are missing from attachment_ids
+        existing_ids = list(instance.attachments.values_list('id', flat=True))
+        removed_attachment_ids = [aid for aid in existing_ids if aid not in attachment_ids]
         
         ctype = ContentType.objects.get_for_model(instance)
         
@@ -198,6 +202,15 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
             proposed_text=proposed_text,
             removed_attachment_ids=removed_attachment_ids
         )
+        
+        attachment_ids = request.data.get('attachment_ids', [])
+        if attachment_ids:
+            se_ctype = ContentType.objects.get_for_model(SuggestedEdit)
+            FileAttachment.objects.filter(
+                id__in=attachment_ids,
+                object_id__isnull=True,
+                uploader=request.user
+            ).update(content_type=se_ctype, object_id=suggested_edit.id)
         
         return Response(
             {"message": "Edit submitted for admin approval.", "suggested_edit_id": suggested_edit.id},
@@ -323,7 +336,11 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
         if not proposed_text:
             return Response({"error": "proposed_text is required"}, status=status.HTTP_400_BAD_REQUEST)
             
-        removed_attachment_ids = request.data.get('removed_attachment_ids', [])
+        attachment_ids = request.data.get('attachment_ids', [])
+        
+        # Declarative syncing: compute which existing attachments are missing from attachment_ids
+        existing_ids = list(instance.attachments.values_list('id', flat=True))
+        removed_attachment_ids = [aid for aid in existing_ids if aid not in attachment_ids]
         
         ctype = ContentType.objects.get_for_model(instance)
         
@@ -334,6 +351,15 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
             proposed_text=proposed_text,
             removed_attachment_ids=removed_attachment_ids
         )
+        
+        attachment_ids = request.data.get('attachment_ids', [])
+        if attachment_ids:
+            se_ctype = ContentType.objects.get_for_model(SuggestedEdit)
+            FileAttachment.objects.filter(
+                id__in=attachment_ids,
+                object_id__isnull=True,
+                uploader=request.user
+            ).update(content_type=se_ctype, object_id=suggested_edit.id)
         
         return Response(
             {"message": "Edit submitted for admin approval.", "suggested_edit_id": suggested_edit.id},
@@ -408,7 +434,6 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import mixins
 
 @extend_schema_view(
-    list=extend_schema(summary="List all uploaded attachments"),
     retrieve=extend_schema(summary="Get a specific attachment"),
     create=extend_schema(
         summary="Upload a new attachment (multipart/form-data)",
@@ -416,11 +441,9 @@ from rest_framework import mixins
             "multipart/form-data": {
                 "type": "object",
                 "properties": {
-                    "file": {"type": "string", "format": "binary", "description": "The binary file to upload"},
-                    "model_name": {"type": "string", "description": "The target model (e.g., 'question', 'answer','suggestededit')"},
-                    "object_id": {"type": "integer", "description": "ID of the specific post"}
+                    "file": {"type": "string", "format": "binary", "description": "The binary file to upload"}
                 },
-                "required": ["file", "model_name", "object_id"]
+                "required": ["file"]
             }
         }
     ),
@@ -429,10 +452,9 @@ from rest_framework import mixins
 class FileAttachmentViewSet(mixins.CreateModelMixin,
                             mixins.RetrieveModelMixin,
                             mixins.DestroyModelMixin,
-                            mixins.ListModelMixin,
                             viewsets.GenericViewSet):
     """
-    Files can only be uploaded (created), retrieved, listed, and deleted.
+    Files can only be uploaded (created), retrieved, and deleted.
     They cannot be edited (updated) once uploaded.
     """
     queryset = FileAttachment.objects.all()

@@ -153,3 +153,58 @@ class QnAAPITests(APITestCase):
         response = self.client.get('/api/questions/?author__username=student')
         self.assertEqual(len(response.data['results']), 1)
 
+
+    def test_markdown_upload_and_claim(self):
+        self.client.force_authenticate(user=self.student)
+        # 1. Upload orphan file
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        file_obj = SimpleUploadedFile('test.png', b'file_content', content_type='image/png')
+        upload_url = '/api/attachments/'
+        response = self.client.post(upload_url, {'file': file_obj}, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        attachment_id = response.data['id']
+        
+        # 2. Create question and claim
+        url = '/api/questions/'
+        from tags.models import TagCategory, Tag
+        cat = TagCategory.objects.create(name='Subject')
+        tag = Tag.objects.create(category=cat, value='Math')
+        data = {'title': 'T', 'body': 'B', 'tag_ids': [tag.id], 'attachment_ids': [attachment_id]}
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(response.data['tags']), 1)
+        self.assertEqual(len(response.data['attachments']), 1)
+        self.assertEqual(response.data['attachments'][0]['id'], attachment_id)
+
+
+    def test_update_removes_attachments(self):
+        self.client.force_authenticate(user=self.student)
+        # 1. Upload two orphan files
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        f1 = SimpleUploadedFile('f1.txt', b'1', content_type='text/plain')
+        f2 = SimpleUploadedFile('f2.txt', b'2', content_type='text/plain')
+        
+        a1_id = self.client.post('/api/attachments/', {'file': f1}, format='multipart').data['id']
+        a2_id = self.client.post('/api/attachments/', {'file': f2}, format='multipart').data['id']
+        
+        # 2. Create question with both
+        url = '/api/questions/'
+        data = {'title': 'T', 'body': 'B', 'attachment_ids': [a1_id, a2_id]}
+        response = self.client.post(url, data)
+        question_id = response.data['id']
+        self.assertEqual(len(response.data['attachments']), 2)
+        
+        # 3. Update question, removing a1_id (must be admin to edit directly)
+        self.client.force_authenticate(user=self.admin)
+        update_url = f'/api/questions/{question_id}/'
+        # using PATCH
+        patch_data = {'attachment_ids': [a2_id]}
+        response = self.client.patch(update_url, patch_data)
+        self.assertEqual(len(response.data['attachments']), 1)
+        self.assertEqual(response.data['attachments'][0]['id'], a2_id)
+        
+        # 4. Verify a1_id is deleted from database
+        from .models import FileAttachment
+        self.assertFalse(FileAttachment.objects.filter(id=a1_id).exists())
+        self.assertTrue(FileAttachment.objects.filter(id=a2_id).exists())
+
