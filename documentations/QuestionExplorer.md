@@ -1,231 +1,143 @@
-# QuestionExplorer.md Documentation
+# QuestionExplorer Component Documentation
 
-## Purpose
-The `QuestionExplorer.jsx` file implements a comprehensive component for displaying exam questions with their associated instructor answers in the UniQAKNTU platform. It fetches and renders a list of questions for a specific exam, displays all submitted answers for each question using AnswerCard components, and provides an integrated AnswerForm for instructors to contribute new answers. The component currently uses mock data matching API Endpoint 2.3 (Questions) and Endpoint 3.1 (Answers) structures, with clear markers for future backend integration.
+## Overview
+The `QuestionExplorer` component displays a list of questions for a specific exam (source material) with their answers. It has been updated in Phase 2 to implement the pagination adapter pattern and standardized data contract.
 
-## Key Components
+## File Location
+`frontend/src/components/wiki/QuestionExplorer.jsx`
 
-### Component: QuestionExplorer
-A functional React component that serves as the main interface for browsing exam questions and viewing/submitting answers.
+## API Data Contract Alignment
 
-### Props
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `examId` | number | Yes | The unique identifier of the exam to fetch questions for |
+### API Endpoint Used
+- **GET `/api/questions/?source_material={examId}&status=APPROVED`**
+  - Filters questions by source material (exam)
+  - Only shows APPROVED questions for public visibility
+  - Returns paginated response: `{ count, next, previous, results }`
 
-### Internal State
-- `questions` (Array): List of question objects with nested answers
-- `loading` (boolean): Loading state during data fetching
-- `isInstructor` (boolean): User's instructor status from AuthContext
-
-### Mock Data Structure
-
-#### Question Object (Endpoint 2.3)
+### Response Transformer Usage (Step 2.1 & 2.2)
 ```javascript
-{
-  id: number,              // Unique question identifier
-  question_number: number, // Sequential question number
-  text: string             // Question text with MathJax formulas
-}
+// Uses extractResults utility from api.js
+const results = api.extractResults 
+  ? api.extractResults(response) 
+  : (response.data?.results || []);
 ```
 
-#### Answer Object (Endpoint 3.1)
+## Key Changes from Previous Implementation
+
+### 1. Removed Mock Data
+**Before:** Used hardcoded mock questions array
+**After:** Fetches real data from API endpoint
+
+### 2. API Integration with Response Adapter
 ```javascript
-{
-  id: number,              // Unique answer identifier
-  author: {                // Instructor information
-    name: string,
-    title: string
-  },
-  current_body: string,    // Markdown content
-  is_verified: boolean,    // Verification status
-  image: string|null,      // Image attachment URL
-  pdf_file: string|null    // PDF attachment URL
-}
-```
+useEffect(() => {
+  const fetchQuestions = async () => {
+    setLoading(true);
+    try {
+      // Fetch questions filtered by source_material and status=APPROVED
+      const response = await api.get(`/questions/?source_material=${examId}&status=APPROVED`);
+      
+      // Use extractResults utility for standardized parsing
+      const results = api.extractResults 
+        ? api.extractResults(response) 
+        : (response.data?.results || []);
+      setQuestions(results);
+    } catch (error) {
+      console.error('Failed to fetch questions:', error);
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-### Key Functions
-
-#### `fetchQuestions()`
-Effect hook that loads questions when component mounts or examId changes.
-- **Current Implementation**: Uses hardcoded mock data with simulated delay
-- **Production**: Must be replaced with actual API call to Endpoint 2.3
-- Sets loading state during fetch operation
-- Populates questions array on success
-
-#### `handleAnswerSubmit(result)`
-Callback function triggered when instructor submits an answer.
-- Logs submission result to console
-- Placeholder for UI refresh logic (refetch questions or optimistic update)
-- Passed to AnswerForm component via onSubmit prop
-
-### Child Components
-
-#### AnswerCard
-- Renders individual answer cards for each submitted answer
-- Displays author info, verification badge, markdown content, and attachments
-- Imported from `./AnswerCard`
-
-#### AnswerForm
-- Provides answer submission interface for instructors
-- Conditionally rendered only when user has instructor privileges
-- Imported from `./AnswerForm`
-
-### Dependencies
-- React (`useState`, `useEffect`)
-- `AnswerCard` component
-- `AnswerForm` component
-- `useAuth` hook from `../../context/AuthContext`
-- Bootstrap CSS classes for styling
-
-## Usage
-
-### Basic Integration
-```jsx
-import QuestionExplorer from './components/wiki/QuestionExplorer';
-
-function ExamDetailPage({ examId }) {
-  return (
-    <div>
-      <h1>Exam Questions</h1>
-      <QuestionExplorer examId={examId} />
-    </div>
-  );
-}
-```
-
-### With Route Parameters
-```jsx
-import { useParams } from 'react-router-dom';
-import QuestionExplorer from './components/wiki/QuestionExplorer';
-
-function ExamPage() {
-  const { examId } = useParams();
-  
-  return <QuestionExplorer examId={parseInt(examId)} />;
-}
-```
-
-## Integration
-
-### Parent Components
-The `QuestionExplorer` is designed to be used within:
-- Exam detail pages
-- Course navigation flows
-- Future: Student dashboard for quick access to exam questions
-
-### API Endpoints (Must be verified - باید چک شود)
-
-#### Endpoint 2.3: Get Questions for Exam
-```
-GET /api/v1/exams/:id/questions/
-Authorization: Token <user_token>
-
-Response:
-[
-  {
-    "id": 1,
-    "question_number": 1,
-    "text": "Calculate $$T(n) = 2T(n/2) + O(n)$$",
-    "answers": [
-      {
-        "id": 101,
-        "author": { "name": "Dr. Smith", "title": "Professor" },
-        "current_body": "## Solution...",
-        "is_verified": true,
-        "image": null,
-        "pdf_file": "/media/answers/sol.pdf"
-      }
-    ]
+  if (examId) {
+    fetchQuestions();
   }
-]
+}, [examId]);
 ```
 
-#### Endpoint 3.1: Get Answers for Question
-May be called separately or included in questions endpoint:
+### 3. Status Badge Display (Step 2.3)
+```jsx
+{question.status && (
+  <span className={`badge ms-2 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
+    {question.status === 'APPROVED' ? 'Approved' : 'Pending Review'}
+  </span>
+)}
 ```
-GET /api/v1/questions/:id/answers/
+
+### 4. Jalali Date Timestamps (Step 2.3)
+```jsx
+{question.created_at_jalali && (
+  <small className="text-muted d-block mt-2">
+    Asked: {question.created_at_jalali}
+  </small>
+)}
 ```
 
-### Current Mock Implementation
-⚠️ **باید چک شود**: The component currently uses mock data. Real API integration requires:
+### 5. Updated Answer Submission Handler
+```javascript
+const handleAnswerSubmit = (result) => {
+  console.log('Answer submitted:', result);
+  // Refetch questions to show updated answers
+  if (examId) {
+    setLoading(true);
+    api.get(`/questions/?source_material=${examId}&status=APPROVED`)
+      .then(response => {
+        const results = api.extractResults 
+          ? api.extractResults(response) 
+          : (response.data?.results || []);
+        setQuestions(results);
+      })
+      .catch(error => console.error('Failed to refetch questions:', error))
+      .finally(() => setLoading(false));
+  }
+};
+```
 
-1. Uncomment API call in `fetchQuestions()`:
-   ```javascript
-   const response = await api.get(`/exams/${examId}/questions/`);
-   setQuestions(response.data);
-   ```
+## Features
 
-2. Backend Endpoint 2.3 must be implemented with:
-   - Question model filtering by exam ID
-   - Prefetching of related answers (or separate endpoint calls)
-   - Proper serialization of answer data including file URLs
-   - RBAC enforcement (students can read, instructors can write)
+### Question Display
+- Question number or ID fallback
+- Markdown text rendering with MathJax support
+- Status badge (Approved/Pending Review)
+- Jalali timestamp display
 
-3. Handle nested data structure:
-   - Option A: Backend returns questions with nested answers array
-   - Option B: Frontend makes separate API calls for each question's answers
+### Answers Section
+- Renders AnswerCard components for each answer
+- Shows "No answers" message when empty
+- Displays answer count
 
-### Authentication & Authorization
-- **Read Access**: All authenticated users can view questions and answers
-- **Write Access**: Only users with `is_instructor = true` see AnswerForm
-- **Server-Side RBAC**: Backend must verify instructor status before allowing answer submission
+### Instructor Features
+- AnswerForm displayed only for instructors
+- Automatic refresh after answer submission
 
-### MathJax Integration
-Questions and answers containing mathematical formulas are automatically rendered:
-- Question text processed with inline math replacement
-- AnswerCard components handle their own MathJax typesetting
-- Ensure MathJax script is loaded in application entry point
+## Props
+| Prop | Type | Description |
+|------|------|-------------|
+| examId | number | The ID of the exam (source material) to fetch questions for |
 
-## Styling
-Uses Bootstrap 5 utility classes:
-- Card layouts for questions and answers
-- Spinner component for loading states
-- Alert components for empty states and warnings
-- Responsive spacing utilities (`mb-3`, `mt-4`, `py-5`)
-- Text color utilities (`text-primary`, `text-muted`)
+## Dependencies
+- React (`useState`, `useEffect`)
+- `../../services/api` - API client with extractResults utility
+- `./AnswerCard` - Child component for rendering answers
+- `./AnswerForm` - Child component for instructor answer submission
+- `../../context/AuthContext` - Authentication context for role checking
 
-## Change Log
+## Verification Status
+**باید چک شود** - This component has been updated to match Phase 2 data contract. Requires verification against actual backend API responses.
 
-### Initial Implementation - August 2026
-- Created question explorer component with mock data
-- Implemented question list rendering with numbering
-- Integrated AnswerCard for displaying answers
-- Added conditional AnswerForm rendering for instructors
-- Built loading and empty state handling
-- Included comprehensive backend integration warnings (باید چک شود)
-- Added mock data examples with mathematical formulas
+## Related Files
+- `services/api.js` - API client with response transformers
+- `components/wiki/AnswerCard.jsx` - Child component for answer display
+- `components/wiki/AnswerForm.jsx` - Form for submitting answers
+- `API.md` - API endpoint specifications
+- `FIXING_TODO.md` - Phase 2 implementation checklist
 
-## Notes
-- **Backend Dependency**: Component requires both Endpoint 2.3 and 3.1 to be fully functional
-- **Performance Consideration**: For exams with many questions, consider pagination or virtual scrolling
-- **Data Structure**: Current mock assumes nested answers; backend may return flat structure requiring client-side grouping
-- **Error Handling**: Basic error logging implemented; production should add user-friendly error messages
-- **MathJax Timing**: Answers trigger their own typesetting; questions use inline replacement
-
-## Verification Checklist
-Before marking this component as complete, verify:
-- [ ] Backend Endpoint 2.3 returns correct question structure
-- [ ] Answers are properly associated with questions
-- [ ] Loading state displays during data fetching
-- [ ] Empty state shows when no questions exist
-- [ ] Instructors see AnswerForm below each question
-- [ ] Non-instructors do not see AnswerForm
-- [ ] Mathematical formulas render correctly in questions and answers
-- [ ] Answer submission triggers UI update
-- [ ] Error states handled gracefully
-
-## Error Handling
-- Network errors logged to console
-- Loading state prevents premature rendering
-- Empty questions array displays informative message
-- Missing answers show encouragement to contribute
-- MathJax errors isolated to prevent UI crashes
-
-## Future Enhancements
-- **Pagination**: Support for large question sets
-- **Filtering**: Sort questions by answered/unanswered status
-- **Search**: Text search within questions and answers
-- **Collapsible Answers**: Toggle visibility of individual answers
-- **Answer Count Badge**: Show number of answers per question in header
-- **Direct Navigation**: Jump to specific question number via URL hash
+## Testing Checklist
+- [ ] Verify questions load from API endpoint
+- [ ] Confirm status=APPROVED filter is applied
+- [ ] Test extractResults utility integration
+- [ ] Validate status badge display
+- [ ] Check Jalali date rendering
+- [ ] Test answer submission and refresh flow
+- [ ] Verify instructor-only AnswerForm visibility

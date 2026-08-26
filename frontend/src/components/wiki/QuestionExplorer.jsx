@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
 import { useAuth } from '../../context/AuthContext';
@@ -8,90 +9,38 @@ import { useAuth } from '../../context/AuthContext';
  * 
  * Displays a list of questions for a specific exam with their answers.
  * Instructors can submit new answers through the integrated AnswerForm.
- * Uses mock data based on API Endpoint 2.3 (Questions) and 3.1 (Answers).
+ * Uses API Endpoint 2.3 (Questions) and 3.1 (Answers).
  * 
  * @param {number} examId - The ID of the exam to fetch questions for
  */
 const QuestionExplorer = ({ examId }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { isInstructor } = useAuth();
-
-  /**
-   * Mock data matching API Endpoint 2.3 structure
-   * باید چک شود - Replace with actual API call when backend is ready
-   */
-  const mockQuestions = [
-    {
-      id: 1,
-      question_number: 1,
-      text: 'Calculate the time complexity of the following algorithm: $$T(n) = 2T(n/2) + O(n)$$',
-      answers: [
-        {
-          id: 101,
-          author: { name: 'Dr. Smith', title: 'Professor' },
-          current_body: '## Solution\n\nUsing the **Master Theorem**:\n\n$$T(n) = aT(n/b) + f(n)$$\n\nWhere:\n- $a = 2$\n- $b = 2$\n- $f(n) = O(n)$\n\nSince $n^{\\log_b a} = n^{\\log_2 2} = n^1 = n$, and $f(n) = O(n)$, we have Case 2:\n\n$$T(n) = \\Theta(n \\log n)$$',
-          is_verified: true,
-          image: null,
-          pdf_file: '/media/answers/solution1.pdf',
-        },
-        {
-          id: 102,
-          author: { name: 'Prof. Johnson', title: 'Associate Professor' },
-          current_body: '### Alternative Approach\n\nWe can also solve this using a **recursion tree**:\n\n```\nLevel 0:        cn\nLevel 1:     cn/2  cn/2\nLevel 2:   cn/4 cn/4 cn/4 cn/4\n...\n```\n\nTotal work at each level: $cn$\nNumber of levels: $\\log_2 n$\n\nTherefore: $T(n) = O(n \\log n)$',
-          is_verified: false,
-          image: '/media/answers/recursion_tree.png',
-          pdf_file: null,
-        },
-      ],
-    },
-    {
-      id: 2,
-      question_number: 2,
-      text: 'Prove that for any graph $G = (V, E)$, the sum of degrees equals twice the number of edges: $$\\sum_{v \\in V} \\deg(v) = 2|E|$$',
-      answers: [
-        {
-          id: 201,
-          author: { name: 'Dr. Williams', title: 'Lecturer' },
-          current_body: '**Proof by Handshaking Lemma:**\n\nEach edge $e = \\{u, v\\}$ contributes exactly **2** to the total degree count:\n- 1 to $\\deg(u)$\n- 1 to $\\deg(v)$\n\nTherefore:\n$$\\sum_{v \\in V} \\deg(v) = 2|E|$$\n\nThis is known as the **Handshaking Lemma**. ∎',
-          is_verified: true,
-          image: null,
-          pdf_file: null,
-        },
-      ],
-    },
-    {
-      id: 3,
-      question_number: 3,
-      text: 'Find the eigenvalues of the matrix: $$A = \\begin{pmatrix} 3 & 1 \\\\ 0 & 2 \\end{pmatrix}$$',
-      answers: [],
-    },
-  ];
+  const { user, isInstructor } = useAuth();
 
   /**
    * Fetch questions from API
-   * باید چک شود - Replace mock data with actual API call
+   * Implements pagination adapter pattern from api.js
+   * Filters by source_material (exam) and status=APPROVED for public visibility
    */
   useEffect(() => {
     const fetchQuestions = async () => {
       setLoading(true);
 
-      // باید چک شود - Uncomment when backend Endpoint 2.3 is ready:
-      /*
       try {
-        const response = await api.get(`/exams/${examId}/questions/`);
-        setQuestions(response.data);
+        // Fetch questions filtered by source_material (exam) and status=APPROVED
+        const response = await api.get(`/questions/?source_material=${examId}&status=APPROVED`);
+        
+        // Use extractResults utility for standardized parsing
+        const results = api.extractResults ? api.extractResults(response) : (response.data?.results || []);
+        setQuestions(results);
       } catch (error) {
         console.error('Failed to fetch questions:', error);
+        // Fallback to empty array on error
+        setQuestions([]);
       } finally {
         setLoading(false);
       }
-      */
-
-      // Mock API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setQuestions(mockQuestions);
-      setLoading(false);
     };
 
     if (examId) {
@@ -105,7 +54,17 @@ const QuestionExplorer = ({ examId }) => {
    */
   const handleAnswerSubmit = (result) => {
     console.log('Answer submitted:', result);
-    // In production, refetch questions or optimistically update UI
+    // Refetch questions to show updated answers
+    if (examId) {
+      setLoading(true);
+      api.get(`/questions/?source_material=${examId}&status=APPROVED`)
+        .then(response => {
+          const results = api.extractResults ? api.extractResults(response) : (response.data?.results || []);
+          setQuestions(results);
+        })
+        .catch(error => console.error('Failed to refetch questions:', error))
+        .finally(() => setLoading(false));
+    }
   };
 
   if (loading) {
@@ -134,22 +93,34 @@ const QuestionExplorer = ({ examId }) => {
             <div className="card mb-3 bg-light">
               <div className="card-body">
                 <h4 className="text-primary">
-                  Question {question.question_number}
+                  Question {question.question_number || question.id}
                 </h4>
                 <div 
                   className="question-text mt-2"
                   style={{ fontSize: '16px', lineHeight: '1.6' }}
                   dangerouslySetInnerHTML={{ 
-                    __html: question.text.replace(/\$(.*?)\$/g, '<span class="math-inline">$1</span>')
+                    __html: question.text?.replace(/\$(.*?)\$/g, '<span class="math-inline">$1</span>') || question.body || ''
                   }}
                 />
+                {/* Status Badge */}
+                {question.status && (
+                  <span className={`badge ms-2 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
+                    {question.status === 'APPROVED' ? 'Approved' : 'Pending Review'}
+                  </span>
+                )}
+                {/* Timestamp using Jalali date */}
+                {question.created_at_jalali && (
+                  <small className="text-muted d-block mt-2">
+                    Asked: {question.created_at_jalali}
+                  </small>
+                )}
               </div>
             </div>
 
             {/* Answers List */}
             <div className="answers-section">
               <h5 className="mb-3">
-                Answers ({question.answers?.length || 0})
+                Answers ({question.answers_count || 0})
               </h5>
               
               {question.answers && question.answers.length > 0 ? (
@@ -175,16 +146,6 @@ const QuestionExplorer = ({ examId }) => {
           </div>
         ))
       )}
-
-      {/* Backend Integration Notice */}
-      <div className="alert alert-warning mt-4">
-        <strong>⚠️ باید چک شود:</strong> This component currently uses mock data. 
-        Real API integration requires:
-        <ul className="mb-0 mt-2">
-          <li>Backend Endpoint 2.3: <code>GET /api/v1/exams/:id/questions/</code></li>
-          <li>Backend Endpoint 3.1: <code>GET /api/v1/questions/:id/answers/</code></li>
-        </ul>
-      </div>
     </div>
   );
 };

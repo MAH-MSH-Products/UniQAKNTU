@@ -70,4 +70,28 @@ api.interceptors.response.use(
   }
 );
 
+/**
+ * Response Transformer Utilities
+ * Standardizes API response parsing for list endpoints
+ * All GET list endpoints return { count, next, previous, results }
+ */
+
+/**
+ * Extract results array from paginated API response
+ * @param {Object} response - Axios response object
+ * @returns {Array} - Array of result objects or empty array
+ */
+export const extractResults = (response) => response.data?.results || [];
+
+/**
+ * Extract pagination metadata from API response
+ * @param {Object} response - Axios response object
+ * @returns {Object} - Pagination metadata { count, next, previous }
+ */
+export const getPaginationMeta = (response) => ({
+  count: response.data?.count || 0,
+  next: response.data?.next || null,
+  previous: response.data?.previous || null,
+});
+
 export default api;

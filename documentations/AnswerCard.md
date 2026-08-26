@@ -1,202 +1,133 @@
-# AnswerCard.md Documentation
+# AnswerCard Component Documentation
 
-## Purpose
-The `AnswerCard.jsx` file provides a display component for rendering individual instructor answers to exam questions in the UniQAKNTU platform. It supports rich content presentation including formatted Markdown text with MathJax mathematical formulas, author information with verification badges, image attachments, and PDF file download links. The component is designed to consume answer objects matching the API Endpoint 3.1 response structure.
+## Overview
+The `AnswerCard` component displays a single answer to a question with comprehensive support for the backend API data contract. It has been updated in Phase 2 to align with the standardized response format.
 
-## Key Components
+## File Location
+`frontend/src/components/wiki/AnswerCard.jsx`
 
-### Component: AnswerCard
-A functional React component that renders a single answer card with complete metadata and attachments.
+## API Data Contract Alignment
 
-### Props
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `answer` | Object | Yes | Complete answer object matching API Endpoint 3.1 structure |
-
-### Answer Object Structure
+### Props Structure (API Endpoint 3.1 - Answers)
 ```javascript
 {
   id: number,                    // Unique answer identifier
   author: {                      // Author information
-    name: string,                // Instructor's display name
-    title: string                // Academic title (e.g., "Professor")
+    username: string,
+    role: 'STUDENT' | 'MODERATOR' | 'ADMIN'
   },
-  current_body: string,          // Markdown content of the answer
-  is_verified: boolean,          // Whether answer is verified by system
-  image: string|null,            // URL to attached image (optional)
-  pdf_file: string|null          // URL to attached PDF (optional)
+  body: string,                  // Markdown content (replaces current_body)
+  status: 'PENDING' | 'APPROVED' | 'REJECTED',  // Status enum (replaces is_verified)
+  image: string | null,          // URL to attached image
+  pdf_file: string | null,       // URL to attached PDF
+  user_vote: 1 | -1 | 0,         // User's vote value
+  created_at_jalali: string,     // Persian Shamsi timestamp (replaces created_at)
+  updated_at_jalali: string      // Persian Shamsi update timestamp
 }
 ```
 
-### Internal Functions
+## Key Changes from Previous Implementation
 
-#### `processMarkdown(text)`
-Converts raw Markdown text to HTML for safe rendering.
-- **Input**: Raw markdown string from `current_body`
-- **Output**: HTML string with proper escaping
-- **Supported Syntax**:
-  - Headers: `# H1`, `## H2`, `### H3`
-  - Bold: `**text**` → `<strong>text</strong>`
-  - Italic: `*text*` → `<em>text</em>`
-  - Inline code: `` `code` `` → `<code>code</code>`
-  - Line breaks: Newlines → `<br>`
-  - HTML escaping: Prevents XSS attacks
+### 1. Status Field Mapping (Step 2.3)
+**Before:** Used boolean `is_verified` field
+**After:** Uses enum `status` field
 
-#### `useEffect` Hook
-Triggers MathJax typesetting when component mounts or content updates.
-- Checks for `window.MathJax.typesetPromise` availability
-- Calls `typesetPromise()` to render mathematical formulas
-- Dependency array: `[current_body]` ensures re-render on content change
+```javascript
+// Old implementation
+{is_verified && <span className="badge bg-success">✓ Verified</span>}
 
-### Rendered Elements
+// New implementation
+const getStatusBadge = () => {
+  if (status === 'APPROVED') return <span className="badge bg-success">✓ Approved</span>;
+  if (status === 'PENDING') return <span className="badge bg-warning">Pending Review</span>;
+  if (status === 'REJECTED') return <span className="badge bg-danger">Rejected</span>;
+};
+```
 
-#### Header Section
-- Author name with optional academic title
-- Green "✓ Verified" badge if `is_verified === true`
+### 2. Date Field Mapping (Step 2.3)
+**Before:** Used `created_at`, `updated_at` (ISO 8601 UTC)
+**After:** Uses `created_at_jalali`, `updated_at_jalali` (Persian Shamsi)
 
-#### Content Section
-- Processed Markdown HTML with MathJax formulas
-- Proper line height and font sizing for readability
+```javascript
+{created_at_jalali && (
+  <small className="text-muted d-block mb-2">
+    Posted: {created_at_jalali}
+    {updated_at_jalali && updated_at_jalali !== created_at_jalali && (
+      <span className="ms-2">• Updated: {updated_at_jalali}</span>
+    )}
+  </small>
+)}
+```
 
-#### Attachments
-- **Image**: Renders `<img>` tag with responsive sizing (max-height: 400px)
-- **PDF**: Provides download/view button with external link
-- Optional iframe preview (commented out for future use)
+### 3. Vote Display Using user_vote (Step 2.3)
+**Before:** Client-side vote calculation
+**After:** Uses server-provided `user_vote` field
 
-### Dependencies
-- React (`useEffect`)
-- Bootstrap CSS classes for styling
-- Global `window.MathJax` object for formula rendering
+```javascript
+const getVoteDisplay = () => {
+  if (user_vote === 1) return <span className="text-success"><i className="bi bi-arrow-up"></i> Upvoted</span>;
+  if (user_vote === -1) return <span className="text-danger"><i className="bi bi-arrow-down"></i> Downvoted</span>;
+};
+```
 
-## Usage
+### 4. Author Role Display
+**Before:** Used `author.name` and `author.title`
+**After:** Uses `author.username` and `author.role` enum
 
-### Basic Integration
+```javascript
+{author?.username || author?.name || 'Unknown Author'}
+{author?.role && (
+  <small className="text-muted ms-2">
+    ({author.role === 'ADMIN' ? 'Admin' : author.role === 'MODERATOR' ? 'Moderator' : 'Student'})
+  </small>
+)}
+```
+
+## Features
+
+### Markdown Processing
+- Basic markdown parsing (headers, bold, italic, code)
+- HTML escaping for security
+- MathJax integration for mathematical formulas
+
+### Attachment Support
+- Image attachments with responsive sizing
+- PDF file download links
+- Optional PDF embed preview (commented out)
+
+### Status Badges
+- **Approved** (green badge): Content is publicly visible
+- **Pending Review** (yellow badge): Awaiting moderator approval
+- **Rejected** (red badge): Content was rejected by moderator
+
+## Usage Example
+
 ```jsx
 import AnswerCard from './components/wiki/AnswerCard';
 
-function QuestionDetail({ question }) {
-  return (
-    <div>
-      {question.answers.map(answer => (
-        <AnswerCard key={answer.id} answer={answer} />
-      ))}
-    </div>
-  );
-}
-```
-
-### With Single Answer
-```jsx
-const answerData = {
-  id: 101,
-  author: { name: 'Dr. Smith', title: 'Professor' },
-  current_body: '## Solution\n\n$$E = mc^2$$',
-  is_verified: true,
-  image: '/media/answers/diagram.png',
-  pdf_file: '/media/answers/solution.pdf'
-};
-
+// In parent component
 <AnswerCard answer={answerData} />
 ```
 
-### Example Answer with Math
-```javascript
-const answer = {
-  id: 1,
-  author: { name: 'Prof. Johnson', title: 'Associate Professor' },
-  current_body: `
-### Solution using Master Theorem
+## Dependencies
+- React (`useEffect` hook)
+- Bootstrap CSS classes
+- Bootstrap Icons (`bi-arrow-up`, `bi-arrow-down`, `bi-file-pdf`)
+- MathJax (for formula rendering)
 
-$$T(n) = aT(n/b) + f(n)$$
+## Verification Status
+**باید چک شود** - This component has been updated to match the Phase 2 data contract. Requires verification against actual backend API responses.
 
-Where:
-- $a = 2$ (number of subproblems)
-- $b = 2$ (division factor)
-- $f(n) = O(n)$ (combination cost)
+## Related Files
+- `services/api.js` - API client with response transformers
+- `components/wiki/QuestionExplorer.jsx` - Parent component that renders AnswerCard
+- `API.md` - API endpoint specifications
+- `FIXING_TODO.md` - Phase 2 implementation checklist
 
-**Result**: $T(n) = \\Theta(n \\log n)$
-  `,
-  is_verified: false,
-  image: '/media/answers/recursion_tree.png',
-  pdf_file: null
-};
-```
-
-## Integration
-
-### Parent Components
-The `AnswerCard` is designed to be used within:
-- `QuestionExplorer.jsx`: Renders list of answers for each question
-- Future: Answer detail pages, user profile answer histories
-
-### API Endpoint Specification (Endpoint 3.1)
-Expected response structure from backend:
-
-```
-GET /api/v1/questions/:id/answers/
-
-Response:
-[
-  {
-    "id": 101,
-    "author": {
-      "name": "Dr. Smith",
-      "title": "Professor"
-    },
-    "current_body": "## Solution...",
-    "is_verified": true,
-    "image": "/media/answers/img123.png",
-    "pdf_file": "/media/answers/pdf456.pdf",
-    "created_at": "2026-08-18T10:30:00Z"
-  }
-]
-```
-
-### MathJax Integration
-For proper mathematical rendering:
-1. Ensure MathJax script is loaded in `index.html` or main layout
-2. Component automatically triggers typesetting on mount and content changes
-3. Supports both inline `$...$` and display `$$...$$` math modes
-
-### Styling
-Uses Bootstrap 5 utility classes:
-- Card layout (`card`, `card-header`, `card-body`)
-- Flexbox utilities for header alignment (`d-flex`, `justify-content-between`)
-- Badge component for verification status (`badge bg-success`)
-- Responsive image handling (`img-fluid`, `rounded`)
-- Button styling for PDF links (`btn btn-outline-primary btn-sm`)
-
-## Change Log
-
-### Initial Implementation - August 2026
-- Created answer display card component
-- Implemented Markdown parsing with HTML escaping
-- Integrated MathJax for mathematical formula rendering
-- Added author information with verification badge
-- Implemented image attachment rendering
-- Added PDF download link functionality
-- Configured responsive design with Bootstrap
-
-## Notes
-- **Security**: All user-generated content is HTML-escaped before rendering to prevent XSS attacks
-- **Performance**: MathJax typesetting occurs asynchronously to avoid blocking UI
-- **Accessibility**: Consider adding alt text validation for images in future iterations
-- **PDF Preview**: Currently only provides download link; iframe preview available but commented out
-- **Multiple Images**: Current API spec supports single image; component can be extended for gallery view
-
-## Verification Checklist
-Before marking this component as complete, verify:
-- [ ] Markdown rendering displays correctly (headers, bold, italic, code)
-- [ ] MathJax formulas render properly (both inline and display modes)
-- [ ] Verified badge appears only when `is_verified === true`
-- [ ] Images load and display with correct sizing
-- [ ] PDF links open/download correctly
-- [ ] Author name and title display properly
-- [ ] XSS protection prevents script injection via markdown
-
-## Error Handling
-- Missing author name defaults to "Unknown Author"
-- Missing `current_body` defaults to empty string
-- Missing `is_verified` defaults to `false`
-- Null/undefined image/pdf handled gracefully (not rendered)
-- MathJax errors logged to console without breaking UI
+## Testing Checklist
+- [ ] Verify status badges display correctly for all three states
+- [ ] Confirm Jalali dates render properly
+- [ ] Test vote display with user_vote values: 1, -1, 0
+- [ ] Validate author role display for STUDENT, MODERATOR, ADMIN
+- [ ] Check MathJax formula rendering
+- [ ] Test image and PDF attachment display

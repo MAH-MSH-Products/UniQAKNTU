@@ -8,23 +8,31 @@ import React, { useEffect } from 'react';
  * - Markdown text with MathJax formulas
  * - Image attachments
  * - PDF file downloads
+ * - Status badges (Pending Review / Approved)
+ * - Jalali date timestamps
+ * - Vote display using user_vote field
  * 
  * @param {Object} answer - Answer object matching API Endpoint 3.1 structure
  * @param {number} answer.id - Unique answer identifier
- * @param {Object} answer.author - Author information (name, title)
- * @param {string} answer.current_body - Markdown content of the answer
- * @param {boolean} answer.is_verified - Whether the answer is verified
+ * @param {Object} answer.author - Author information (username, role)
+ * @param {string} answer.body - Markdown content of the answer
+ * @param {string} answer.status - Status enum: 'PENDING', 'APPROVED', 'REJECTED'
  * @param {string|null} answer.image - URL to attached image (optional)
  * @param {string|null} answer.pdf_file - URL to attached PDF (optional)
+ * @param {number} answer.user_vote - User's vote: 1, -1, or 0
+ * @param {string} answer.created_at_jalali - Persian Shamsi timestamp
  */
 const AnswerCard = ({ answer }) => {
   const {
     id,
     author,
-    current_body = '',
-    is_verified = false,
+    body = '',
+    status = 'PENDING',
     image = null,
     pdf_file = null,
+    user_vote = 0,
+    created_at_jalali,
+    updated_at_jalali,
   } = answer;
 
   /**
@@ -60,9 +68,35 @@ const AnswerCard = ({ answer }) => {
     if (window.MathJax && window.MathJax.typesetPromise) {
       window.MathJax.typesetPromise();
     }
-  }, [current_body]);
+  }, [body]);
 
-  const processedContent = processMarkdown(current_body);
+  const processedContent = processMarkdown(body);
+
+  /**
+   * Get status badge configuration
+   */
+  const getStatusBadge = () => {
+    if (status === 'APPROVED') {
+      return <span className="badge bg-success">✓ Approved</span>;
+    } else if (status === 'PENDING') {
+      return <span className="badge bg-warning">Pending Review</span>;
+    } else if (status === 'REJECTED') {
+      return <span className="badge bg-danger">Rejected</span>;
+    }
+    return null;
+  };
+
+  /**
+   * Get vote display based on user_vote field
+   */
+  const getVoteDisplay = () => {
+    if (user_vote === 1) {
+      return <span className="text-success"><i className="bi bi-arrow-up"></i> Upvoted</span>;
+    } else if (user_vote === -1) {
+      return <span className="text-danger"><i className="bi bi-arrow-down"></i> Downvoted</span>;
+    }
+    return null;
+  };
 
   return (
     <div className="answer-card card mb-3" id={`answer-${id}`}>
@@ -70,17 +104,18 @@ const AnswerCard = ({ answer }) => {
         <div className="d-flex justify-content-between align-items-center">
           <div>
             <h6 className="mb-0">
-              {author?.name || 'Unknown Author'}
-              {author?.title && (
-                <small className="text-muted ms-2">({author.title})</small>
+              {author?.username || author?.name || 'Unknown Author'}
+              {author?.role && (
+                <small className="text-muted ms-2">
+                  ({author.role === 'ADMIN' ? 'Admin' : author.role === 'MODERATOR' ? 'Moderator' : 'Student'})
+                </small>
               )}
             </h6>
+            {getVoteDisplay()}
           </div>
-          {is_verified && (
-            <span className="badge bg-success">
-              ✓ Verified
-            </span>
-          )}
+          <div className="d-flex align-items-center gap-2">
+            {getStatusBadge()}
+          </div>
         </div>
       </div>
       <div className="card-body">
@@ -93,6 +128,16 @@ const AnswerCard = ({ answer }) => {
             fontSize: '15px'
           }}
         />
+
+        {/* Timestamp using Jalali date */}
+        {created_at_jalali && (
+          <small className="text-muted d-block mb-2">
+            Posted: {created_at_jalali}
+            {updated_at_jalali && updated_at_jalali !== created_at_jalali && (
+              <span className="ms-2">• Updated: {updated_at_jalali}</span>
+            )}
+          </small>
+        )}
 
         {/* Image Attachment */}
         {image && (
