@@ -1301,12 +1301,22 @@ paths:
       operationId: tags_list
       summary: List all tags
       parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
       - name: page
         required: false
         in: query
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
       tags:
       - tags
       security:
@@ -1600,6 +1610,103 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/users/:
+    get:
+      operationId: users_list
+      summary: '[Admins/Moderators Only] List all users'
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+          enum:
+          - ADMIN
+          - MODERATOR
+          - STUDENT
+        description: |-
+          * `STUDENT` - Student
+          * `MODERATOR` - Moderator
+          * `ADMIN` - Admin
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+  /api/users/{id}/:
+    get:
+      operationId: users_retrieve
+      summary: '[Admins/Moderators Only] Get details of a specific user'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
+      tags:
+      - users
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/users/{id}/role/:
+    patch:
+      operationId: users_role_partial_update
+      summary: '[Admins Only] Change user role'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this user.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedChangeRole'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedChangeRole'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedChangeRole'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
 components:
   schemas:
     AcceptAnswerResponse:
@@ -1719,6 +1826,16 @@ components:
           type: string
       required:
       - message
+    AttachedToModelEnum:
+      enum:
+      - question
+      - answer
+      - suggestededit
+      type: string
+      description: |-
+        * `question` - question
+        * `answer` - answer
+        * `suggestededit` - suggestededit
     Comment:
       type: object
       properties:
@@ -1780,7 +1897,8 @@ components:
           readOnly: true
           nullable: true
         attached_to_model:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/AttachedToModelEnum'
           readOnly: true
         uploaded_at:
           type: string
@@ -1958,6 +2076,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tag'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
     PatchedAnswer:
       type: object
       properties:
@@ -2013,6 +2154,11 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedChangeRole:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleEnum'
     PatchedQuestion:
       type: object
       properties:
@@ -2259,6 +2405,16 @@ components:
           type: string
       required:
       - message
+    RoleEnum:
+      enum:
+      - STUDENT
+      - MODERATOR
+      - ADMIN
+      type: string
+      description: |-
+        * `STUDENT` - Student
+        * `MODERATOR` - Moderator
+        * `ADMIN` - Admin
     SourceMaterial:
       type: object
       properties:
@@ -2312,7 +2468,8 @@ components:
           type: integer
           readOnly: true
         target_type:
-          type: string
+          allOf:
+          - $ref: '#/components/schemas/TargetTypeEnum'
           readOnly: true
         target_id:
           type: integer
@@ -2388,6 +2545,14 @@ components:
       required:
       - id
       - name
+    TargetTypeEnum:
+      enum:
+      - question
+      - answer
+      type: string
+      description: |-
+        * `question` - question
+        * `answer` - answer
     TokenObtainPair:
       type: object
       properties:
@@ -2420,6 +2585,45 @@ components:
       required:
       - access
       - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: Email address
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - date_joined
+      - email
+      - first_name
+      - id
+      - last_name
+      - role
+      - username
     ValueEnum:
       enum:
       - 1
