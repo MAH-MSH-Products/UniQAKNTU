@@ -135,4 +135,30 @@ export const getAnswerById = (id) => {
   return api.get(`/answers/${id}/`);
 };
 
+// ============================================
+// Phase 8: Tags & Categories Integration
+// Fetch tags and categories for question tagging
+// ============================================
+
+/**
+ * Tag Categories API
+ * GET /api/tags/categories/ - List all tag categories
+ * Used to populate category dropdowns in question forms
+ */
+export const getTagCategories = () => {
+  return api.get('/tags/categories/');
+};
+
+/**
+ * Tags API
+ * GET /api/tags/ - List all tags
+ * Supports query parameters:
+ * - ?category=<id> - Filter tags by category ID
+ * - ?search=<text> - Search tags by value
+ * @param {Object} params - Query parameters object
+ */
+export const getTags = (params = {}) => {
+  return api.get('/tags', { params });
+};
+
 export default api;

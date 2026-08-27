@@ -285,9 +285,11 @@ const fetchAnswers = async (questionId) => {
 | `getSourceMaterialById` | Function | Get single source material by ID using query param (Phase 4) |
 | `getAnswersByQuestionId` | Function | Get answers for a specific question using query param (Phase 4) |
 | `getAnswerById` | Function | Get single answer by ID using path param (Phase 4) |
+| `getTagCategories` | Function | Get all tag categories (Phase 8) |
+| `getTags` | Function | Get all tags with optional filtering by category or search (Phase 8) |
 
 ## Verification Status
-**✅ Complete** - Phase 2 implementation complete with response transformers. Phase 4 flat endpoint structure implemented with query parameter alignment.
+**✅ Complete** - Phase 2 implementation complete with response transformers. Phase 4 flat endpoint structure implemented with query parameter alignment. Phase 8 tags and categories integration complete.
 
 ## Related Files
 - `components/wiki/QuestionExplorer.jsx` - Uses extractResults for question fetching

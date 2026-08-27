@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api, { getAnswersByQuestionId, getSourceMaterials, extractResults } from '../../services/api';
+import api, { getAnswersByQuestionId, getSourceMaterials, extractResults, getTags } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
 import CommentSection from './CommentSection';
@@ -179,6 +179,16 @@ const QuestionExplorer = ({ examId }) => {
                   <span className={`badge ms-2 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
                     {question.status === 'APPROVED' ? 'Approved' : 'Pending Review'}
                   </span>
+                )}
+                {/* Phase 8: Tags Display */}
+                {question.tags && question.tags.length > 0 && (
+                  <div className="tags-section mt-2">
+                    {question.tags.map(tag => (
+                      <span key={tag.id} className="badge bg-secondary me-1">
+                        {tag.value || tag.name}
+                      </span>
+                    ))}
+                  </div>
                 )}
                 {/* Timestamp using Jalali date */}
                 {question.created_at_jalali && (

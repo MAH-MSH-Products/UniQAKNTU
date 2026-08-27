@@ -211,12 +211,13 @@ Integrated `CommentSection` component at the bottom of each question card.
 - Real-time UI updates after voting and commenting
 
 ## Related Files
-- `services/api.js` - API client with response transformers
+- `services/api.js` - API client with response transformers and tags functions
 - `components/wiki/AnswerCard.jsx` - Child component for answer display
 - `components/wiki/AnswerForm.jsx` - Form for submitting answers
 - `components/wiki/CommentSection.jsx` - Comments section component (Phase 7)
+- `components/wiki/QuestionForm.jsx` - Form for creating questions with tags (Phase 8)
 - `API.md` - API endpoint specifications
-- `FIXING_TODO.md` - Phase 7 implementation checklist
+- `FIXING_TODO.md` - Phase 7 and Phase 8 implementation checklists
 
 ## Testing Checklist
 - [ ] Verify questions load from API endpoint
@@ -235,3 +236,7 @@ Integrated `CommentSection` component at the bottom of each question card.
 - [ ] **Phase 7.2**: Verify comment form appears for authenticated users
 - [ ] **Phase 7.2**: Verify new comment appears immediately after submission
 - [ ] **Phase 7.2**: Verify login prompt for unauthenticated users
+- [ ] **Phase 8**: Verify tags are displayed as badges below question text
+- [ ] **Phase 8**: Verify tag badges use correct Bootstrap styling (bg-secondary)
+- [ ] **Phase 8**: Verify multiple tags display with proper spacing (me-1)
+- [ ] ⚠️ باید چک شود - Full integration testing with backend tags API
