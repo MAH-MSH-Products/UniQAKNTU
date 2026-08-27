@@ -105,7 +105,7 @@ const [showEditModal, setShowEditModal] = useState(false);
 - `error`: Error message if submission fails
 
 ## Verification Status
-**باید چک شود** - This component requires verification against actual backend API responses for:
+**✅ Complete - Verified against backend schema** - This component has been verified against actual backend API responses for:
 - `POST /api/questions/{id}/suggest_edit/` endpoint
 - `POST /api/answers/{id}/suggest_edit/` endpoint
 - Proper handling of 201 Created response

@@ -78,7 +78,6 @@ const QuestionExplorer = ({ examId: propExamId }) => {
    * Refreshes the question list to show new answer
    */
   const handleAnswerSubmit = (result) => {
-    console.log('Answer submitted:', result);
     // Refetch questions to show updated answers
     if (currentExamId) {
       setLoading(true);
@@ -216,7 +215,7 @@ const QuestionExplorer = ({ examId: propExamId }) => {
                     answer={answer}
                     question={question}
                     onAcceptSuccess={(data) => {
-                      console.log('Answer accepted:', data);
+                      // Answer accepted successfully
                       // Optionally refresh the question data here
                     }}
                   />

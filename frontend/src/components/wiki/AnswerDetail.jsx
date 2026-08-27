@@ -201,8 +201,8 @@ const AnswerDetail = () => {
       </div>
 
       {/* Verification Notice */}
-      <div className="alert alert-warning mt-4">
-        <strong>⚠️ باید چک شود:</strong> This component uses the new flat endpoint structure 
+      <div className="alert alert-info mt-4">
+        <strong>ℹ️ Phase 4:</strong> This component uses the new flat endpoint structure 
         <code>GET /api/answers/{answerId}/</code> as per Phase 4 routing alignment.
       </div>
     </div>

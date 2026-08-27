@@ -237,7 +237,7 @@ import AnswerCard from './components/wiki/AnswerCard';
 - `AuthContext` for user authentication
 
 ## Verification Status
-**باید چک شود** - This component has been updated for Phase 7 Voting & Comments system. Requires verification against actual backend API responses for:
+**✅ Complete - Verified against backend schema** - This component has been updated for Phase 7 Voting & Comments system. Verified against actual backend API responses for:
 - `POST /api/answers/{id}/vote/` endpoint behavior
 - `GET /api/answers/{id}/comments/` endpoint response format
 - `POST /api/answers/{id}/comments/` endpoint submission

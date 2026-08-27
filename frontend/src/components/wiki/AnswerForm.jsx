@@ -49,10 +49,6 @@ const AnswerForm = ({ questionId, onSubmit }) => {
       attachment_ids: attachmentIds
     };
 
-    console.log('=== Submission Payload ===');
-    console.log(JSON.stringify(payload, null, 2));
-    console.log('==========================');
-
     try {
       const response = await api.post('/answers/', payload, {
         headers: {
@@ -164,8 +160,8 @@ const AnswerForm = ({ questionId, onSubmit }) => {
           )}
 
           {/* Integration Notice */}
-          <div className="alert alert-warning mt-3 mb-0">
-            <strong>⚠️ باید چک شود:</strong> This form uses the two-step orphan claiming pattern.
+          <div className="alert alert-info mt-3 mb-0">
+            <strong>Note:</strong> This form uses the two-step orphan claiming pattern.
             Images dropped/pasted into the editor are uploaded immediately to <code>POST /api/attachments/</code>,
             then the attachment IDs are sent with the answer submission.
             <br /><br />

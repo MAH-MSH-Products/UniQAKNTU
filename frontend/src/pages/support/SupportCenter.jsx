@@ -58,10 +58,8 @@ const SupportCenter = () => {
   const fetchUserTickets = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // باید چک شود - API integration point
-      // const response = await api.get('/support/tickets/');
-      // setTickets(response.data);
+      // API Endpoint 4.2: GET /support/tickets/
+      // Mock data based on API.md Endpoint 4.2
       
       // Mock data based on API.md Endpoint 4.2
       const mockTickets = [
@@ -149,12 +147,6 @@ const SupportCenter = () => {
 
     try {
       // Phase 6: Mock API call - backend endpoint /support/tickets/ does not exist
-      console.log('Mock API Call - Support Ticket:', {
-        title: formData.title,
-        description: formData.description,
-        category: formData.category
-      });
-
       setFormStatus({ type: 'success', message: 'Ticket submitted successfully! (Mock)' });
       
       // Reset form

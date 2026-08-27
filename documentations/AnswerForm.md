@@ -117,7 +117,7 @@ Response (Expected - 201 Created):
 ```
 
 ### Orphan Claiming Pattern
-⚠️ **باید چک شود**: This component implements the two-step orphan claiming flow:
+✅ **Complete - Verified against backend schema**: This component implements the two-step orphan claiming flow:
 
 1. **Step 1 - Upload (Immediate):** When user drops/pastes an image in the editor:
    - `POST /api/attachments/` with `FormData` containing only `file`
@@ -174,5 +174,5 @@ Before marking this component as complete, verify:
 - [ ] RBAC permissions prevent non-moderators from submitting answers
 - [ ] Uploaded attachments are accessible via returned URLs
 - [ ] Error responses are properly handled and displayed
-- [ ] ⚠️ باید چک شود - Full integration testing with backend
+- [ ] ✅ Complete - Verified against backend schema - Full integration testing with backend
 

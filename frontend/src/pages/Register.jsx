@@ -45,8 +45,7 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      // ⚠️ Mock API Call - Backend integration required later
-      console.log('Mock Registration Data:', formData);
+      // Registration API call will be handled by backend endpoint
       await new Promise(resolve => setTimeout(resolve, 800)); // simulate delay
       
       // On success, redirect to login

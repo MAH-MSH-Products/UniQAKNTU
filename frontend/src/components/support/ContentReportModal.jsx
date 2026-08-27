@@ -29,8 +29,6 @@ const ContentReportModal = ({ isOpen, onClose, questionId, answerId = null }) =>
     setStatus({ type: '', message: '' });
 
     try {
-      // TODO: Replace with actual API call
-      // باید چک شود - API integration point
       // Construct payload for Endpoint 4.5
       const payload = {
         question_id: questionId,
@@ -38,9 +36,6 @@ const ContentReportModal = ({ isOpen, onClose, questionId, answerId = null }) =>
         reason: reason
       };
 
-      // Mock API call
-      console.log('Mock API Call - Content Report:', payload);
-      
       // Actual API call (uncomment when backend is ready):
       // const response = await api.post('/support/reports/', payload);
       

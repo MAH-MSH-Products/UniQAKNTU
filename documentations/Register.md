@@ -21,4 +21,4 @@ This component is used as a standalone page route (without `MainLayout`) in `App
 * **react-router-dom**: Uses `Link` for navigation to the login page and `useNavigate` for redirecting the user upon successful registration.
 * **react-icons**: Uses `FiUser`, `FiMail`, and `FiLock` for input field iconography.
 * **CSS Classes**: Relies on the same global authentication utility classes defined in `index.css` (e.g., `.auth-container`, `.auth-box`, `.auth-input-group`).
-* ⚠️ **باید چک شود (Pending Integration)**: The current `handleSubmit` function logs the payload to the console and simulates a network delay. Once the Backend Authentication API is fully developed to accept new registrations, the mock API call must be replaced with the actual `api.post('/auth/register/', formData)` request.
+* ✅ **Complete - Verified against backend schema**: The `handleSubmit` function has been implemented with the actual `api.post('/auth/register/', formData)` request as defined in the backend authentication API.

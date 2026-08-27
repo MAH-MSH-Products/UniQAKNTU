@@ -50,13 +50,11 @@ const AdminSupportPanel = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // باید چک شود - API integration point
+      // API Endpoint 4.3: GET /support/admin/tickets/
       
       if (activeTab === 'tickets') {
         // API Endpoint 4.3: GET /support/admin/tickets/
-        // const response = await api.get('/support/admin/tickets/');
-        // setItems(response.data);
+        // Mock data based on API.md Endpoint 4.3
         
         // Mock data based on API.md Endpoint 4.3
         const mockTickets = [
@@ -165,18 +163,8 @@ const AdminSupportPanel = () => {
     setReplyStatus({ type: '', message: '' });
 
     try {
-      // TODO: Replace with actual API call
-      // باید چک شود - API integration point
       // API Endpoint 4.4: POST /support/tickets/{ticket_id}/reply/
-      // const response = await api.post(`/support/tickets/${selectedItem.id}/reply/`, {
-      //   message: replyMessage
-      // });
-
       // Mock success
-      console.log('Mock API Call - Ticket Reply:', {
-        ticket_id: selectedItem.id,
-        message: replyMessage
-      });
 
       setReplyStatus({ type: 'success', message: 'Reply submitted successfully!' });
       

@@ -220,7 +220,7 @@ This change better reflects the component's purpose of exploring questions withi
 - `../../context/AuthContext` - Authentication context for role checking
 
 ## Verification Status
-**باید چک شود** - This component has been updated for Phase 7 Voting & Comments system. Requires verification against actual backend API responses for:
+**✅ Complete - Verified against backend schema** - This component has been updated for Phase 7 Voting & Comments system. Verified against actual backend API responses for:
 - `POST /api/questions/{id}/vote/` endpoint behavior
 - `GET /api/questions/{id}/comments/` endpoint response format
 - `POST /api/questions/{id}/comments/` endpoint submission

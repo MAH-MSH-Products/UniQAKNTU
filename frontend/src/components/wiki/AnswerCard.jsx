@@ -345,7 +345,7 @@ const AnswerCard = ({ answer, question, onAcceptSuccess }) => {
         itemType="answer"
         currentText={body}
         onSuccess={(data) => {
-          console.log('Edit suggestion submitted:', data);
+          // Edit suggestion submitted successfully
           // Optionally refresh the answer data here
         }}
       />
