@@ -5,6 +5,8 @@ The `SupportCenter.jsx` component provides a user-facing support dashboard for s
 
 **Phase 6 Update:** This component has been modified to handle non-existent backend endpoints. The "Request Instructor Role" functionality has been replaced with a static notice, and all API calls now use mock data until backend support is added.
 
+**Static Notice:** The "Request Instructor Role" tab/section displays: *"Role changes are managed by administrators. Contact support offline."*
+
 This component is part of Phase 6 (Feature Decommissioning & Mock Fallbacks) of the UniQAKNTU project.
 
 ## Key Components
@@ -31,7 +33,7 @@ This component is part of Phase 6 (Feature Decommissioning & Mock Fallbacks) of 
   - `POST /support/tickets/` **[DISABLED - Phase 6]** for general support tickets
   - `POST /auth/role-request/` **[DISABLED - Phase 6]** for instructor role requests
 - **Validation**: Ensures required fields are filled
-- **Phase 6 Update**: Prevents submission for "Request Instructor Role" category with static notice
+- **Phase 6 Update**: Prevents submission for "Request Instructor Role" category with static notice: *"Role changes are managed by administrators. Contact support offline."*
 
 #### `handleInputChange(e)`
 - **Purpose**: Updates form data state when user types in form fields
@@ -60,11 +62,12 @@ This component does not accept any props. It is designed to be used as a standal
 - **Title**: Text input (required)
 - **Description**: Textarea (required)
 
-#### Instructor Role Request [DISABLED - Phase 6]
-When "Request Instructor Role" category is selected, a static notice is displayed:
+#### Instructor Role Request [REMOVED - Phase 6]
+The "Request Instructor Role" category has been removed from the categories array. If this category is somehow selected, a static notice is displayed:
+
 > **Notice:** Role changes are managed by administrators. Contact support offline.
 
-The introduction field and submission functionality have been removed per Phase 6 requirements.
+The submission functionality for instructor role requests has been removed per Phase 6 requirements.
 
 ## Integration
 
@@ -129,10 +132,11 @@ const mockTickets = [
 
 - **Phase 6 (2026-08-27)** - Feature Decommissioning & Mock Fallbacks:
   - Removed "Request Instructor Role" from categories array
-  - Replaced instructor role request form with static notice
+  - Replaced instructor role request form with static notice: *"Role changes are managed by administrators. Contact support offline."*
   - All API calls replaced with mock data
   - Updated documentation to reflect disabled endpoints
   - Component serves as placeholder until backend support is added
+  - Updated JSDoc comments to clarify the static notice implementation
 
 - **Phase 12 - Route Protection & RBAC UI Enforcement**: 
   - Added authentication check in `useEffect` hook to prevent `fetchUserTickets()` from executing when user is not authenticated

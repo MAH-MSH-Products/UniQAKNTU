@@ -8,6 +8,7 @@ import { FiMessageSquare, FiBookOpen, FiFileText } from 'react-icons/fi';
  * Phase 6 Update:
  * - Backend endpoints /widgets/recent-answers/, /widgets/popular-courses/, /widgets/latest-exams/ do not exist
  * - All API calls replaced with mock data
+ * - Implements conditional rendering based on REACT_APP_ENABLE_MOCK_WIDGETS environment flag
  * - Component serves as placeholder until backend support is added
  * 
  * Original Purpose:
@@ -82,6 +83,12 @@ const WidgetsPanel = () => {
     );
   }
 
+  // Phase 6.2: UI Fallbacks - Conditional rendering based on environment flag
+  // When mock widgets are disabled, show empty state instead
+  if (process.env.REACT_APP_ENABLE_MOCK_WIDGETS === 'false') {
+    return <EmptyState />;
+  }
+
   return (
     <div className="widgets-panel" style={{ width: '300px', flexShrink: 0 }}>
       {/* Recent Answers Widget */}
@@ -135,6 +142,24 @@ const WidgetsPanel = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * EmptyState Component - Fallback when mock widgets are disabled
+ * Phase 6.2: UI Fallbacks
+ */
+const EmptyState = () => {
+  return (
+    <div className="widgets-panel" style={{ width: '300px', flexShrink: 0 }}>
+      <div className="academic-card widget-panel mb-3">
+        <div className="text-center py-4">
+          <FiMessageSquare className="widget-icon mb-2" />
+          <p className="text-muted">Widgets are currently unavailable.</p>
+          <small className="text-muted">Backend integration pending.</small>
         </div>
       </div>
     </div>
