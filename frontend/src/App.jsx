@@ -6,6 +6,7 @@ import MainLayout from './components/layout/MainLayout';
 import AuthLayout from './components/layout/AuthLayout';
 import RequireAuth from './components/auth/RequireAuth';
 import RequireInstructor from './components/auth/RequireInstructor';
+import RequireAdmin from './components/auth/RequireAdmin';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -14,6 +15,9 @@ import Register from './pages/Register';
 // import AdminSupportPanel from './pages/admin/AdminSupportPanel';
 import QuestionExplorer from './components/wiki/QuestionExplorer';
 import AnswerDetail from './components/wiki/AnswerDetail';
+// Phase 9: Moderation and User Management Dashboards
+import ModerationDashboard from './pages/admin/ModerationDashboard';
+import UserManagement from './pages/admin/UserManagement';
 import './i18n';
 import i18n from 'i18next';
 
@@ -84,11 +88,21 @@ function App() {
               </Route>
             </Route>
 
-            {/* Instructor Routes - Require Instructor Role */}
+            {/* Instructor Routes - Require Moderator/Admin Role */}
             <Route element={<RequireInstructor />}>
               <Route element={<MainLayout />}>
                 <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />
                 <Route path="/instructor/answers" element={<div className="p-4"><h2>Manage Answers</h2></div>} />
+                {/* Phase 9: Moderation Dashboard (MODERATOR and ADMIN) */}
+                <Route path="/admin/moderation" element={<ModerationDashboard />} />
+              </Route>
+            </Route>
+            
+            {/* Admin Only Routes - Require ADMIN role */}
+            <Route element={<RequireAdmin />}>
+              <Route element={<MainLayout />}>
+                {/* Phase 9: User Management (ADMIN only) */}
+                <Route path="/admin/users" element={<UserManagement />} />
               </Route>
             </Route>
             

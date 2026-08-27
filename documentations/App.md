@@ -127,18 +127,38 @@ Require user authentication:
 
 ### Instructor Routes (RequireInstructor)
 
-Require authenticated user with instructor role:
+Require authenticated user with moderator or admin role:
 
 | Path | Component | Layout | Description |
 |------|-----------|--------|-------------|
 | `/instructor/dashboard` | Instructor Dashboard | MainLayout | Instructor analytics and stats |
 | `/instructor/answers` | Manage Answers | MainLayout | Create and manage exam answers |
+| `/admin/moderation` | ModerationDashboard | MainLayout | Content moderation queue (Phase 9) |
 
 ```javascript
 <Route element={<RequireInstructor />}>
   <Route element={<MainLayout />}>
     <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />
     <Route path="/instructor/answers" element={<div className="p-4"><h2>Manage Answers</h2></div>} />
+    {/* Phase 9: Moderation Dashboard (MODERATOR and ADMIN) */}
+    <Route path="/admin/moderation" element={<ModerationDashboard />} />
+  </Route>
+</Route>
+```
+
+### Admin Routes (RequireAdmin)
+
+Require authenticated user with ADMIN role only:
+
+| Path | Component | Layout | Description |
+|------|-----------|--------|-------------|
+| `/admin/users` | UserManagement | MainLayout | User management dashboard (Phase 9) |
+
+```javascript
+<Route element={<RequireAdmin />}>
+  <Route element={<MainLayout />}>
+    {/* Phase 9: User Management (ADMIN only) */}
+    <Route path="/admin/users" element={<UserManagement />} />
   </Route>
 </Route>
 ```

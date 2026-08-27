@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit } from 'react-icons/fi';
+import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit, FiShield, FiUsers } from 'react-icons/fi';
 /**
  * Sidebar Component - Course and Exam Navigation
  * 
@@ -15,7 +15,7 @@ import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit } from 'react-icons/
 
 const Sidebar = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, isInstructor } = useAuth();
+  const { isAuthenticated, isInstructor, canModerate, isAdmin } = useAuth();
 
   const navLinkStyle = {
     transition: 'all 0.2s ease-in-out',
@@ -109,6 +109,43 @@ const Sidebar = () => {
                   <span>{t('sidebar.manage_answers')}</span>
                 </Link>
               </li>
+            </ul>
+          </>
+        )}
+
+        {/* Moderator/Admin section - Content Moderation & User Management */}
+        {canModerate && (
+          <>
+            <h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3 mt-4" style={{ color: 'var(--text-light)' }}>
+              {t('sidebar.moderation_tools')}
+            </h6>
+            <ul className="nav flex-column">
+              <li className="nav-item">
+                <Link 
+                  className="nav-link text-dark d-flex align-items-center gap-2" 
+                  to="/admin/moderation"
+                  style={navLinkStyle}
+                  onMouseEnter={(e) => Object.assign(e.currentTarget.style, navLinkHoverStyle)}
+                  onMouseLeave={(e) => Object.assign(e.currentTarget.style, { backgroundColor: 'transparent', color: 'var(--text-secondary)' })}
+                >
+                  <FiShield />
+                  <span>{t('sidebar.content_moderation')}</span>
+                </Link>
+              </li>
+              {isAdmin && (
+                <li className="nav-item">
+                  <Link 
+                    className="nav-link text-dark d-flex align-items-center gap-2" 
+                    to="/admin/users"
+                    style={navLinkStyle}
+                    onMouseEnter={(e) => Object.assign(e.currentTarget.style, navLinkHoverStyle)}
+                    onMouseLeave={(e) => Object.assign(e.currentTarget.style, { backgroundColor: 'transparent', color: 'var(--text-secondary)' })}
+                  >
+                    <FiUsers />
+                    <span>{t('sidebar.user_management')}</span>
+                  </Link>
+                </li>
+              )}
             </ul>
           </>
         )}
