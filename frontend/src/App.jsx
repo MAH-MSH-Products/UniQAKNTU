@@ -9,8 +9,9 @@ import RequireInstructor from './components/auth/RequireInstructor';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import SupportCenter from './pages/support/SupportCenter';
-import AdminSupportPanel from './pages/admin/AdminSupportPanel';
+// Phase 6: Support routes disabled - backend endpoints do not exist
+// import SupportCenter from './pages/support/SupportCenter';
+// import AdminSupportPanel from './pages/admin/AdminSupportPanel';
 import QuestionExplorer from './components/wiki/QuestionExplorer';
 import AnswerDetail from './components/wiki/AnswerDetail';
 import './i18n';
@@ -69,12 +70,13 @@ function App() {
             {/* Protected Routes - Require Authentication */}
             <Route element={<RequireAuth />}>
               <Route element={<MainLayout />}>
-                <Route path="/support" element={<SupportCenter />} />
-                <Route path="/support/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
-                <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
-                <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
-                <Route path="/admin/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
-                <Route path="/admin/support" element={<AdminSupportPanel />} />
+                {/* Phase 6: Support routes disabled - backend endpoints do not exist */}
+                {/* <Route path="/support" element={<SupportCenter />} /> */}
+                {/* <Route path="/support/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} /> */}
+                {/* <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} /> */}
+                {/* <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} /> */}
+                {/* <Route path="/admin/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} /> */}
+                {/* <Route path="/admin/support" element={<AdminSupportPanel />} /> */}
                 
                 {/* Phase 4: Questions and Answers routes with flat structure */}
                 <Route path="/questions/:questionId/answers" element={<QuestionExplorer />} />

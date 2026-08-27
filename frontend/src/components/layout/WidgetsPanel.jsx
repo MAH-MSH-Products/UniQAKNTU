@@ -1,23 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiMessageSquare, FiBookOpen, FiFileText } from 'react-icons/fi';
-import api from '../../services/api';
 
 /**
  * WidgetsPanel Component - Dynamic Side Panel
  * 
+ * Phase 6 Update:
+ * - Backend endpoints /widgets/recent-answers/, /widgets/popular-courses/, /widgets/latest-exams/ do not exist
+ * - All API calls replaced with mock data
+ * - Component serves as placeholder until backend support is added
+ * 
+ * Original Purpose:
  * Displays three dynamic widget sections:
  * 1. Recent Answers - Latest instructor answers
  * 2. Popular Courses - Most accessed courses
  * 3. Latest Exams - Recently added exams
- * 
- * Fetches data from backend API endpoints (mock data for now).
- * Uses academic-card styling for consistent UI.
- * 
- * API Integration Points (باید چک شود):
- * - GET /widgets/recent-answers/
- * - GET /widgets/popular-courses/
- * - GET /widgets/latest-exams/
  */
 
 const WidgetsPanel = () => {
@@ -29,8 +26,8 @@ const WidgetsPanel = () => {
   const [loading, setLoading] = useState(true);
 
   /**
-   * Fetch all widget data on component mount
-   * Currently uses mock data - API integration pending
+   * Fetch widget data on component mount
+   * Phase 6 Update: Uses mock data only - backend endpoints do not exist
    */
   useEffect(() => {
     fetchWidgetData();
@@ -39,12 +36,11 @@ const WidgetsPanel = () => {
   const fetchWidgetData = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API calls
-      // باید چک شود - API integration point for widgets
-      
-      // Mock data for Recent Answers (API Endpoint: GET /widgets/recent-answers/)
-      // const answersResponse = await api.get('/widgets/recent-answers/');
-      // setRecentAnswers(answersResponse.data);
+      // Phase 6: Mock data only - backend endpoints do not exist
+      // Original API Endpoints (not implemented):
+      // - GET /widgets/recent-answers/
+      // - GET /widgets/popular-courses/
+      // - GET /widgets/latest-exams/
       
       const mockAnswers = [
         { id: 1, title: 'Banker\'s Algorithm Solution', course: 'Operating Systems', author: 'Dr. Khanmirza', date: '2026-08-16' },
@@ -52,19 +48,11 @@ const WidgetsPanel = () => {
         { id: 3, title: 'Process Scheduling', course: 'Computer Architecture', author: 'Dr. Azizi', date: '2026-08-14' }
       ];
       
-      // Mock data for Popular Courses (API Endpoint: GET /widgets/popular-courses/)
-      // const coursesResponse = await api.get('/widgets/popular-courses/');
-      // setPopularCourses(coursesResponse.data);
-      
       const mockCourses = [
         { id: 1, name: 'Operating Systems', code: 'CE414', examCount: 12 },
         { id: 2, name: 'Computer Networks', code: 'CE420', examCount: 10 },
         { id: 3, name: 'Database Systems', code: 'CE305', examCount: 8 }
       ];
-      
-      // Mock data for Latest Exams (API Endpoint: GET /widgets/latest-exams/)
-      // const examsResponse = await api.get('/widgets/latest-exams/');
-      // setLatestExams(examsResponse.data);
       
       const mockExams = [
         { id: 1, title: 'Final Exam 1402', course: 'Operating Systems', date: '2026-08-16' },

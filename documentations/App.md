@@ -98,22 +98,25 @@ Accessible to all users without authentication:
 
 Require user authentication:
 
-| Path | Component | Layout | Description |
-|------|-----------|--------|-------------|
-| `/support` | SupportCenter | MainLayout | Submit and view support tickets |
-| `/tickets` | My Tickets Page | MainLayout | View user's ticket history |
-| `/reports` | Reports Page | MainLayout | View content reports |
-| `/admin/support` | AdminSupportPanel | MainLayout | Admin panel for managing tickets |
-| `/questions/:questionId/answers` | QuestionExplorer | MainLayout | View answers for a specific question (Phase 4) |
-| `/answers/:answerId` | AnswerDetail | MainLayout | View single answer detail (Phase 4) |
+**Phase 6 Update:** Support-related routes have been disabled/removed as the backend endpoints do not exist. These routes are commented out until backend support is added.
+
+| Path | Component | Layout | Description | Status |
+|------|-----------|--------|-------------|--------|
+| `/support` | ~~SupportCenter~~ | MainLayout | Submit and view support tickets | **Disabled (Phase 6)** |
+| `/tickets` | ~~My Tickets Page~~ | MainLayout | View user's ticket history | **Disabled (Phase 6)** |
+| `/reports` | ~~Reports Page~~ | MainLayout | View content reports | **Disabled (Phase 6)** |
+| `/admin/support` | ~~AdminSupportPanel~~ | MainLayout | Admin panel for managing tickets | **Disabled (Phase 6)** |
+| `/questions/:questionId/answers` | QuestionExplorer | MainLayout | View answers for a specific question (Phase 4) | Active |
+| `/answers/:answerId` | AnswerDetail | MainLayout | View single answer detail (Phase 4) | Active |
 
 ```javascript
 <Route element={<RequireAuth />}>
   <Route element={<MainLayout />}>
-    <Route path="/support" element={<SupportCenter />} />
-    <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
-    <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
-    <Route path="/admin/support" element={<AdminSupportPanel />} />
+    {/* Phase 6: Support routes disabled - backend endpoints do not exist */}
+    {/* <Route path="/support" element={<SupportCenter />} /> */}
+    {/* <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} /> */}
+    {/* <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} /> */}
+    {/* <Route path="/admin/support" element={<AdminSupportPanel />} /> */}
     
     {/* Phase 4: Questions and Answers routes with flat structure */}
     <Route path="/questions/:questionId/answers" element={<QuestionExplorer />} />
@@ -170,10 +173,11 @@ BrowserRouter
             │
             ├── RequireAuth Routes
             │   └── MainLayout
-            │       ├── /support → SupportCenter
-            │       ├── /tickets → My Tickets
-            │       ├── /reports → Reports
-            │       ├── /admin/support → AdminSupportPanel
+            │       ├── Phase 6: Support routes DISABLED (commented out)
+            │       │   ├── /support → SupportCenter [DISABLED]
+            │       ├── /tickets → My Tickets [DISABLED]
+            │       ├── /reports → Reports [DISABLED]
+            │       ├── /admin/support → AdminSupportPanel [DISABLED]
             │       ├── /questions/:questionId/answers → QuestionExplorer (Phase 4)
             │       └── /answers/:answerId → AnswerDetail (Phase 4)
             │

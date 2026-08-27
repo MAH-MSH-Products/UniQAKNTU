@@ -5,9 +5,11 @@ import api from '../../services/api';
 /**
  * SupportCenter Component - User Facing Support Dashboard
  * 
- * Provides a dashboard for standard users/instructors to:
- * - Submit support tickets (including instructor role requests)
- * - View and track their past tickets
+ * Phase 6 Update:
+ * - Backend endpoints /support/tickets/ and /auth/role-request/ do not exist
+ * - Replaced "Request Instructor Role" functionality with static notice
+ * - All API calls replaced with mock data
+ * - Component serves as placeholder until backend support is added
  */
 
 const SupportCenter = () => {
@@ -27,12 +29,12 @@ const SupportCenter = () => {
   
   const [formStatus, setFormStatus] = useState({ type: '', message: '' });
 
-  // Categories for tickets
+  // Categories for tickets - Phase 6: "Request Instructor Role" disabled
   const categories = [
     'General Support',
     'Technical Issue',
-    'Content Error',
-    'Request Instructor Role'
+    'Content Error'
+    // 'Request Instructor Role' - Disabled per Phase 6 (backend endpoint does not exist)
   ];
 
   /**
@@ -115,8 +117,7 @@ const SupportCenter = () => {
 
   /**
    * Submit ticket form
-   * API Endpoint 4.1: POST /support/tickets/
-   * API Endpoint 1.2: POST /auth/role-request/ (for instructor role requests)
+   * Phase 6 Update: Backend endpoints do not exist - mock submission only
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -128,46 +129,26 @@ const SupportCenter = () => {
       return;
     }
 
-    if (formData.category === 'Request Instructor Role' && !formData.introduction) {
-      setFormStatus({ type: 'error', message: 'Introduction is required for instructor role requests.' });
+    // Phase 6: Prevent submission for instructor role requests
+    if (formData.category === 'Request Instructor Role') {
+      setFormStatus({ 
+        type: 'info', 
+        message: 'Role changes are managed by administrators. Contact support offline.' 
+      });
       return;
     }
 
     setLoading(true);
 
     try {
-      // TODO: Replace with actual API call
-      // باید چک شود - API integration point
-      // If it's an instructor role request, use Endpoint 1.2
-      // Otherwise, use Endpoint 4.1
-      
-      if (formData.category === 'Request Instructor Role') {
-        // API Endpoint 1.2: POST /auth/role-request/
-        // const response = await api.post('/auth/role-request/', {
-        //   introduction: formData.introduction
-        // });
-        
-        // Mock success
-        console.log('Mock API Call - Role Request:', {
-          introduction: formData.introduction
-        });
-      } else {
-        // API Endpoint 4.1: POST /support/tickets/
-        // const response = await api.post('/support/tickets/', {
-        //   title: formData.title,
-        //   description: formData.description,
-        //   category: formData.category
-        // });
-        
-        // Mock success
-        console.log('Mock API Call - Support Ticket:', {
-          title: formData.title,
-          description: formData.description,
-          category: formData.category
-        });
-      }
+      // Phase 6: Mock API call - backend endpoint /support/tickets/ does not exist
+      console.log('Mock API Call - Support Ticket:', {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category
+      });
 
-      setFormStatus({ type: 'success', message: 'Ticket submitted successfully!' });
+      setFormStatus({ type: 'success', message: 'Ticket submitted successfully! (Mock)' });
       
       // Reset form
       setFormData({
@@ -177,14 +158,11 @@ const SupportCenter = () => {
         introduction: ''
       });
       
-      // Refresh tickets list
-      fetchUserTickets();
-      
     } catch (error) {
       console.error('Error submitting ticket:', error);
       setFormStatus({ 
         type: 'error', 
-        message: error.response?.data?.message || 'Failed to submit ticket.' 
+        message: 'Failed to submit ticket. (Backend endpoint not available)' 
       });
     } finally {
       setLoading(false);
@@ -277,22 +255,10 @@ const SupportCenter = () => {
                     ></textarea>
                   </div>
 
+                  {/* Phase 6: "Request Instructor Role" tab replaced with static notice */}
                   {formData.category === 'Request Instructor Role' && (
-                    <div className="mb-3">
-                      <label htmlFor="introduction" className="form-label">Introduction *</label>
-                      <textarea
-                        id="introduction"
-                        name="introduction"
-                        className="form-control"
-                        rows="4"
-                        value={formData.introduction}
-                        onChange={handleInputChange}
-                        placeholder="Explain why you want to become an instructor and your qualifications"
-                        required
-                      ></textarea>
-                      <div className="form-text">
-                        This will be sent to admins for review as part of your instructor role request.
-                      </div>
+                    <div className="alert alert-info" role="alert">
+                      <strong>Notice:</strong> Role changes are managed by administrators. Contact support offline.
                     </div>
                   )}
 
