@@ -85,7 +85,7 @@ const WidgetsPanel = () => {
 
   // Phase 6.2: UI Fallbacks - Conditional rendering based on environment flag
   // When mock widgets are disabled, show empty state instead
-  if (process.env.REACT_APP_ENABLE_MOCK_WIDGETS === 'false') {
+  if (import.meta.env.VITE_ENABLE_MOCK_WIDGETS === 'false') {
     return <EmptyState />;
   }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api, { extractResults } from '../../services/api';
+import api, { extractResults } from '../services/api';
 
 /**
  * SourceMaterialsList Component - Display All Source Materials
