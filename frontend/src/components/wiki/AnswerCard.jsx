@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import SuggestEditModal from './SuggestEditModal';
+import CommentSection from './CommentSection';
 
 /**
  * AnswerCard Component
@@ -14,8 +15,10 @@ import SuggestEditModal from './SuggestEditModal';
  * - Status badges (Pending Review / Approved)
  * - Jalali date timestamps
  * - Vote display using user_vote field
+ * - Voting functionality (upvote/downvote) - Phase 7.1
  * - Edit suggestion workflow for students (Phase 5)
  * - Accept answer button for question authors (Phase 5.3)
+ * - Comments section (Phase 7.2)
  * 
  * @param {Object} answer - Answer object matching API Endpoint 3.1 structure
  * @param {number} answer.id - Unique answer identifier
@@ -43,10 +46,15 @@ const AnswerCard = ({ answer, question, onAcceptSuccess }) => {
     is_accepted = false,
   } = answer;
 
-  const { user, userRole } = useAuth();
+  const { user, userRole, isAuthenticated } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState(null);
+  
+  // Voting state - Phase 7.1
+  const [currentVote, setCurrentVote] = useState(user_vote || 0);
+  const [voting, setVoting] = useState(false);
+  const [voteError, setVoteError] = useState(null);
 
   // Check if current user is the question author
   const isQuestionAuthor = question?.author?.id === user?.id;
@@ -56,6 +64,37 @@ const AnswerCard = ({ answer, question, onAcceptSuccess }) => {
   
   // Students can only suggest edits
   const canSuggestEdit = user && userRole === 'STUDENT';
+
+  /**
+   * Handle voting on an answer - Phase 7.1
+   * Uses POST /api/answers/{id}/vote/
+   * Payload: { "value": 1 } for upvote, { "value": -1 } for downvote
+   * Calling with same value removes the vote
+   */
+  const handleVote = async (value) => {
+    if (!isAuthenticated) {
+      alert('Please login to vote');
+      return;
+    }
+
+    setVoting(true);
+    setVoteError(null);
+
+    try {
+      const response = await api.post(`/answers/${id}/vote/`, { value });
+      
+      // Update local state with the returned vote info
+      setCurrentVote(response.data.user_vote || value);
+    } catch (err) {
+      console.error('Failed to vote:', err);
+      setVoteError(
+        err.response?.data?.message ||
+        'Failed to vote. Please try again.'
+      );
+    } finally {
+      setVoting(false);
+    }
+  };
 
   /**
    * Process markdown text for display
@@ -162,9 +201,28 @@ const AnswerCard = ({ answer, question, onAcceptSuccess }) => {
                 </small>
               )}
             </h6>
-            {getVoteDisplay()}
           </div>
           <div className="d-flex align-items-center gap-2">
+            {/* Voting Buttons - Phase 7.1 */}
+            <div className="btn-group btn-group-sm" role="group">
+              <button 
+                className={`btn ${currentVote === 1 ? 'btn-success' : 'btn-outline-success'}`}
+                onClick={() => handleVote(1)}
+                disabled={voting || !isAuthenticated}
+                title={isAuthenticated ? 'Upvote' : 'Login to vote'}
+              >
+                <i className={`bi bi-arrow-up${currentVote === 1 ? '-fill' : ''}`}></i>
+              </button>
+              <button 
+                className={`btn ${currentVote === -1 ? 'btn-danger' : 'btn-outline-danger'}`}
+                onClick={() => handleVote(-1)}
+                disabled={voting || !isAuthenticated}
+                title={isAuthenticated ? 'Downvote' : 'Login to vote'}
+              >
+                <i className={`bi bi-arrow-down${currentVote === -1 ? '-fill' : ''}`}></i>
+              </button>
+            </div>
+            
             {getStatusBadge()}
             
             {/* Accepted Answer Badge */}
@@ -275,6 +333,9 @@ const AnswerCard = ({ answer, question, onAcceptSuccess }) => {
           </div>
         )}
       </div>
+      
+      {/* Comments Section - Phase 7.2 */}
+      <CommentSection targetType="answers" targetId={id} />
       
       {/* Suggest Edit Modal - Phase 5.2 */}
       <SuggestEditModal

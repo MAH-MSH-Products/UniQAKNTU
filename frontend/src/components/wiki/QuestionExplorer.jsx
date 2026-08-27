@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api, { getAnswersByQuestionId, getSourceMaterials, extractResults } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
+import CommentSection from './CommentSection';
 import { useAuth } from '../../context/AuthContext';
 import { useSourceMaterials } from '../../context/SourceMaterialsContext';
 
@@ -16,13 +17,21 @@ import { useSourceMaterials } from '../../context/SourceMaterialsContext';
  * - Uses GET /api/answers/?question={questionId} instead of /wiki/questions/{id}/answers/
  * - Integrated SourceMaterialsContext for caching
  * 
+ * Phase 7 Updates:
+ * - Added voting functionality for questions (upvote/downvote)
+ * - Added comments section for questions
+ * 
  * @param {number} examId - The ID of the exam/source material to fetch questions for
  */
 const QuestionExplorer = ({ examId }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user, isInstructor } = useAuth();
+  const { user, isInstructor, isAuthenticated } = useAuth();
   const { materials } = useSourceMaterials();
+  
+  // Voting state for questions - Phase 7.1
+  const [votingQuestionId, setVotingQuestionId] = useState(null);
+  const [voteError, setVoteError] = useState(null);
 
   /**
    * Fetch questions from API
@@ -73,6 +82,40 @@ const QuestionExplorer = ({ examId }) => {
     }
   };
 
+  /**
+   * Handle voting on a question - Phase 7.1
+   * Uses POST /api/questions/{id}/vote/
+   * Payload: { "value": 1 } for upvote, { "value": -1 } for downvote
+   */
+  const handleQuestionVote = async (questionId, value) => {
+    if (!isAuthenticated) {
+      alert('Please login to vote');
+      return;
+    }
+
+    setVotingQuestionId(questionId);
+    setVoteError(null);
+
+    try {
+      const response = await api.post(`/questions/${questionId}/vote/`, { value });
+      
+      // Update local state with the returned vote info
+      setQuestions(prev => prev.map(q => 
+        q.id === questionId 
+          ? { ...q, user_vote: response.data.user_vote || value }
+          : q
+      ));
+    } catch (err) {
+      console.error('Failed to vote:', err);
+      setVoteError(
+        err.response?.data?.message ||
+        'Failed to vote. Please try again.'
+      );
+    } finally {
+      setVotingQuestionId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -98,9 +141,32 @@ const QuestionExplorer = ({ examId }) => {
             {/* Question Header */}
             <div className="card mb-3 bg-light">
               <div className="card-body">
-                <h4 className="text-primary">
-                  Question {question.question_number || question.id}
-                </h4>
+                <div className="d-flex justify-content-between align-items-start mb-2">
+                  <h4 className="text-primary mb-0" style={{ fontSize: '18px' }}>
+                    Question {question.question_number || question.id}
+                  </h4>
+                  
+                  {/* Voting Buttons - Phase 7.1 */}
+                  <div className="btn-group btn-group-sm" role="group">
+                    <button 
+                      className={`btn ${question.user_vote === 1 ? 'btn-success' : 'btn-outline-success'}`}
+                      onClick={() => handleQuestionVote(question.id, 1)}
+                      disabled={votingQuestionId === question.id || !isAuthenticated}
+                      title={isAuthenticated ? 'Upvote' : 'Login to vote'}
+                    >
+                      <i className={`bi bi-arrow-up${question.user_vote === 1 ? '-fill' : ''}`}></i>
+                    </button>
+                    <button 
+                      className={`btn ${question.user_vote === -1 ? 'btn-danger' : 'btn-outline-danger'}`}
+                      onClick={() => handleQuestionVote(question.id, -1)}
+                      disabled={votingQuestionId === question.id || !isAuthenticated}
+                      title={isAuthenticated ? 'Downvote' : 'Login to vote'}
+                    >
+                      <i className={`bi bi-arrow-down${question.user_vote === -1 ? '-fill' : ''}`}></i>
+                    </button>
+                  </div>
+                </div>
+                
                 <div 
                   className="question-text mt-2"
                   style={{ fontSize: '16px', lineHeight: '1.6' }}
@@ -156,9 +222,19 @@ const QuestionExplorer = ({ examId }) => {
               />
             )}
 
+            {/* Comments Section for Question - Phase 7.2 */}
+            <CommentSection targetType="questions" targetId={question.id} />
+
             <hr className="my-4" />
           </div>
         ))
+      )}
+
+      {/* Vote Error Message */}
+      {voteError && (
+        <div className="alert alert-danger mt-3">
+          <small>{voteError}</small>
+        </div>
       )}
 
       {/* Phase 4 Verification Notice */}

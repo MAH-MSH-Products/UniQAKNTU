@@ -1,7 +1,7 @@
 # AnswerCard Component Documentation
 
 ## Overview
-The `AnswerCard` component displays a single answer to a question with comprehensive support for the backend API data contract. It has been updated in Phase 2 to align with the standardized response format, and in Phase 5 to implement Wiki-style editing workflow and RBAC enforcement.
+The `AnswerCard` component displays a single answer to a question with comprehensive support for the backend API data contract. It has been updated in Phase 2 to align with the standardized response format, in Phase 5 to implement Wiki-style editing workflow and RBAC enforcement, and in Phase 7 to integrate voting functionality and comments section.
 
 ## File Location
 `frontend/src/components/wiki/AnswerCard.jsx`
@@ -27,7 +27,7 @@ The `AnswerCard` component displays a single answer to a question with comprehen
 }
 ```
 
-### Additional Props for Phase 5
+### Additional Props for Phase 5 & 7
 ```javascript
 {
   question: Object,              // Parent question object (for accept button verification)
@@ -125,6 +125,54 @@ Only the original question author can accept answers.
 
 **Constraint:** Frontend verifies `question.author.id === currentUser.id` before rendering the accept button.
 
+### 6. Phase 7: Voting & Comments Integration
+
+#### Step 7.1: Voting API Integration
+Implemented upvote/downvote functionality using the backend voting endpoint.
+
+**State Management:**
+```javascript
+const [currentVote, setCurrentVote] = useState(user_vote || 0);
+const [voting, setVoting] = useState(false);
+const [voteError, setVoteError] = useState(null);
+```
+
+**Voting Handler:**
+```javascript
+const handleVote = async (value) => {
+  if (!isAuthenticated) {
+    alert('Please login to vote');
+    return;
+  }
+
+  const response = await api.post(`/answers/${id}/vote/`, { value });
+  setCurrentVote(response.data.user_vote || value);
+};
+```
+
+**UI Buttons:**
+- Upvote button: Green filled when active, outline otherwise
+- Downvote button: Red filled when active, outline otherwise
+- Disabled state during voting operation
+- Login prompt for unauthenticated users
+
+**Endpoint:** `POST /api/answers/{id}/vote/`
+**Payload:** `{ "value": 1 }` for upvote, `{ "value": -1 }` for downvote
+**Response:** `{ "score": N, "user_vote": V }`
+
+#### Step 7.2: Comments Section Integration
+Integrated `CommentSection` component at the bottom of each answer card.
+
+```jsx
+<CommentSection targetType="answers" targetId={id} />
+```
+
+**Features:**
+- Displays list of existing comments
+- Shows author name and Jalali timestamp
+- Allows authenticated users to post new comments
+- Real-time UI update after successful comment submission
+
 ## Features
 
 ### Markdown Processing
@@ -143,6 +191,19 @@ Only the original question author can accept answers.
 
 ### Accepted Answer Badge
 - **Accepted Answer** (green badge with check icon): Answer accepted by question author
+
+### Voting System (Phase 7)
+- **Upvote Button**: Toggle upvote with visual feedback
+- **Downvote Button**: Toggle downvote with visual feedback
+- **Authentication Gate**: Requires login to vote
+- **Loading State**: Disabled during API call
+- **Error Handling**: Displays error messages on failure
+
+### Comments Section (Phase 7)
+- Reusable `CommentSection` component
+- Displays comment list with author and timestamp
+- Comment form for authenticated users
+- Real-time updates on new comments
 
 ### Role-Based Edit Controls
 - **MODERATOR/ADMIN**: Direct edit button (pencil icon)
@@ -171,22 +232,25 @@ import AnswerCard from './components/wiki/AnswerCard';
 - Bootstrap Icons
 - MathJax (for formula rendering)
 - `SuggestEditModal` component (Phase 5)
+- `CommentSection` component (Phase 7)
 - `api` service for HTTP requests
 - `AuthContext` for user authentication
 
 ## Verification Status
-**باید چک شود** - This component has been updated for Phase 5 Wiki-style editing and RBAC enforcement. Requires verification against actual backend API responses for:
-- `POST /api/answers/{id}/suggest_edit/` endpoint
-- `POST /api/answers/{id}/accept/` endpoint
-- 403 Forbidden response for student direct edit attempts
+**باید چک شود** - This component has been updated for Phase 7 Voting & Comments system. Requires verification against actual backend API responses for:
+- `POST /api/answers/{id}/vote/` endpoint behavior
+- `GET /api/answers/{id}/comments/` endpoint response format
+- `POST /api/answers/{id}/comments/` endpoint submission
+- Real-time UI updates after voting and commenting
 
 ## Related Files
 - `services/api.js` - API client with response transformers
 - `components/wiki/SuggestEditModal.jsx` - Modal for suggesting edits (Phase 5.2)
+- `components/wiki/CommentSection.jsx` - Comments section component (Phase 7.2)
 - `components/wiki/QuestionExplorer.jsx` - Parent component that renders AnswerCard
 - `context/AuthContext.jsx` - User authentication and role management
 - `API.md` - API endpoint specifications
-- `FIXING_TODO.md` - Phase 5 implementation checklist
+- `FIXING_TODO.md` - Phase 7 implementation checklist
 
 ## Testing Checklist
 - [ ] Verify status badges display correctly for all three states (APPROVED, PENDING, REJECTED)
@@ -201,3 +265,11 @@ import AnswerCard from './components/wiki/AnswerCard';
 - [ ] **Phase 5.2**: Verify edit suggestion submission works
 - [ ] **Phase 5.3**: Verify only question author sees accept button
 - [ ] **Phase 5.3**: Verify accept button works and updates UI
+- [ ] **Phase 7.1**: Verify upvote button toggles correctly
+- [ ] **Phase 7.1**: Verify downvote button toggles correctly
+- [ ] **Phase 7.1**: Verify voting requires authentication
+- [ ] **Phase 7.1**: Verify vote state updates after API response
+- [ ] **Phase 7.2**: Verify comments load correctly
+- [ ] **Phase 7.2**: Verify comment form appears for authenticated users
+- [ ] **Phase 7.2**: Verify new comment appears immediately after submission
+- [ ] **Phase 7.2**: Verify login prompt for unauthenticated users
