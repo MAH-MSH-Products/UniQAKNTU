@@ -1,11 +1,12 @@
-# `fixing_TODO.md`
+# `FIXING_TODO.md`
 
-## 📌 Overview
-This document provides a phased, file-by-file migration plan to align the React frontend with the finalized Django REST Framework backend. **The backend is strictly immutable.** All modifications must be applied exclusively to frontend components, services, and state management layers. An AI agent can execute these steps sequentially without prior project knowledge.
+## Overview
+This document provides a phased, file-by-file migration plan to align the React frontend with the finalized Django REST Framework backend.
+**The backend is strictly immutable.** All modifications must be applied exclusively to frontend components, services, and state management layers. An AI agent can execute these steps sequentially without prior project knowledge.
 
 ---
 
-## 🟦 Phase 1: API Client & Authentication Layer
+## Phase 1: API Client & Authentication Layer
 **Objective:** Align base URL, implement JWT lifecycle, and replace boolean role flags with enum-based RBAC.
 **Target Files:** `services/api.js`, `context/AuthContext.jsx`, `components/RequireAuth.jsx`, `components/RequireInstructor.jsx`, `components/Navbar.jsx`
 
@@ -25,191 +26,193 @@ This document provides a phased, file-by-file migration plan to align the React 
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
-  ```
-- **Add Response Interceptor (Auto-Refresh):**
-  ```javascript
-  api.interceptors.response.use(
-    response => response,
-    async error => {
-      const originalRequest = error.config;
-      if (error.response?.status === 401 && !originalRequest._retry) {
-        originalRequest._retry = true;
-        try {
-          const refresh = localStorage.getItem('refreshToken');
-          const { data } = await api.post('/auth/token/refresh/', { refresh });
-          localStorage.setItem('accessToken', data.access);
-          originalRequest.headers.Authorization = `Bearer ${data.access}`;
-          return api(originalRequest);
-        } catch (refreshError) {
-          localStorage.clear();
-          window.location.href = '/login';
-        }
-      }
-      return Promise.reject(error);
-    }
-  );
-  ```
+
+```
+
+* **Add Response Interceptor (Auto-Refresh):**
+Implement automatic 401 handling, calling `POST /api/auth/token/refresh/` with the `refreshToken` and retrying the original request.
 
 ### Step 1.3: Refactor Authentication Flow
-- **File:** `context/AuthContext.jsx`
-- **Replace Login Logic:**
-  - Endpoint: `POST /api/auth/token/`
-  - Payload: `{ username, password }`
-  - Response: `{ access, refresh }`
-  - Store both in `localStorage`: `accessToken`, `refreshToken`.
-  - **User Extraction:** Backend does not return user object. Decode JWT locally or fetch `/api/users/{user_id}/`. Recommended: Use `jwt-decode` library to extract `user_id` and `role` from `access` token immediately after login. Set `user` state accordingly.
-  - Update `logout()` to clear both tokens.
+
+* **File:** `context/AuthContext.jsx`
+* **Replace Login Logic:**
+* Endpoint: `POST /api/auth/token/`
+* Payload: `{ username, password }`
+* Response: `{ access, refresh }`
+* **User Extraction:** Decode JWT locally (using `jwt-decode`) to extract `user_id` and `role` from the `access` token. Set `user` state accordingly.
+
+
 
 ### Step 1.4: Map Role-Based Access Control
-- **Files:** `context/AuthContext.jsx`, `components/RequireInstructor.jsx`
-- **Replace:** `user?.is_instructor` and `user?.is_staff`
-- **Implement:** 
-  ```javascript
-  const userRole = user?.role || 'STUDENT';
-  export const canModerate = ['MODERATOR', 'ADMIN'].includes(userRole);
-  export const isAdmin = userRole === 'ADMIN';
-  ```
-- Update `RequireInstructor.jsx` to check `canModerate` instead of `is_instructor`.
+
+* **Files:** `context/AuthContext.jsx`, auth wrapper components.
+* **Replace:** `user?.is_instructor` and `user?.is_staff`
+* **Implement:**
+```javascript
+const userRole = user?.role || 'STUDENT';
+export const canModerate = ['MODERATOR', 'ADMIN'].includes(userRole);
+export const isAdmin = userRole === 'ADMIN';
+
+```
+
+
 
 ---
 
-## 🟨 Phase 2: Data Contract & Pagination Adapter
+## Phase 2: Data Contract & Pagination Adapter
+
 **Objective:** Standardize response parsing, pagination handling, and date/status field mapping.
-**Target Files:** `services/api.js`, `components/QuestionExplorer.jsx`, `components/AnswerCard.jsx`, `components/Home.jsx`
+**Target Files:** `services/api.js`, `components/QuestionExplorer.jsx`, `components/AnswerCard.jsx`
 
 ### Step 2.1: Implement Response Transformer
-- **File:** `services/api.js` or a dedicated `utils/adapter.js`
-- **Logic:** All `GET` list endpoints return `{ count, next, previous, results }`. Create a wrapper:
-  ```javascript
-  export const extractResults = (response) => response.data.results || [];
-  export const getPaginationMeta = (response) => ({
-    count: response.data.count,
-    next: response.data.next,
-    previous: response.data.previous,
-  });
-  ```
 
-### Step 2.2: Update List Fetching Components
-- **Files:** `QuestionExplorer.jsx`, `Home.jsx`
-- Replace direct `response.data` usage with `extractResults(response)`.
-- Bind pagination UI to `next`/`previous` URLs. Do not implement client-side pagination.
+* **Logic:** All `GET` list endpoints return `{ count, next, previous, results }`. Create wrapper functions (`extractResults`, `getPaginationMeta`) to parse `response.data.results`.
 
-### Step 2.3: Field Mapping
-- **Files:** `AnswerCard.jsx`, `QuestionCard.jsx`, any component rendering timestamps/status
-- **Status:** Replace `is_verified` with `status`. 
-  - Public visibility filter: Append `?status=APPROVED` to all list requests.
-  - UI Badge: Show `Pending Review` if `status === 'PENDING'`, `Approved` if `status === 'APPROVED'`.
-- **Dates:** Replace `created_at`, `last_updated`, `updated_at` with `created_at_jalali`, `updated_at_jalali`.
-- **Votes:** Use `user_vote` (returns `1`, `-1`, or `0`) to style vote buttons. Do not calculate client-side.
+### Step 2.2: Field Mapping
+
+* **Status:** Replace `is_verified` with `status`.
+* Public visibility filter: Append `?status=APPROVED` to all public list requests.
+
+
+* **Dates:** Replace `created_at`, `last_updated` with `created_at_jalali`, `updated_at_jalali`.
 
 ---
 
-## 🟧 Phase 3: Content Submission & Attachment Workflow
+## Phase 3: Content Submission & Attachment Workflow
+
 **Objective:** Replace `multipart/form-data` uploads with the two-step Orphan Claiming pattern.
-**Target Files:** `components/AnswerForm.jsx`, `components/MarkdownEditor.jsx`, `components/QuestionForm.jsx`
 
 ### Step 3.1: Remove Multipart Submission Logic
-- **File:** `AnswerForm.jsx` (and `QuestionForm.jsx`)
-- **Delete:** `formData.append('image')`, `formData.append('pdf_file')`, `formData.append('current_body')`.
-- **Change Content-Type:** Ensure all `POST/PATCH` requests use `application/json` (default for Axios).
+
+* **File:** `AnswerForm.jsx` and `QuestionForm.jsx`
+* Change Content-Type to `application/json`.
 
 ### Step 3.2: Implement Orphan Upload & Markdown Injection
-- **File:** `MarkdownEditor.jsx` or `AnswerForm.jsx`
-- **On File Drop/Paste:**
-  1. Upload immediately to `POST /api/attachments/` with `FormData` containing only `file`.
-  2. On success, extract `id` and `file` (URL).
-  3. Insert `![attachment](url)` into markdown editor state.
-  4. Store `id` in a local state array: `attachmentIds: [1, 2, 3]`.
+
+* On File Drop/Paste: Upload immediately to `POST /api/attachments/` with `FormData` containing only `file`. Extract `id` and `file` (URL). Store `id` in a local state array (`attachmentIds`).
 
 ### Step 3.3: Update Submit Handler
-- **File:** `AnswerForm.jsx`
-- **Payload Structure:**
-  ```json
-  {
-    "question": 42,
-    "body": "markdown text with ![img](url)...",
-    "attachment_ids": [105, 106]
-  }
-  ```
-- **Question Form Payload:** Add `source_material` (integer ID) and `tag_ids` (array of integers).
-- **Validation:** Ensure `attachment_ids` matches the IDs stored during upload.
+
+* **Payload Structure:**
+```json
+{
+  "question": 42,
+  "body": "markdown text...",
+  "attachment_ids": [105, 106]
+}
+
+```
+
+
 
 ---
 
-## 🟥 Phase 4: Routing & Query Parameter Alignment
+## Phase 4: Routing & Query Parameter Alignment
+
 **Objective:** Replace nested REST paths with flat endpoints + query parameters.
-**Target Files:** `App.jsx`, `services/api.js`, `components/QuestionExplorer.jsx`, `components/AnswerForm.jsx`
 
-### Step 4.1: Route Mapping Table
-| Old Frontend Route | New Backend Endpoint | Query Parameter |
-|-------------------|----------------------|-----------------|
-| `/curriculum/courses/` | `/api/source-materials/` | None |
-| `/curriculum/courses/{id}/exams/` | `/api/source-materials/` | `?id={id}` (retrieve single) |
-| `/wiki/questions/{id}/answers/` | `/api/answers/` | `?question={id}` |
-| `/wiki/answers/{id}/` | `/api/answers/{id}/` | None (path param) |
+### Step 4.1: Route Mapping
 
-### Step 4.2: Update Service Calls
-- Replace `GET /wiki/questions/${qid}/answers/` with `GET /api/answers/?question=${qid}`.
-- Replace `GET /curriculum/courses/` with `GET /api/source-materials/`.
-- Cache `source-materials` list in a global store or context to populate dropdowns in `QuestionForm`.
+* `/curriculum/courses/` -> `/api/source-materials/`
+* `/wiki/questions/{id}/answers/` -> `/api/answers/?question={id}`
 
 ---
 
-## 🟪 Phase 5: Edit Workflow & RBAC Enforcement
+## Phase 5: Edit Workflow & RBAC Enforcement
+
 **Objective:** Replace direct editing with Wiki-style suggestions and enforce strict role boundaries.
-**Target Files:** `AnswerCard.jsx`, `QuestionDetail.jsx`, `components/SuggestEditModal.jsx` (create if missing)
 
 ### Step 5.1: Disable Direct Editing for Students
-- **Logic:** If `user.role === 'STUDENT'`, hide/disable `Edit` button on posts.
-- **Backend Constraint:** `PUT/PATCH` to `/api/questions/{id}/` or `/api/answers/{id}/` will return `403 Forbidden` for students.
+
+* If `user.role === 'STUDENT'`, hide/disable `Edit` button on posts.
 
 ### Step 5.2: Implement Suggest Edit Flow
-- **Endpoint:** `POST /api/questions/{id}/suggest_edit/` or `POST /api/answers/{id}/suggest_edit/`
-- **Payload:** 
-  ```json
-  {
-    "proposed_text": "updated markdown",
-    "attachment_ids": [1, 2]
-  }
-  ```
-- **UI:** Replace edit form with a modal. On submit, show `201 Created` response and display "Edit Pending Review" badge.
+
+* **Endpoint:** `POST /api/questions/{id}/suggest_edit/`
+* **Payload:** `{ "proposed_text": "...", "attachment_ids": [] }`
+* **UI:** Replace edit form with a modal for students.
 
 ### Step 5.3: Accept Answer Restriction
-- **Endpoint:** `POST /api/answers/{id}/accept/`
-- **Constraint:** Only callable by the original question author. Frontend must verify `question.author.id === currentUser.id` before rendering the accept button.
+
+* **Endpoint:** `POST /api/answers/{id}/accept/`
+* **Constraint:** Only callable by the original question author.
 
 ---
 
-## ⬛ Phase 6: Feature Decommissioning & Mock Fallbacks
+## Phase 6: Feature Decommissioning & Mock Fallbacks
+
 **Objective:** Handle endpoints that do not exist in the backend without breaking the UI.
-**Target Files:** `components/SupportCenter.jsx`, `components/WidgetsPanel.jsx`, `App.jsx`
 
-### Step 6.1: Remove/Disable Non-Existent Endpoints
-- `/support/tickets/`, `/auth/role-request/`, `/widgets/recent-answers/`, `/widgets/popular-courses/`
-- **Action:** 
-  - Comment out or remove route imports in `App.jsx`.
-  - In `SupportCenter.jsx`, replace the "Request Instructor Role" tab with a static notice: `"Role changes are managed by administrators. Contact support offline."`
-  - In `WidgetsPanel.jsx`, replace API calls with mock data or remove the panel until backend support is added.
+### Step 6.1: Support Tickets and Widgets
 
-### Step 6.2: UI Fallbacks
-- Add `?mock=true` flag or conditional rendering:
-  ```jsx
-  {process.env.REACT_APP_ENABLE_MOCK_WIDGETS === 'true' ? <MockWidgets /> : <EmptyState />}
-  ```
+* The `/support/tickets/` and `/widgets/*` endpoints do not exist in the backend.
+* **Action:** Keep the Support Ticket UI and WidgetsPanel functional by continuing to use **mock data only** for these specific sections. Display a small "Mocked Feature" badge on these panels. Do NOT attempt to integrate them with the backend.
 
 ---
 
-## ✅ Final Verification Checklist
-- [ ] All `POST /auth/login/` calls replaced with `POST /api/auth/token/` (JWT).
-- [ ] `Authorization` header uses `Bearer <accessToken>`.
-- [ ] `401` responses trigger automatic token refresh.
-- [ ] List responses parsed via `response.data.results`.
-- [ ] All dates use `*_jalali` fields.
-- [ ] Public lists include `?status=APPROVED`.
-- [ ] File uploads use two-step orphan pattern (`attachment_ids` array).
-- [ ] Nested routes replaced with flat endpoints + query params.
-- [ ] Student users cannot trigger `PUT/PATCH` on posts.
-- [ ] `/support/` and `/widgets/` routes hidden or mocked.
-- [ ] No backend files modified.
+## Phase 7: Voting & Comments System Integration
 
-**Execution Order:** Phase 1 → 2 → 3 → 4 → 5 → 6. Test each phase independently before proceeding.
+**Objective:** Implement the interactive features that exist in the backend but are missing in the frontend UI.
+**Target Files:** `AnswerCard.jsx`, `QuestionDetail.jsx`, `CommentSection.jsx` (New)
+
+### Step 7.1: Implement Voting API
+
+* **Endpoint:** `POST /api/questions/{id}/vote/` & `POST /api/answers/{id}/vote/`
+* **Payload:** `{"value": 1}` or `{"value": -1}`
+* **Action:** When user clicks upvote/downvote, trigger the API and dynamically update the UI using the returned `{ "new_score": N }`.
+
+### Step 7.2: Build Comments UI
+
+* **Endpoints:** `GET` & `POST /api/questions/{id}/comments/` (and answers).
+* **Action:** Create a new `CommentSection.jsx` component to display a list of comments and a text input for authenticated users to submit new comments. Render this component at the bottom of `AnswerCard` and Question details.
+
+---
+
+## Phase 8: Tags & Categories Integration
+
+**Objective:** Utilize the backend's tagging system for questions.
+**Target Files:** `QuestionForm.jsx`, `QuestionExplorer.jsx`
+
+### Step 8.1: Fetch Tags & Categories
+
+* **Endpoints:** `GET /api/tags/categories/` and `GET /api/tags/`.
+* **Action:** In the Question creation/editing form, fetch these lists to populate a multi-select dropdown.
+
+### Step 8.2: Submit Tags
+
+* Modify the Question `POST` payload to include `"tag_ids": [id1, id2]`.
+* Display selected tags visually on the `QuestionExplorer` cards using the `tags` array returned from the backend.
+
+---
+
+## Phase 9: Real Moderation & User Management Dashboards
+
+**Objective:** Replace the placeholder `AdminSupportPanel` with real moderation tools based on backend RBAC.
+**Target Files:** `ModerationDashboard.jsx` (New), `UserManagement.jsx` (New)
+
+### Step 9.1: Content Moderation Queue
+
+* **Endpoints:**
+* `GET /api/questions/?status=PENDING`
+* `GET /api/answers/?status=PENDING`
+* `GET /api/suggested-edits/`
+
+
+* **Action:** Build a dashboard strictly for `MODERATOR` and `ADMIN` roles to view pending content and suggested edits. Include buttons to hit the respective `/approve/` or `/reject/` endpoints.
+
+### Step 9.2: Admin User Management
+
+* **Endpoints:** `GET /api/users/` & `PATCH /api/users/{id}/role/`
+* **Action:** Build a user grid (strictly for `ADMIN` role) to list all users, view their current roles, and allow the admin to promote a `STUDENT` to `MODERATOR` (replacing the old mock "Role Request" flow).
+
+---
+
+## Phase 10: Source Material Enhancements
+
+**Objective:** Fully utilize the `SourceMaterial` model attributes in the UI.
+**Target Files:** `SourceMaterialList.jsx`, `QuestionExplorer.jsx`
+
+### Step 10.1: Display Associated PDFs
+
+* The `SourceMaterial` object contains `question_pdf`, `answer_pdf`, and `year`.
+* **Action:** Update the UI where Source Materials (Exams/Courses) are listed or explored to display the `year` and provide direct download buttons for the `question_pdf` and `answer_pdf` if they are not null.
