@@ -38,7 +38,7 @@ const Sidebar = () => {
           <li className="nav-item">
             <Link 
               className="nav-link text-dark d-flex align-items-center gap-2" 
-              to="/courses"
+              to="/source-materials"
               style={navLinkStyle}
               onMouseEnter={(e) => Object.assign(e.currentTarget.style, navLinkHoverStyle)}
               onMouseLeave={(e) => Object.assign(e.currentTarget.style, { backgroundColor: 'transparent', color: 'var(--text-secondary)' })}

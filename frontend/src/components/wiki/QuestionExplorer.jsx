@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import api, { getAnswersByQuestionId, getSourceMaterials, extractResults } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
@@ -21,13 +22,22 @@ import { useSourceMaterials } from '../../context/SourceMaterialsContext';
  * - Added voting functionality for questions (upvote/downvote)
  * - Added comments section for questions
  * 
- * @param {number} examId - The ID of the exam/source material to fetch questions for
+ * Phase 10 Updates:
+ * - Changed route from /questions/:questionId/answers to /source-materials/:examId/questions
+ * - Now uses examId from URL parameters via useParams hook
+ * - Supports both prop-based and URL-based examId
+ * 
+ * @param {number} examId - The ID of the exam/source material to fetch questions for (optional, can come from URL)
  */
-const QuestionExplorer = ({ examId }) => {
+const QuestionExplorer = ({ examId: propExamId }) => {
+  const { examId: paramExamId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user, isInstructor, isAuthenticated } = useAuth();
   const { materials } = useSourceMaterials();
+  
+  // Use examId from props or URL parameters
+  const currentExamId = propExamId || paramExamId;
   
   // Voting state for questions - Phase 7.1
   const [votingQuestionId, setVotingQuestionId] = useState(null);
@@ -44,7 +54,7 @@ const QuestionExplorer = ({ examId }) => {
 
       try {
         // Fetch questions filtered by source_material (exam) and status=APPROVED
-        const response = await api.get(`/questions/?source_material=${examId}&status=APPROVED`);
+        const response = await api.get(`/questions/?source_material=${currentExamId}&status=APPROVED`);
         
         // Use extractResults utility for standardized parsing
         const results = extractResults(response);
@@ -58,10 +68,10 @@ const QuestionExplorer = ({ examId }) => {
       }
     };
 
-    if (examId) {
+    if (currentExamId) {
       fetchQuestions();
     }
-  }, [examId]);
+  }, [currentExamId]);
 
   /**
    * Handle successful answer submission
@@ -70,9 +80,9 @@ const QuestionExplorer = ({ examId }) => {
   const handleAnswerSubmit = (result) => {
     console.log('Answer submitted:', result);
     // Refetch questions to show updated answers
-    if (examId) {
+    if (currentExamId) {
       setLoading(true);
-      api.get(`/questions/?source_material=${examId}&status=APPROVED`)
+      api.get(`/questions/?source_material=${currentExamId}&status=APPROVED`)
         .then(response => {
           const results = extractResults(response);
           setQuestions(results);
@@ -131,7 +141,11 @@ const QuestionExplorer = ({ examId }) => {
     <div className="question-explorer">
       <h2 className="mb-4">Exam Questions</h2>
 
-      {questions.length === 0 ? (
+      {!currentExamId ? (
+        <div className="alert alert-warning">
+          No exam ID provided. Please navigate from a source material.
+        </div>
+      ) : questions.length === 0 ? (
         <div className="alert alert-info">
           No questions available for this exam yet.
         </div>

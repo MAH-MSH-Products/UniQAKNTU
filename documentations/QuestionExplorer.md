@@ -1,7 +1,7 @@
 # QuestionExplorer Component Documentation
 
 ## Overview
-The `QuestionExplorer` component displays a list of questions for a specific exam (source material) with their answers. It has been updated in Phase 2 to implement the pagination adapter pattern and standardized data contract, and in Phase 7 to integrate voting functionality for questions and comments section.
+The `QuestionExplorer` component displays a list of questions for a specific exam (source material) with their answers. It has been updated in Phase 2 to implement the pagination adapter pattern and standardized data contract, in Phase 7 to integrate voting functionality for questions and comments section, and in Phase 10 to use source material-based routing (`/source-materials/:examId/questions`).
 
 ## File Location
 `frontend/src/components/wiki/QuestionExplorer.jsx`
@@ -193,7 +193,23 @@ Integrated `CommentSection` component at the bottom of each question card.
 ## Props
 | Prop | Type | Description |
 |------|------|-------------|
-| examId | number | The ID of the exam (source material) to fetch questions for |
+| examId | number | The ID of the exam (source material) to fetch questions for. Can be passed as prop or extracted from URL parameters via `useParams()` hook (Phase 10) |
+
+## Phase 10 Routing Updates
+
+### URL Parameter Support
+The component now supports both prop-based and URL parameter-based `examId`:
+
+```javascript
+const { examId: paramExamId } = useParams();
+const currentExamId = propExamId || paramExamId;
+```
+
+### Route Change
+- **Old Route**: `/questions/:questionId/answers`
+- **New Route**: `/source-materials/:examId/questions`
+
+This change better reflects the component's purpose of exploring questions within a specific source material rather than viewing answers to a specific question.
 
 ## Dependencies
 - React (`useState`, `useEffect`)
@@ -235,3 +251,6 @@ Integrated `CommentSection` component at the bottom of each question card.
 - [ ] **Phase 7.2**: Verify comment form appears for authenticated users
 - [ ] **Phase 7.2**: Verify new comment appears immediately after submission
 - [ ] **Phase 7.2**: Verify login prompt for unauthenticated users
+- [ ] **Phase 10**: Verify component receives examId from URL parameters
+- [ ] **Phase 10**: Verify route `/source-materials/:examId/questions` works correctly
+- [ ] **Phase 10**: Verify "Explore Questions" button navigates to correct route

@@ -9,6 +9,7 @@ import RequireInstructor from './components/auth/RequireInstructor';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import SourceMaterialsList from './pages/SourceMaterialsList';
 // Phase 6: Support routes disabled - backend endpoints do not exist
 // import SupportCenter from './pages/support/SupportCenter';
 // import AdminSupportPanel from './pages/admin/AdminSupportPanel';
@@ -63,8 +64,11 @@ function App() {
               <Route path="/" element={<Home />} />
               
               {/* Phase 4: Source Materials routes (replaces /curriculum/courses/) */}
-              <Route path="/source-materials" element={<div className="p-4"><h2>Source Materials List</h2></div>} />
+              <Route path="/source-materials" element={<SourceMaterialsList />} />
               <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
+              
+              {/* Phase 10: Source Material Questions route */}
+              <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
             </Route>
 
             {/* Protected Routes - Require Authentication */}
@@ -79,7 +83,6 @@ function App() {
                 {/* <Route path="/admin/support" element={<AdminSupportPanel />} /> */}
                 
                 {/* Phase 4: Questions and Answers routes with flat structure */}
-                <Route path="/questions/:questionId/answers" element={<QuestionExplorer />} />
                 <Route path="/answers/:answerId" element={<AnswerDetail />} />
               </Route>
             </Route>

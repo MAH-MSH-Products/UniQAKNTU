@@ -87,7 +87,7 @@ const Footer = () => {
             <ul className="list-unstyled">
               <li className="mb-2">
                 <Link 
-                  to="/courses" 
+                  to="/source-materials" 
                   className="text-decoration-none text-muted small"
                   style={{ transition: 'color 0.2s ease' }}
                   onMouseEnter={(e) => e.target.style.color = 'var(--secondary-color)'}

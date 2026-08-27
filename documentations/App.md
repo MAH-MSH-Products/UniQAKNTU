@@ -83,6 +83,7 @@ Accessible to all users without authentication:
 | `/` | Home | MainLayout | Landing page with features and hero section |
 | `/source-materials` | SourceMaterialsList | MainLayout | Browse all source materials (Phase 4) |
 | `/source-materials/:id` | SourceMaterialsList | MainLayout | View single source material detail (Phase 4) |
+| `/source-materials/:examId/questions` | QuestionExplorer | MainLayout | View questions for a specific source material (Phase 10) |
 
 ```javascript
 <Route element={<MainLayout />}>
@@ -90,7 +91,10 @@ Accessible to all users without authentication:
   
   {/* Phase 4: Source Materials routes (replaces /curriculum/courses/) */}
   <Route path="/source-materials" element={<SourceMaterialsList />} />
-  <Route path="/source-materials/:id" element={<SourceMaterialsList />} />
+  <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
+  
+  {/* Phase 10: Source Material Questions route */}
+  <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
 </Route>
 ```
 
@@ -106,7 +110,6 @@ Require user authentication:
 | `/tickets` | ~~My Tickets Page~~ | MainLayout | View user's ticket history | **Disabled (Phase 6)** |
 | `/reports` | ~~Reports Page~~ | MainLayout | View content reports | **Disabled (Phase 6)** |
 | `/admin/support` | ~~AdminSupportPanel~~ | MainLayout | Admin panel for managing tickets | **Disabled (Phase 6)** |
-| `/questions/:questionId/answers` | QuestionExplorer | MainLayout | View answers for a specific question (Phase 4) | Active |
 | `/answers/:answerId` | AnswerDetail | MainLayout | View single answer detail (Phase 4) | Active |
 
 ```javascript
@@ -119,7 +122,6 @@ Require user authentication:
     {/* <Route path="/admin/support" element={<AdminSupportPanel />} /> */}
     
     {/* Phase 4: Questions and Answers routes with flat structure */}
-    <Route path="/questions/:questionId/answers" element={<QuestionExplorer />} />
     <Route path="/answers/:answerId" element={<AnswerDetail />} />
   </Route>
 </Route>
@@ -169,7 +171,8 @@ BrowserRouter
             ├── Public Routes (MainLayout)
             │   ├── / → Home
             │   ├── /source-materials → SourceMaterialsList (Phase 4)
-            │   └── /source-materials/:id → SourceMaterial Detail (Phase 4)
+            │   ├── /source-materials/:id → SourceMaterial Detail (Phase 4)
+            │   └── /source-materials/:examId/questions → QuestionExplorer (Phase 10)
             │
             ├── RequireAuth Routes
             │   └── MainLayout
@@ -178,7 +181,6 @@ BrowserRouter
             │       ├── /tickets → My Tickets [DISABLED]
             │       ├── /reports → Reports [DISABLED]
             │       ├── /admin/support → AdminSupportPanel [DISABLED]
-            │       ├── /questions/:questionId/answers → QuestionExplorer (Phase 4)
             │       └── /answers/:answerId → AnswerDetail (Phase 4)
             │
             ├── RequireInstructor Routes
@@ -348,3 +350,4 @@ useEffect(() => {
 - **Phase 11**: Integrated AuthLayout for authentication pages
 - **Phase 12**: Implemented route protection with RequireAuth and RequireInstructor wrappers, reorganized route hierarchy
 - **Phase 4**: Added SourceMaterialsProvider for global caching, updated routes to use flat endpoint structure, added QuestionExplorer and AnswerDetail routes
+- **Phase 10**: Updated routing for QuestionExplorer component to use source material-based URLs (`/source-materials/:examId/questions`), replaced placeholder content with SourceMaterialsList component at `/source-materials` route
