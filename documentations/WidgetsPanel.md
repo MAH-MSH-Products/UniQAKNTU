@@ -10,6 +10,8 @@ This component enhances user engagement by providing quick access to trending an
 
 **Phase 6 Update:** All backend endpoints for widgets do not exist. This component now uses mock data exclusively and serves as a placeholder until backend support is added.
 
+**Phase 6.2 Update:** Implements conditional rendering based on the `REACT_APP_ENABLE_MOCK_WIDGETS` environment variable. When set to `'false'`, displays an `EmptyState` fallback component instead of mock widgets.
+
 ## Key Components
 
 ### State Variables
@@ -38,6 +40,13 @@ This component enhances user engagement by providing quick access to trending an
 - **Display Fields**: title, course, date
 - **Status**: Backend endpoint does not exist - using mock data
 
+### EmptyState Component (Phase 6.2)
+A fallback component that displays when `process.env.REACT_APP_ENABLE_MOCK_WIDGETS === 'false'`.
+
+**Purpose**: Provides a graceful degradation path when mock widgets are disabled via environment configuration.
+
+**Display**: Shows a centered message with icon stating "Widgets are currently unavailable. Backend integration pending."
+
 ## Usage
 
 ```jsx
@@ -48,6 +57,16 @@ import WidgetsPanel from './components/layout/WidgetsPanel';
   <WidgetsPanel />
 </MainLayout>
 ```
+
+### Environment Configuration (Phase 6.2)
+To disable mock widgets and show the empty state fallback:
+
+```env
+# .env file
+REACT_APP_ENABLE_MOCK_WIDGETS=false
+```
+
+When this environment variable is set to `'false'`, the component renders `<EmptyState />` instead of the mock widget panels.
 
 ## Styling
 
@@ -105,6 +124,11 @@ const mockExams = [
 - `../../services/api` - Imported but not used in Phase 6
 
 ## Change Log
+
+- **Phase 6.2 (2026-08-27)** - UI Fallbacks Implementation:
+  - Added `EmptyState` component for graceful degradation
+  - Implemented conditional rendering based on `REACT_APP_ENABLE_MOCK_WIDGETS` environment flag
+  - Follows pattern: `{process.env.REACT_APP_ENABLE_MOCK_WIDGETS === 'true' ? <MockWidgets /> : <EmptyState />}`
 
 - **Phase 6 (2026-08-27)** - Feature Decommissioning & Mock Fallbacks:
   - Removed all API calls to non-existent backend endpoints

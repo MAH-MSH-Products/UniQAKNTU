@@ -10,6 +10,9 @@ import api from '../../services/api';
  * - Replaced "Request Instructor Role" functionality with static notice
  * - All API calls replaced with mock data
  * - Component serves as placeholder until backend support is added
+ * 
+ * The "Request Instructor Role" tab/section has been replaced with a static notice:
+ * "Role changes are managed by administrators. Contact support offline."
  */
 
 const SupportCenter = () => {
@@ -24,17 +27,18 @@ const SupportCenter = () => {
     title: '',
     description: '',
     category: 'General Support',
-    introduction: '' // For instructor role requests
+    introduction: '' // For instructor role requests (disabled in Phase 6)
   });
   
   const [formStatus, setFormStatus] = useState({ type: '', message: '' });
 
-  // Categories for tickets - Phase 6: "Request Instructor Role" disabled
+  // Categories for tickets - Phase 6: "Request Instructor Role" removed
+  // Only general support categories remain
   const categories = [
     'General Support',
     'Technical Issue',
     'Content Error'
-    // 'Request Instructor Role' - Disabled per Phase 6 (backend endpoint does not exist)
+    // 'Request Instructor Role' - Removed per Phase 6 (backend endpoint does not exist)
   ];
 
   /**
@@ -118,6 +122,9 @@ const SupportCenter = () => {
   /**
    * Submit ticket form
    * Phase 6 Update: Backend endpoints do not exist - mock submission only
+   * 
+   * Static notice displayed for instructor role requests:
+   * "Role changes are managed by administrators. Contact support offline."
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -129,7 +136,7 @@ const SupportCenter = () => {
       return;
     }
 
-    // Phase 6: Prevent submission for instructor role requests
+    // Phase 6: Prevent submission for instructor role requests with static notice
     if (formData.category === 'Request Instructor Role') {
       setFormStatus({ 
         type: 'info', 
@@ -255,7 +262,7 @@ const SupportCenter = () => {
                     ></textarea>
                   </div>
 
-                  {/* Phase 6: "Request Instructor Role" tab replaced with static notice */}
+                  {/* Phase 6: "Request Instructor Role" category removed - static notice shown if selected */}
                   {formData.category === 'Request Instructor Role' && (
                     <div className="alert alert-info" role="alert">
                       <strong>Notice:</strong> Role changes are managed by administrators. Contact support offline.
