@@ -1,4 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import api from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import SuggestEditModal from './SuggestEditModal';
 
 /**
  * AnswerCard Component
@@ -11,6 +14,8 @@ import React, { useEffect } from 'react';
  * - Status badges (Pending Review / Approved)
  * - Jalali date timestamps
  * - Vote display using user_vote field
+ * - Edit suggestion workflow for students (Phase 5)
+ * - Accept answer button for question authors (Phase 5.3)
  * 
  * @param {Object} answer - Answer object matching API Endpoint 3.1 structure
  * @param {number} answer.id - Unique answer identifier
@@ -21,8 +26,10 @@ import React, { useEffect } from 'react';
  * @param {string|null} answer.pdf_file - URL to attached PDF (optional)
  * @param {number} answer.user_vote - User's vote: 1, -1, or 0
  * @param {string} answer.created_at_jalali - Persian Shamsi timestamp
+ * @param {Object} question - Parent question object (for accept button verification)
+ * @param {Function} onAcceptSuccess - Callback when answer is accepted
  */
-const AnswerCard = ({ answer }) => {
+const AnswerCard = ({ answer, question, onAcceptSuccess }) => {
   const {
     id,
     author,
@@ -33,7 +40,22 @@ const AnswerCard = ({ answer }) => {
     user_vote = 0,
     created_at_jalali,
     updated_at_jalali,
+    is_accepted = false,
   } = answer;
+
+  const { user, userRole } = useAuth();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [accepting, setAccepting] = useState(false);
+  const [acceptError, setAcceptError] = useState(null);
+
+  // Check if current user is the question author
+  const isQuestionAuthor = question?.author?.id === user?.id;
+  
+  // Check if user can directly edit (MODERATOR or ADMIN)
+  const canDirectEdit = ['MODERATOR', 'ADMIN'].includes(userRole);
+  
+  // Students can only suggest edits
+  const canSuggestEdit = user && userRole === 'STUDENT';
 
   /**
    * Process markdown text for display
@@ -98,6 +120,35 @@ const AnswerCard = ({ answer }) => {
     return null;
   };
 
+  /**
+   * Handle accepting an answer (Phase 5.3)
+   * Only question author can accept answers
+   * Calls POST /api/answers/{id}/accept/
+   */
+  const handleAcceptAnswer = async () => {
+    if (!isQuestionAuthor) return;
+    
+    setAccepting(true);
+    setAcceptError(null);
+    
+    try {
+      const response = await api.post(`/answers/${id}/accept/`);
+      
+      // Notify parent component of success
+      if (onAcceptSuccess) {
+        onAcceptSuccess(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to accept answer:', err);
+      setAcceptError(
+        err.response?.data?.message ||
+        'Failed to accept answer. Please try again.'
+      );
+    } finally {
+      setAccepting(false);
+    }
+  };
+
   return (
     <div className="answer-card card mb-3" id={`answer-${id}`}>
       <div className="card-header">
@@ -115,6 +166,55 @@ const AnswerCard = ({ answer }) => {
           </div>
           <div className="d-flex align-items-center gap-2">
             {getStatusBadge()}
+            
+            {/* Accepted Answer Badge */}
+            {is_accepted && (
+              <span className="badge bg-success">
+                <i className="bi bi-check-circle me-1"></i>
+                Accepted Answer
+              </span>
+            )}
+            
+            {/* Edit Button - Phase 5.1 (MODERATOR/ADMIN only) */}
+            {canDirectEdit && (
+              <button 
+                className="btn btn-sm btn-outline-primary"
+                onClick={() => setShowEditModal(true)}
+                title="Edit this answer"
+              >
+                <i className="bi bi-pencil"></i>
+              </button>
+            )}
+            
+            {/* Suggest Edit Button for Students - Phase 5.2 */}
+            {canSuggestEdit && (
+              <button 
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => setShowEditModal(true)}
+                title="Suggest an edit"
+              >
+                <i className="bi bi-pencil-square"></i>
+              </button>
+            )}
+            
+            {/* Accept Answer Button - Phase 5.3 (Only for question author) */}
+            {isQuestionAuthor && !is_accepted && status === 'APPROVED' && (
+              <button 
+                className="btn btn-sm btn-success"
+                onClick={handleAcceptAnswer}
+                disabled={accepting}
+                title="Accept this answer"
+              >
+                {accepting ? (
+                  <span className="spinner-border spinner-border-sm"></span>
+                ) : (
+                  <>
+                    <i className="bi bi-check-circle me-1"></i>
+                    Accept
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -175,6 +275,19 @@ const AnswerCard = ({ answer }) => {
           </div>
         )}
       </div>
+      
+      {/* Suggest Edit Modal - Phase 5.2 */}
+      <SuggestEditModal
+        show={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        itemId={id}
+        itemType="answer"
+        currentText={body}
+        onSuccess={(data) => {
+          console.log('Edit suggestion submitted:', data);
+          // Optionally refresh the answer data here
+        }}
+      />
     </div>
   );
 };

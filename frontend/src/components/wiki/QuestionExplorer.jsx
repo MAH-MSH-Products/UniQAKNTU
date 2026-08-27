@@ -131,7 +131,15 @@ const QuestionExplorer = ({ examId }) => {
               
               {question.answers && question.answers.length > 0 ? (
                 question.answers.map((answer) => (
-                  <AnswerCard key={answer.id} answer={answer} />
+                  <AnswerCard 
+                    key={answer.id} 
+                    answer={answer}
+                    question={question}
+                    onAcceptSuccess={(data) => {
+                      console.log('Answer accepted:', data);
+                      // Optionally refresh the question data here
+                    }}
+                  />
                 ))
               ) : (
                 <div className="alert alert-warning">
