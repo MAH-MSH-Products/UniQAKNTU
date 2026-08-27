@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `App.jsx` file serves as the main application entry point for the AzmoonHub Nasir React frontend. It configures the routing structure using React Router DOM, provides authentication context throughout the application, and implements route protection using authentication wrappers. The component also handles RTL/LTR direction switching based on the active language (Persian/English).
+The `App.jsx` file serves as the main application entry point for the AzmoonHub Nasir React frontend. It configures the routing structure using React Router DOM, provides authentication context throughout the application, and implements route protection using authentication wrappers. The component also handles RTL/LTR direction switching based on the active language (Persian/English). In Phase 4, it was updated to include SourceMaterialsProvider for caching source materials and implement flat endpoint routing structure.
 
 ## Key Components
 
@@ -28,9 +28,11 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Route definitions */}
-        </Routes>
+        <SourceMaterialsProvider>
+          <Routes>
+            {/* Route definitions */}
+          </Routes>
+        </SourceMaterialsProvider>
       </AuthProvider>
     </BrowserRouter>
   );
@@ -40,6 +42,7 @@ function App() {
 **Core Responsibilities:**
 - Wraps application with `BrowserRouter` for client-side routing
 - Provides `AuthProvider` for global authentication state
+- Provides `SourceMaterialsProvider` for caching source materials (Phase 4)
 - Configures all application routes with appropriate protection wrappers
 - Manages RTL/LTR direction based on i18n language settings
 
@@ -78,12 +81,16 @@ Accessible to all users without authentication:
 | Path | Component | Layout | Description |
 |------|-----------|--------|-------------|
 | `/` | Home | MainLayout | Landing page with features and hero section |
-| `/courses` | Courses Page | MainLayout | Browse all available courses |
+| `/source-materials` | SourceMaterialsList | MainLayout | Browse all source materials (Phase 4) |
+| `/source-materials/:id` | SourceMaterialsList | MainLayout | View single source material detail (Phase 4) |
 
 ```javascript
 <Route element={<MainLayout />}>
   <Route path="/" element={<Home />} />
-  <Route path="/courses" element={<div className="p-4"><h2>Courses Page</h2></div>} />
+  
+  {/* Phase 4: Source Materials routes (replaces /curriculum/courses/) */}
+  <Route path="/source-materials" element={<SourceMaterialsList />} />
+  <Route path="/source-materials/:id" element={<SourceMaterialsList />} />
 </Route>
 ```
 
@@ -97,6 +104,8 @@ Require user authentication:
 | `/tickets` | My Tickets Page | MainLayout | View user's ticket history |
 | `/reports` | Reports Page | MainLayout | View content reports |
 | `/admin/support` | AdminSupportPanel | MainLayout | Admin panel for managing tickets |
+| `/questions/:questionId/answers` | QuestionExplorer | MainLayout | View answers for a specific question (Phase 4) |
+| `/answers/:answerId` | AnswerDetail | MainLayout | View single answer detail (Phase 4) |
 
 ```javascript
 <Route element={<RequireAuth />}>
@@ -105,6 +114,10 @@ Require user authentication:
     <Route path="/tickets" element={<div className="p-4"><h2>My Tickets Page</h2></div>} />
     <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
     <Route path="/admin/support" element={<AdminSupportPanel />} />
+    
+    {/* Phase 4: Questions and Answers routes with flat structure */}
+    <Route path="/questions/:questionId/answers" element={<QuestionExplorer />} />
+    <Route path="/answers/:answerId" element={<AnswerDetail />} />
   </Route>
 </Route>
 ```
@@ -148,26 +161,30 @@ Login and register pages with minimal layout:
 ```
 BrowserRouter
 └── AuthProvider
-    └── Routes
-        ├── Public Routes (MainLayout)
-        │   ├── / → Home
-        │   └── /courses → Courses Page
-        │
-        ├── RequireAuth Routes
-        │   └── MainLayout
-        │       ├── /support → SupportCenter
-        │       ├── /tickets → My Tickets
-        │       ├── /reports → Reports
-        │       └── /admin/support → AdminSupportPanel
-        │
-        ├── RequireInstructor Routes
-        │   └── MainLayout
-        │       ├── /instructor/dashboard → Instructor Dashboard
-        │       └── /instructor/answers → Manage Answers
-        │
-        └── AuthLayout Routes
-            ├── /login → Login
-            └── /register → Register
+    └── SourceMaterialsProvider (Phase 4)
+        └── Routes
+            ├── Public Routes (MainLayout)
+            │   ├── / → Home
+            │   ├── /source-materials → SourceMaterialsList (Phase 4)
+            │   └── /source-materials/:id → SourceMaterial Detail (Phase 4)
+            │
+            ├── RequireAuth Routes
+            │   └── MainLayout
+            │       ├── /support → SupportCenter
+            │       ├── /tickets → My Tickets
+            │       ├── /reports → Reports
+            │       ├── /admin/support → AdminSupportPanel
+            │       ├── /questions/:questionId/answers → QuestionExplorer (Phase 4)
+            │       └── /answers/:answerId → AnswerDetail (Phase 4)
+            │
+            ├── RequireInstructor Routes
+            │   └── MainLayout
+            │       ├── /instructor/dashboard → Instructor Dashboard
+            │       └── /instructor/answers → Manage Answers
+            │
+            └── AuthLayout Routes
+                ├── /login → Login
+                └── /register → Register
 ```
 
 ## Integration Points
@@ -185,6 +202,26 @@ import { AuthProvider } from './context/AuthContext';
   </Routes>
 </AuthProvider>
 ```
+
+### SourceMaterialsContext Integration (Phase 4)
+
+Provides cached source materials to all components for dropdown population:
+
+```javascript
+import { SourceMaterialsProvider } from './context/SourceMaterialsContext';
+
+<SourceMaterialsProvider>
+  <Routes>
+    {/* All routes have access to cached source materials */}
+  </Routes>
+</SourceMaterialsProvider>
+```
+
+**Purpose:**
+- Caches source materials globally on app initialization
+- Eliminates redundant API calls across components
+- Provides consistent data for dropdown menus in forms
+- Supports Phase 4 flat endpoint structure
 
 ### Route Protection Components
 
@@ -248,11 +285,13 @@ useEffect(() => {
 - **React**: Core component library (`useEffect`)
 - **react-router-dom**: `BrowserRouter`, `Routes`, `Route`
 - **AuthContext**: `AuthProvider` for authentication state
+- **SourceMaterialsContext**: `SourceMaterialsProvider` for caching source materials (Phase 4)
 - **i18n**: Internationalization configuration
 - **i18next**: Language change event handling
 - **Layout Components**: MainLayout, AuthLayout
 - **Auth Wrappers**: RequireAuth, RequireInstructor
 - **Page Components**: Home, Login, Register, SupportCenter, AdminSupportPanel
+- **Wiki Components**: QuestionExplorer, AnswerDetail (Phase 4)
 
 ## Security Considerations
 
@@ -273,10 +312,30 @@ useEffect(() => {
 
 | User State | Accessible Routes |
 |------------|-------------------|
-| Unauthenticated | `/`, `/courses`, `/login`, `/register` |
-| Authenticated (Student) | All public + `/support`, `/tickets`, `/reports` |
-| Authenticated (Instructor) | All routes including `/instructor/*` |
+| Unauthenticated | `/`, `/source-materials`, `/login`, `/register` |
+| Authenticated (Student) | All public + `/support`, `/tickets`, `/reports`, `/questions/:id/answers` |
+| Authenticated (Instructor) | All routes including `/instructor/*` and `/answers/:id` |
 | Loading State | Shows spinner on protected routes |
+
+## Phase 4 Routing Changes
+
+### Old Route Structure (Nested REST)
+- `/curriculum/courses/` → Course list
+- `/curriculum/courses/{id}/exams/` → Single course exams
+- `/wiki/questions/{id}/answers/` → Answers for question
+- `/wiki/answers/{id}/` → Single answer detail
+
+### New Route Structure (Flat Endpoints)
+- `/source-materials/` → Source materials list
+- `/source-materials/:id` → Single source material detail
+- `/questions/:questionId/answers` → Answers for question
+- `/answers/:answerId` → Single answer detail
+
+**Benefits:**
+- Simpler routing logic
+- Aligns with backend flat API design
+- Easier to maintain and extend
+- Consistent query parameter usage
 
 ## Change Log
 
@@ -284,3 +343,4 @@ useEffect(() => {
 - **Phase 7**: Added i18n RTL/LTR direction switching
 - **Phase 11**: Integrated AuthLayout for authentication pages
 - **Phase 12**: Implemented route protection with RequireAuth and RequireInstructor wrappers, reorganized route hierarchy
+- **Phase 4**: Added SourceMaterialsProvider for global caching, updated routes to use flat endpoint structure, added QuestionExplorer and AnswerDetail routes
