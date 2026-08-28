@@ -1,35 +1,148 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { FiThumbsUp, FiThumbsDown } from 'react-icons/fi';
-import api, { getAnswersByQuestionId, getSourceMaterials, extractResults } from '../../services/api';
+import api, { extractResults } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
 import CommentSection from './CommentSection';
 import QuestionForm from './QuestionForm';
 import { useAuth } from '../../context/AuthContext';
-import { useSourceMaterials } from '../../context/SourceMaterialsContext';
+
+/**
+ * QuestionItem Component
+ * Handles fetching and displaying answers for a specific question to support the flat API structure.
+ */
+const QuestionItem = ({ question, isAuthenticated, handleQuestionVote, votingQuestionId }) => {
+  const [answers, setAnswers] = useState([]);
+  const [loadingAnswers, setLoadingAnswers] = useState(true);
+
+  const fetchAnswers = async () => {
+    try {
+      setLoadingAnswers(true);
+      // Fetch only APPROVED answers for this specific question
+      const response = await api.get(`/answers/?question=${question.id}&status=APPROVED`);
+      setAnswers(extractResults(response));
+    } catch (error) {
+      console.error(`Failed to fetch answers for question ${question.id}:`, error);
+      setAnswers([]);
+    } finally {
+      setLoadingAnswers(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnswers();
+  }, [question.id]);
+
+  return (
+    <div className="question-item mb-5">
+      {/* Question Header */}
+      <div className="card mb-3 bg-light">
+        <div className="card-body">
+          <div className="d-flex justify-content-between align-items-start mb-2">
+            <h4 className="text-primary mb-0" style={{ fontSize: '18px' }}>
+              Question {question.id}
+            </h4>
+
+            {/* Voting UI - Redesigned to show total score between arrows */}
+            <div className="d-flex align-items-center bg-white border rounded px-2 py-1 shadow-sm">
+              <button
+                className={`btn btn-sm border-0 p-1 ${question.user_vote === 1 ? 'text-success' : 'text-secondary'}`}
+                onClick={() => handleQuestionVote(question.id, 1)}
+                disabled={votingQuestionId === question.id || !isAuthenticated}
+                title={isAuthenticated ? 'Upvote' : 'Login to vote'}
+              >
+                <FiThumbsUp size={18} className={question.user_vote === 1 ? 'fill-current' : ''} />
+              </button>
+
+              <span className="mx-2 fw-bold" style={{ fontSize: '1.1rem', minWidth: '20px', textAlign: 'center' }}>
+                {question.score || 0}
+              </span>
+
+              <button
+                className={`btn btn-sm border-0 p-1 ${question.user_vote === -1 ? 'text-danger' : 'text-secondary'}`}
+                onClick={() => handleQuestionVote(question.id, -1)}
+                disabled={votingQuestionId === question.id || !isAuthenticated}
+                title={isAuthenticated ? 'Downvote' : 'Login to vote'}
+              >
+                <FiThumbsDown size={18} className={question.user_vote === -1 ? 'fill-current' : ''} />
+              </button>
+            </div>
+          </div>
+
+          {/* Render Title if it exists */}
+          {question.title && (
+            <h5 className="card-title mt-2 fw-bold text-dark">{question.title}</h5>
+          )}
+
+          <div
+            className="question-text mt-2"
+            style={{ fontSize: '16px', lineHeight: '1.6' }}
+            dangerouslySetInnerHTML={{
+              __html: question.text?.replace(/\$(.*?)\$/g, '<span class="math-inline">$1</span>') || question.body || ''
+            }}
+          />
+
+          {/* Status Badge */}
+          {question.status && (
+            <span className={`badge mt-3 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
+              {question.status === 'APPROVED' ? 'Approved' : 'Pending Review'}
+            </span>
+          )}
+
+          {/* Timestamp using Jalali date */}
+          {question.created_at_jalali && (
+            <small className="text-muted d-block mt-2">
+              Asked: {question.created_at_jalali}
+            </small>
+          )}
+        </div>
+      </div>
+
+      {/* Answers List */}
+      <div className="answers-section">
+        <h5 className="mb-3">
+          Answers ({answers.length})
+        </h5>
+
+        {loadingAnswers ? (
+          <div className="text-center my-3">
+            <span className="spinner-border spinner-border-sm text-primary" role="status"></span>
+          </div>
+        ) : answers.length > 0 ? (
+          answers.map((answer) => (
+            <AnswerCard
+              key={answer.id}
+              answer={answer}
+              question={question}
+              onAcceptSuccess={() => fetchAnswers()}
+            />
+          ))
+        ) : (
+          <div className="alert alert-warning">
+            No answers submitted yet. Be the first to contribute!
+          </div>
+        )}
+      </div>
+
+      {/* General Answer Form for all authenticated users */}
+      {isAuthenticated && (
+        <AnswerForm
+          questionId={question.id}
+          onSubmit={() => fetchAnswers()}
+        />
+      )}
+
+      {/* Comments Section for Question */}
+      <CommentSection targetType="questions" targetId={question.id} />
+      <hr className="my-4" />
+    </div>
+  );
+};
 
 /**
  * QuestionExplorer Component
- * 
- * Displays a list of questions for a specific source material with their answers.
- * Instructors can submit new answers through the integrated AnswerForm.
- * 
- * Phase 4 Updates:
- * - Replaced nested route /wiki/questions/{id}/answers/ with flat endpoint
- * - Uses GET /api/answers/?question={questionId} instead of /wiki/questions/{id}/answers/
- * - Integrated SourceMaterialsContext for caching
- * 
- * Phase 7 Updates:
- * - Added voting functionality for questions (upvote/downvote)
- * - Added comments section for questions
- * 
- * Phase 10 Updates:
- * - Changed route from /questions/:questionId/answers to /source-materials/:examId/questions
- * - Now uses examId from URL parameters via useParams hook
- * - Supports both prop-based and URL-based examId
- * 
- * @param {number} examId - The ID of the exam/source material to fetch questions for (optional, can come from URL)
+ * Displays a list of questions for a specific source material.
  */
 const QuestionExplorer = ({ examId: propExamId }) => {
   const { examId: paramExamId } = useParams();
@@ -37,41 +150,28 @@ const QuestionExplorer = ({ examId: propExamId }) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showQuestionForm, setShowQuestionForm] = useState(false);
-  const { user, isInstructor, isAuthenticated } = useAuth();
-  const { materials } = useSourceMaterials();
-  
+  const { isAuthenticated } = useAuth();
+
   // Use examId from props or URL parameters
   const currentExamId = propExamId || paramExamId;
-  
-  // Voting state for questions - Phase 7.1
+
+  // Voting state for questions
   const [votingQuestionId, setVotingQuestionId] = useState(null);
   const [voteError, setVoteError] = useState(null);
 
-  /**
-   * Fetch questions from API
-   * Implements pagination adapter pattern from api.js
-   * Filters by source_material (exam) and status=APPROVED for public visibility
-   * Supports optional search parameter
-   */
   useEffect(() => {
     const fetchQuestions = async () => {
       setLoading(true);
-
       try {
-        // Build query string with optional search
         let url = `/questions/?source_material=${currentExamId}&status=APPROVED`;
         if (searchTerm) {
           url += `&search=${encodeURIComponent(searchTerm)}`;
         }
         
         const response = await api.get(url);
-        
-        // Use extractResults utility for standardized parsing
-        const results = extractResults(response);
-        setQuestions(results);
+        setQuestions(extractResults(response));
       } catch (error) {
         console.error('Failed to fetch questions:', error);
-        // Fallback to empty array on error
         setQuestions([]);
       } finally {
         setLoading(false);
@@ -83,45 +183,24 @@ const QuestionExplorer = ({ examId: propExamId }) => {
     }
   }, [currentExamId, searchTerm]);
 
-  /**
-   * Handle successful answer submission
-   * Refreshes the question list to show new answer
-   */
-  const handleAnswerSubmit = (result) => {
-    // Refetch questions to show updated answers
-    if (currentExamId) {
-      setLoading(true);
-      api.get(`/questions/?source_material=${currentExamId}&status=APPROVED`)
-        .then(response => {
-          const results = extractResults(response);
-          setQuestions(results);
-        })
-        .catch(error => console.error('Failed to refetch questions:', error))
-        .finally(() => setLoading(false));
-    }
-  };
-
-  /**
-   * Handle voting on a question - Phase 7.1
-   * Uses POST /api/questions/{id}/vote/
-   * Payload: { "value": 1 } for upvote, { "value": -1 } for downvote
-   */
   const handleQuestionVote = async (questionId, value) => {
     if (!isAuthenticated) {
       alert('Please login to vote');
       return;
     }
-
     setVotingQuestionId(questionId);
     setVoteError(null);
 
     try {
       const response = await api.post(`/questions/${questionId}/vote/`, { value });
       
-      // Update local state with the returned vote info
       setQuestions(prev => prev.map(q => 
         q.id === questionId 
-          ? { ...q, user_vote: response.data.user_vote || value }
+          ? { 
+              ...q, 
+              user_vote: response.data.user_vote !== undefined ? response.data.user_vote : value,
+              score: response.data.new_score 
+            } 
           : q
       ));
     } catch (err) {
@@ -151,7 +230,7 @@ const QuestionExplorer = ({ examId: propExamId }) => {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="mb-0">Exam Questions</h2>
         
-        {/* Ask a Question Button - Only for authenticated users */}
+        {/* Ask a Question Button */}
         {isAuthenticated && (
           <button
             className="btn btn-primary"
@@ -165,14 +244,13 @@ const QuestionExplorer = ({ examId: propExamId }) => {
       {/* Question Form */}
       {showQuestionForm && (
         <QuestionForm
+          examId={currentExamId}
           onSuccess={() => {
-            // Refresh questions after successful submission
             if (currentExamId) {
               setLoading(true);
               api.get(`/questions/?source_material=${currentExamId}&status=APPROVED`)
                 .then(response => {
-                  const results = extractResults(response);
-                  setQuestions(results);
+                  setQuestions(extractResults(response));
                 })
                 .catch(error => console.error('Failed to refetch questions:', error))
                 .finally(() => {
@@ -208,100 +286,16 @@ const QuestionExplorer = ({ examId: propExamId }) => {
         </div>
       ) : (
         questions.map((question) => (
-          <div key={question.id} className="question-item mb-5">
-            {/* Question Header */}
-            <div className="card mb-3 bg-light">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-start mb-2">
-                  <h4 className="text-primary mb-0" style={{ fontSize: '18px' }}>
-                    Question {question.question_number || question.id}
-                  </h4>
-                  
-                  {/* Voting Buttons - Phase 7.1 Redesigned */}
-                  <div className="btn-group" role="group">
-                    <button 
-                      className={`btn ${question.user_vote === 1 ? 'btn-success' : 'btn-outline-success'} btn-lg`}
-                      onClick={() => handleQuestionVote(question.id, 1)}
-                      disabled={votingQuestionId === question.id || !isAuthenticated}
-                      title={isAuthenticated ? 'Upvote' : 'Login to vote'}
-                    >
-                      <FiThumbsUp className="me-1" /> {question.score || 0}
-                    </button>
-                    <button 
-                      className={`btn ${question.user_vote === -1 ? 'btn-danger' : 'btn-outline-danger'} btn-lg`}
-                      onClick={() => handleQuestionVote(question.id, -1)}
-                      disabled={votingQuestionId === question.id || !isAuthenticated}
-                      title={isAuthenticated ? 'Downvote' : 'Login to vote'}
-                    >
-                      <FiThumbsDown className="me-1" /> {question.score || 0}
-                    </button>
-                  </div>
-                </div>
-                
-                <div 
-                  className="question-text mt-2"
-                  style={{ fontSize: '16px', lineHeight: '1.6' }}
-                  dangerouslySetInnerHTML={{ 
-                    __html: question.text?.replace(/\$(.*?)\$/g, '<span class="math-inline">$1</span>') || question.body || ''
-                  }}
-                />
-                {/* Status Badge */}
-                {question.status && (
-                  <span className={`badge ms-2 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
-                    {question.status === 'APPROVED' ? 'Approved' : 'Pending Review'}
-                  </span>
-                )}
-                {/* Timestamp using Jalali date */}
-                {question.created_at_jalali && (
-                  <small className="text-muted d-block mt-2">
-                    Asked: {question.created_at_jalali}
-                  </small>
-                )}
-              </div>
-            </div>
-
-            {/* Answers List */}
-            <div className="answers-section">
-              <h5 className="mb-3">
-                Answers ({question.answers_count || 0})
-              </h5>
-              
-              {question.answers && question.answers.length > 0 ? (
-                question.answers.map((answer) => (
-                  <AnswerCard 
-                    key={answer.id} 
-                    answer={answer}
-                    question={question}
-                    onAcceptSuccess={(data) => {
-                      // Answer accepted successfully
-                      // Optionally refresh the question data here
-                    }}
-                  />
-                ))
-              ) : (
-                <div className="alert alert-warning">
-                  No answers submitted yet. Be the first to contribute!
-                </div>
-              )}
-            </div>
-
-            {/* Instructor Answer Form */}
-            {isInstructor && (
-              <AnswerForm 
-                questionId={question.id} 
-                onSubmit={handleAnswerSubmit} 
-              />
-            )}
-
-            {/* Comments Section for Question - Phase 7.2 */}
-            <CommentSection targetType="questions" targetId={question.id} />
-
-            <hr className="my-4" />
-          </div>
+          <QuestionItem 
+            key={question.id}
+            question={question}
+            isAuthenticated={isAuthenticated}
+            handleQuestionVote={handleQuestionVote}
+            votingQuestionId={votingQuestionId}
+          />
         ))
       )}
 
-      {/* Vote Error Message */}
       {voteError && (
         <div className="alert alert-danger mt-3">
           <small>{voteError}</small>
