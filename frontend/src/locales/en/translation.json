@@ -104,5 +104,41 @@
     "documentation": "Documentation",
     "contact_us": "Contact Us",
     "copyright": "© 2025 AzmoonHub Nasir. All rights reserved."
+  },
+  "support": {
+    "title": "Support Center",
+    "submit_ticket_tab": "Submit Ticket",
+    "my_tickets_tab": "My Tickets",
+    "submit_ticket_title": "Submit a Support Ticket",
+    "category_label": "Category",
+    "title_label": "Title",
+    "title_placeholder": "Brief summary of your issue",
+    "description_label": "Description",
+    "description_placeholder": "Describe your issue in detail",
+    "submit_button": "Submit Ticket",
+    "submitting": "Submitting...",
+    "your_tickets_title": "Your Support Tickets",
+    "no_tickets": "No tickets found.",
+    "category": "Category",
+    "status": "Status",
+    "description": "Description",
+    "introduction": "Introduction",
+    "created": "Created",
+    "replies": "Replies",
+    "categories": {
+      "general": "General Support",
+      "technical": "Technical Issue",
+      "content": "Content Error",
+      "instructor_request": "Request Instructor Role"
+    }
+  },
+  "reports": {
+    "title": "Report Content",
+    "description": "To report a specific question or answer for content errors, please navigate to that item and click the Report icon. For general issues, please use the Support Center.",
+    "how_to_report_title": "How to Report Content:",
+    "how_to_report_step_1": "Navigate to the question or answer you want to report.",
+    "how_to_report_step_2": "Click on the Report icon (flag symbol) next to the content.",
+    "how_to_report_step_3": "Fill out the report form with details about the issue.",
+    "go_to_support": "Go to Support Center"
   }
 }

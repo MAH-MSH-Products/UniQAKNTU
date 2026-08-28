@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import api, { extractResults } from '../../services/api';
 
 /**
@@ -12,6 +13,7 @@ import api, { extractResults } from '../../services/api';
 
 const SupportCenter = () => {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('submit'); // 'submit' or 'my-tickets'
   const [tickets, setTickets] = useState([]);
   const [expandedTicket, setExpandedTicket] = useState(null);
@@ -28,11 +30,12 @@ const SupportCenter = () => {
   const [formStatus, setFormStatus] = useState({ type: '', message: '' });
 
   // Categories for tickets - including "Request Instructor Role"
+  // Values remain in English for API, but display is translated
   const categories = [
-    'General Support',
-    'Technical Issue',
-    'Content Error',
-    'Request Instructor Role'
+    { value: 'General Support', label: t('support.categories.general') },
+    { value: 'Technical Issue', label: t('support.categories.technical') },
+    { value: 'Content Error', label: t('support.categories.content') },
+    { value: 'Request Instructor Role', label: t('support.categories.instructor_request') }
   ];
 
   /**
@@ -125,7 +128,7 @@ const SupportCenter = () => {
     <div className="container-fluid py-4">
       <div className="row">
         <div className="col-12">
-          <h2 className="page-heading mb-4">Support Center</h2>
+          <h2 className="page-heading mb-4">{t('support.title')}</h2>
           
           {/* Coursera-Style Tab Navigation */}
           <div className="coursera-tabs mb-4">
@@ -133,13 +136,13 @@ const SupportCenter = () => {
               className={activeTab === 'submit' ? 'coursera-tab-active' : 'coursera-tab'}
               onClick={() => setActiveTab('submit')}
             >
-              Submit Ticket
+              {t('support.submit_ticket_tab')}
             </button>
             <button
               className={activeTab === 'my-tickets' ? 'coursera-tab-active' : 'coursera-tab'}
               onClick={() => setActiveTab('my-tickets')}
             >
-              My Tickets
+              {t('support.my_tickets_tab')}
             </button>
           </div>
 
@@ -147,7 +150,7 @@ const SupportCenter = () => {
           {activeTab === 'submit' && (
             <div className="card">
               <div className="card-body">
-                <h5 className="card-title mb-3">Submit a Support Ticket</h5>
+                <h5 className="card-title mb-3">{t('support.submit_ticket_title')}</h5>
                 
                 {formStatus.message && (
                   <div className={`alert alert-${formStatus.type === 'success' ? 'success' : 'danger'}`}>
@@ -157,7 +160,7 @@ const SupportCenter = () => {
 
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
-                    <label htmlFor="category" className="form-label">Category</label>
+                    <label htmlFor="category" className="form-label">{t('support.category_label')}</label>
                     <select
                       id="category"
                       name="category"
@@ -167,13 +170,13 @@ const SupportCenter = () => {
                       required
                     >
                       {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat.value} value={cat.value}>{cat.label}</option>
                       ))}
                     </select>
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="title" className="form-label">Title *</label>
+                    <label htmlFor="title" className="form-label">{t('support.title_label')} *</label>
                     <input
                       type="text"
                       id="title"
@@ -181,13 +184,13 @@ const SupportCenter = () => {
                       className="form-control"
                       value={formData.title}
                       onChange={handleInputChange}
-                      placeholder="Brief summary of your issue"
+                      placeholder={t('support.title_placeholder')}
                       required
                     />
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="description" className="form-label">Description *</label>
+                    <label htmlFor="description" className="form-label">{t('support.description_label')} *</label>
                     <textarea
                       id="description"
                       name="description"
@@ -195,7 +198,7 @@ const SupportCenter = () => {
                       rows="4"
                       value={formData.description}
                       onChange={handleInputChange}
-                      placeholder="Describe your issue in detail"
+                      placeholder={t('support.description_placeholder')}
                       required
                     ></textarea>
                   </div>
@@ -206,7 +209,7 @@ const SupportCenter = () => {
                     className="btn btn-primary"
                     disabled={loading}
                   >
-                    {loading ? 'Submitting...' : 'Submit Ticket'}
+                    {loading ? t('support.submitting') : t('support.submit_button')}
                   </button>
                 </form>
               </div>
@@ -217,16 +220,16 @@ const SupportCenter = () => {
           {activeTab === 'my-tickets' && (
             <div className="card">
               <div className="card-body">
-                <h5 className="card-title mb-3">Your Support Tickets</h5>
+                <h5 className="card-title mb-3">{t('support.your_tickets_title')}</h5>
                 
                 {loading ? (
                   <div className="text-center py-4">
                     <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
+                      <span className="visually-hidden">{t('common.loading')}</span>
                     </div>
                   </div>
                 ) : tickets.length === 0 ? (
-                  <p className="text-muted">No tickets found.</p>
+                  <p className="text-muted">{t('support.no_tickets')}</p>
                 ) : (
                   <div className="list-group">
                     {tickets.map(ticket => (
@@ -239,7 +242,7 @@ const SupportCenter = () => {
                           <div>
                             <h6 className="mb-1">{ticket.title}</h6>
                             <small className="text-muted">
-                              Category: {ticket.category} | Status: 
+                              {t('support.category')}: {ticket.category} | {t('support.status')}: 
                               <span className={`badge ms-1 ${
                                 ticket.status === 'Open' ? 'bg-success' : 
                                 ticket.status === 'Closed' ? 'bg-secondary' : 'bg-warning'
@@ -255,17 +258,17 @@ const SupportCenter = () => {
                         
                         {expandedTicket === ticket.id && (
                           <div className="mt-3 pt-3 border-top">
-                            <p className="mb-2"><strong>Description:</strong> {ticket.description}</p>
+                            <p className="mb-2"><strong>{t('support.description')}:</strong> {ticket.description}</p>
                             {ticket.introduction && (
-                              <p className="mb-2"><strong>Introduction:</strong> {ticket.introduction}</p>
+                              <p className="mb-2"><strong>{t('support.introduction')}:</strong> {ticket.introduction}</p>
                             )}
                             <small className="text-muted d-block mb-2">
-                              Created: {new Date(ticket.created_at).toLocaleDateString()}
+                              {t('support.created')}: {new Date(ticket.created_at).toLocaleDateString()}
                             </small>
                             
                             {ticket.replies && ticket.replies.length > 0 && (
                               <div className="mt-3">
-                                <h6 className="border-bottom pb-2">Replies</h6>
+                                <h6 className="border-bottom pb-2">{t('support.replies')}</h6>
                                 {ticket.replies.map(reply => (
                                   <div key={reply.id} className="bg-light p-3 rounded mb-2">
                                     <div className="d-flex justify-content-between">

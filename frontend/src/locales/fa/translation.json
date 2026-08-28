@@ -104,5 +104,41 @@
     "documentation": "مستندات",
     "contact_us": "تماس با ما",
     "copyright": "© ۲۰۲۵ آزمون‌هاب نصیر. تمامی حقوق محفوظ است."
+  },
+  "support": {
+    "title": "مرکز پشتیبانی",
+    "submit_ticket_tab": "ارسال تیکت",
+    "my_tickets_tab": "تیکت‌های من",
+    "submit_ticket_title": "ارسال تیکت پشتیبانی",
+    "category_label": "دسته‌بندی",
+    "title_label": "عنوان",
+    "title_placeholder": "خلاصه‌ای کوتاه از مشکل شما",
+    "description_label": "توضیحات",
+    "description_placeholder": "مشکل خود را با جزئیات شرح دهید",
+    "submit_button": "ارسال تیکت",
+    "submitting": "در حال ارسال...",
+    "your_tickets_title": "تیکت‌های شما",
+    "no_tickets": "هیچ تیکتی یافت نشد.",
+    "category": "دسته‌بندی",
+    "status": "وضعیت",
+    "description": "توضیحات",
+    "introduction": "مقدمه",
+    "created": "ایجاد شده",
+    "replies": "پاسخ‌ها",
+    "categories": {
+      "general": "پشتیبانی عمومی",
+      "technical": "مشکل فنی",
+      "content": "خطای محتوا",
+      "instructor_request": "درخواست نقش استادی"
+    }
+  },
+  "reports": {
+    "title": "گزارش محتوا",
+    "description": "برای گزارش یک سوال یا پاسخ خاص به دلیل خطاهای محتوایی، لطفاً به آن مورد navigated کرده و روی آیکون گزارش کلیک کنید. برای مشکلات عمومی، لطفاً از مرکز پشتیبانی استفاده کنید.",
+    "how_to_report_title": "نحوه گزارش محتوا:",
+    "how_to_report_step_1": "به سوال یا پاسخی که می‌خواهید گزارش کنید navigated کنید.",
+    "how_to_report_step_2": "روی آیکون گزارش (نماد پرچم) در کنار محتوا کلیک کنید.",
+    "how_to_report_step_3": "فرم گزارش را با جزئیات مربوط به مشکل پر کنید.",
+    "go_to_support": "رفتن به مرکز پشتیبانی"
   }
 }

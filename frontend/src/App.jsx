@@ -12,6 +12,7 @@ import Register from './pages/Register';
 import SourceMaterialsList from './pages/SourceMaterialsList';
 import SupportCenter from './pages/support/SupportCenter';
 import AdminSupportPanel from './pages/admin/AdminSupportPanel';
+import UserReports from './pages/support/UserReports';
 import QuestionExplorer from './components/wiki/QuestionExplorer';
 import AnswerDetail from './components/wiki/AnswerDetail';
 import './i18n';
@@ -76,7 +77,7 @@ function App() {
                 {/* Support routes */}
                 <Route path="/support" element={<SupportCenter />} />
                 <Route path="/tickets" element={<SupportCenter />} />
-                <Route path="/reports" element={<div className="p-4"><h2>Reports Page</h2></div>} />
+                <Route path="/reports" element={<UserReports />} />
                 <Route path="/admin/support" element={<AdminSupportPanel />} />
                 
                 {/* Phase 4: Questions and Answers routes with flat structure */}
