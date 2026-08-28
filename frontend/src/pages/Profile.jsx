@@ -10,9 +10,7 @@ const Profile = () => {
   
   const [formData, setFormData] = useState({
     username: '',
-    email: '',
-    first_name: '',
-    last_name: ''
+    email: ''
   });
   
   const [loading, setLoading] = useState(true);
@@ -25,13 +23,10 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      // دریافت اطلاعات کاربر فعلی از بک‌اند
       const response = await api.get('/users/me/');
       setFormData({
         username: response.data.username || '',
-        email: response.data.email || '',
-        first_name: response.data.first_name || '',
-        last_name: response.data.last_name || ''
+        email: response.data.email || ''
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -52,7 +47,6 @@ const Profile = () => {
     setStatus({ type: '', message: '' });
 
     try {
-      // ارسال اطلاعات ویرایش شده به بک‌اند
       await api.patch('/users/me/', formData);
       setStatus({ type: 'success', message: t('profile.update_success', 'Profile updated successfully!') });
     } catch (error) {
@@ -97,29 +91,6 @@ const Profile = () => {
               )}
 
               <form onSubmit={handleSubmit}>
-                <div className="row mb-3">
-                  <div className="col-md-6">
-                    <label className="form-label fw-bold">{t('profile.first_name', 'First Name')}</label>
-                    <input
-                      type="text"
-                      name="first_name"
-                      className="form-control"
-                      value={formData.first_name}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label className="form-label fw-bold">{t('profile.last_name', 'Last Name')}</label>
-                    <input
-                      type="text"
-                      name="last_name"
-                      className="form-control"
-                      value={formData.last_name}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
-
                 <div className="mb-3">
                   <label className="form-label fw-bold">{t('login.username', 'Username')}</label>
                   <div className="input-group">

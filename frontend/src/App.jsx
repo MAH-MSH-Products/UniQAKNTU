@@ -17,6 +17,8 @@ import QuestionExplorer from './components/wiki/QuestionExplorer';
 import AnswerDetail from './components/wiki/AnswerDetail';
 import './i18n';
 import i18n from 'i18next';
+// خط زیر را به بخش importها اضافه کنید
+import Profile from './pages/Profile';
 
 /**
  * App Component - Main Application Entry Point
@@ -66,6 +68,7 @@ function App() {
               {/* Phase 4: Source Materials routes (replaces /curriculum/courses/) */}
               <Route path="/source-materials" element={<SourceMaterialsList />} />
               <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
+              <Route path="/profile" element={<Profile />} />
               
               {/* Phase 10: Source Material Questions route */}
               <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
