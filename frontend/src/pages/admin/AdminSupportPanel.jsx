@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import api, { extractResults } from '../../services/api';
 
 /**
  * AdminSupportPanel Component - Admin Support Dashboard
@@ -50,82 +50,18 @@ const AdminSupportPanel = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      // API Endpoint 4.3: GET /support/admin/tickets/
-      
       if (activeTab === 'tickets') {
-        // API Endpoint 4.3: GET /support/admin/tickets/
-        // Mock data based on API.md Endpoint 4.3
-        
-        // Mock data based on API.md Endpoint 4.3
-        const mockTickets = [
-          {
-            id: 1,
-            user: { username: 'student_01', id: 5 },
-            title: 'Cannot upload PDF',
-            description: 'I get a 500 error when attaching a PDF.',
-            category: 'Technical Issue',
-            status: 'Open',
-            created_at: '2026-08-15T10:30:00Z',
-            replies: []
-          },
-          {
-            id: 2,
-            user: { username: 'instructor_01', id: 8 },
-            title: 'Request Instructor Role',
-            description: 'I am a TA for the OS course.',
-            category: 'Request Instructor Role',
-            status: 'In-progress',
-            created_at: '2026-08-14T08:00:00Z',
-            introduction: 'I have been teaching for 3 years.',
-            replies: [
-              {
-                id: 1,
-                user: 'admin',
-                message: 'We are reviewing your request.',
-                created_at: '2026-08-14T10:00:00Z'
-              }
-            ]
-          },
-          {
-            id: 3,
-            user: { username: 'student_03', id: 12 },
-            title: 'Question 5 has wrong answer',
-            description: 'The provided solution uses incorrect formula.',
-            category: 'Content Error',
-            status: 'Open',
-            created_at: '2026-08-13T14:20:00Z',
-            replies: []
-          }
-        ];
-        
-        setItems(mockTickets);
+        // Real API call for tickets
+        const response = await api.get('/support/admin/tickets/');
+        setItems(extractResults(response));
       } else {
-        // Mock reports data (Endpoint 4.5 related)
-        const mockReports = [
-          {
-            id: 101,
-            user: { username: 'student_02', id: 6 },
-            question_id: 105,
-            answer_id: 42,
-            reason: 'The final formula in the PDF is incorrect.',
-            status: 'Pending',
-            created_at: '2026-08-16T09:00:00Z'
-          },
-          {
-            id: 102,
-            user: { username: 'student_01', id: 5 },
-            question_id: 98,
-            answer_id: null,
-            reason: 'The question text has a typo.',
-            status: 'Resolved',
-            created_at: '2026-08-12T11:30:00Z'
-          }
-        ];
-        
-        setItems(mockReports);
+        // Real API call for reports
+        const response = await api.get('/support/reports/');
+        setItems(extractResults(response));
       }
     } catch (error) {
       console.error('Error fetching items:', error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -163,8 +99,8 @@ const AdminSupportPanel = () => {
     setReplyStatus({ type: '', message: '' });
 
     try {
-      // API Endpoint 4.4: POST /support/tickets/{ticket_id}/reply/
-      // Mock success
+      // Real API call
+      await api.post(`/support/tickets/${selectedItem.id}/reply/`, { message: replyMessage });
 
       setReplyStatus({ type: 'success', message: 'Reply submitted successfully!' });
       

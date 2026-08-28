@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FiMessageSquare, FiBookOpen, FiFileText } from 'react-icons/fi';
+import api, { extractResults } from '../../services/api';
 
 /**
  * WidgetsPanel Component - Dynamic Side Panel
  * 
- * Phase 6 Update:
- * - Backend endpoints /widgets/recent-answers/, /widgets/popular-courses/, /widgets/latest-exams/ do not exist
- * - All API calls replaced with mock data
- * - Implements conditional rendering based on REACT_APP_ENABLE_MOCK_WIDGETS environment flag
- * - Component serves as placeholder until backend support is added
- * 
- * Original Purpose:
- * Displays three dynamic widget sections:
- * 1. Recent Answers - Latest instructor answers
- * 2. Popular Courses - Most accessed courses
- * 3. Latest Exams - Recently added exams
+ * Un-mocked version connected to real backend API endpoints:
+ * - GET /widgets/recent-answers/
+ * - GET /widgets/popular-courses/
+ * - GET /widgets/latest-exams/
  */
 
 const WidgetsPanel = () => {
@@ -28,7 +22,7 @@ const WidgetsPanel = () => {
 
   /**
    * Fetch widget data on component mount
-   * Phase 6 Update: Uses mock data only - backend endpoints do not exist
+   * Uses real API calls - gracefully handles 404 errors if backend is not ready
    */
   useEffect(() => {
     fetchWidgetData();
@@ -37,35 +31,17 @@ const WidgetsPanel = () => {
   const fetchWidgetData = async () => {
     setLoading(true);
     try {
-      // Phase 6: Mock data only - backend endpoints do not exist
-      // Original API Endpoints (not implemented):
-      // - GET /widgets/recent-answers/
-      // - GET /widgets/popular-courses/
-      // - GET /widgets/latest-exams/
+      // Real API calls
+      const answersResponse = await api.get('/widgets/recent-answers/');
+      const coursesResponse = await api.get('/widgets/popular-courses/');
+      const examsResponse = await api.get('/widgets/latest-exams/');
       
-      const mockAnswers = [
-        { id: 1, title: 'Banker\'s Algorithm Solution', course: 'Operating Systems', author: 'Dr. Khanmirza', date: '2026-08-16' },
-        { id: 2, title: 'Deadlock Prevention', course: 'Operating Systems', author: 'Prof. Rahimi', date: '2026-08-15' },
-        { id: 3, title: 'Process Scheduling', course: 'Computer Architecture', author: 'Dr. Azizi', date: '2026-08-14' }
-      ];
-      
-      const mockCourses = [
-        { id: 1, name: 'Operating Systems', code: 'CE414', examCount: 12 },
-        { id: 2, name: 'Computer Networks', code: 'CE420', examCount: 10 },
-        { id: 3, name: 'Database Systems', code: 'CE305', examCount: 8 }
-      ];
-      
-      const mockExams = [
-        { id: 1, title: 'Final Exam 1402', course: 'Operating Systems', date: '2026-08-16' },
-        { id: 2, title: 'Midterm 1402', course: 'Computer Networks', date: '2026-08-15' },
-        { id: 3, title: 'Final Exam 1401', course: 'Database Systems', date: '2026-08-14' }
-      ];
-      
-      setRecentAnswers(mockAnswers);
-      setPopularCourses(mockCourses);
-      setLatestExams(mockExams);
+      setRecentAnswers(extractResults(answersResponse));
+      setPopularCourses(extractResults(coursesResponse));
+      setLatestExams(extractResults(examsResponse));
     } catch (error) {
       console.error('Error fetching widget data:', error);
+      // Leave states as empty arrays - UI will show "No recent data"
     } finally {
       setLoading(false);
     }
@@ -83,12 +59,6 @@ const WidgetsPanel = () => {
     );
   }
 
-  // Phase 6.2: UI Fallbacks - Conditional rendering based on environment flag
-  // When mock widgets are disabled, show empty state instead
-  if (import.meta.env.VITE_ENABLE_MOCK_WIDGETS === 'false') {
-    return <EmptyState />;
-  }
-
   return (
     <div className="widgets-panel" style={{ width: '300px', flexShrink: 0 }}>
       {/* Recent Answers Widget */}
@@ -98,14 +68,18 @@ const WidgetsPanel = () => {
           Recent Answers
         </h6>
         <div>
-          {recentAnswers.map(answer => (
-            <div key={answer.id} className="widget-item">
-              <div className="widget-content">
-                <p className="widget-title">{answer.title}</p>
-                <p className="widget-subtitle">{answer.course} • {answer.author}</p>
+          {recentAnswers.length > 0 ? (
+            recentAnswers.map(answer => (
+              <div key={answer.id} className="widget-item">
+                <div className="widget-content">
+                  <p className="widget-title">{answer.title}</p>
+                  <p className="widget-subtitle">{answer.course} • {answer.author}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-muted small">No recent data</p>
+          )}
         </div>
       </div>
 
@@ -116,14 +90,18 @@ const WidgetsPanel = () => {
           Popular Courses
         </h6>
         <div>
-          {popularCourses.map(course => (
-            <div key={course.id} className="widget-item">
-              <div className="widget-content">
-                <p className="widget-title">{course.name}</p>
-                <p className="widget-subtitle">{course.code} • {course.examCount} exams</p>
+          {popularCourses.length > 0 ? (
+            popularCourses.map(course => (
+              <div key={course.id} className="widget-item">
+                <div className="widget-content">
+                  <p className="widget-title">{course.name}</p>
+                  <p className="widget-subtitle">{course.code} • {course.examCount} exams</p>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-muted small">No recent data</p>
+          )}
         </div>
       </div>
 
@@ -134,32 +112,18 @@ const WidgetsPanel = () => {
           Latest Exams
         </h6>
         <div>
-          {latestExams.map(exam => (
-            <div key={exam.id} className="widget-item">
-              <div className="widget-content">
-                <p className="widget-title">{exam.title}</p>
-                <p className="widget-subtitle">{exam.course} • {exam.date}</p>
+          {latestExams.length > 0 ? (
+            latestExams.map(exam => (
+              <div key={exam.id} className="widget-item">
+                <div className="widget-content">
+                  <p className="widget-title">{exam.title}</p>
+                  <p className="widget-subtitle">{exam.course} • {exam.date}</p>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * EmptyState Component - Fallback when mock widgets are disabled
- * Phase 6.2: UI Fallbacks
- */
-const EmptyState = () => {
-  return (
-    <div className="widgets-panel" style={{ width: '300px', flexShrink: 0 }}>
-      <div className="academic-card widget-panel mb-3">
-        <div className="text-center py-4">
-          <FiMessageSquare className="widget-icon mb-2" />
-          <p className="text-muted">Widgets are currently unavailable.</p>
-          <small className="text-muted">Backend integration pending.</small>
+            ))
+          ) : (
+            <p className="text-muted small">No recent data</p>
+          )}
         </div>
       </div>
     </div>

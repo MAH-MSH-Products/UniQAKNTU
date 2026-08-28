@@ -1,18 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import api, { extractResults } from '../../services/api';
 
 /**
  * SupportCenter Component - User Facing Support Dashboard
  * 
- * Phase 6 Update:
- * - Backend endpoints /support/tickets/ and /auth/role-request/ do not exist
- * - Replaced "Request Instructor Role" functionality with static notice
- * - All API calls replaced with mock data
- * - Component serves as placeholder until backend support is added
- * 
- * The "Request Instructor Role" tab/section has been replaced with a static notice:
- * "Role changes are managed by administrators. Contact support offline."
+ * Un-mocked version connected to real backend API endpoints:
+ * - GET /support/tickets/ - Fetch user tickets
+ * - POST /support/tickets/ - Submit new ticket
  */
 
 const SupportCenter = () => {
@@ -27,18 +22,17 @@ const SupportCenter = () => {
     title: '',
     description: '',
     category: 'General Support',
-    introduction: '' // For instructor role requests (disabled in Phase 6)
+    introduction: ''
   });
   
   const [formStatus, setFormStatus] = useState({ type: '', message: '' });
 
-  // Categories for tickets - Phase 6: "Request Instructor Role" removed
-  // Only general support categories remain
+  // Categories for tickets - including "Request Instructor Role"
   const categories = [
     'General Support',
     'Technical Issue',
-    'Content Error'
-    // 'Request Instructor Role' - Removed per Phase 6 (backend endpoint does not exist)
+    'Content Error',
+    'Request Instructor Role'
   ];
 
   /**
@@ -52,55 +46,18 @@ const SupportCenter = () => {
   }, [isAuthenticated]);
 
   /**
-   * Fetch mock tickets for the current user
-   * API Endpoint 4.2: GET /support/tickets/
+   * Fetch user tickets from API
+   * API Endpoint: GET /support/tickets/
    */
   const fetchUserTickets = async () => {
     setLoading(true);
     try {
-      // API Endpoint 4.2: GET /support/tickets/
-      // Mock data based on API.md Endpoint 4.2
-      
-      // Mock data based on API.md Endpoint 4.2
-      const mockTickets = [
-        {
-          id: 1,
-          title: 'Cannot upload PDF',
-          description: 'I get a 500 error when attaching a PDF.',
-          category: 'Technical Issue',
-          status: 'Open',
-          created_at: '2026-08-15T10:30:00Z',
-          replies: [
-            {
-              id: 1,
-              user: 'admin',
-              message: 'We are looking into this issue.',
-              created_at: '2026-08-15T12:00:00Z'
-            }
-          ]
-        },
-        {
-          id: 2,
-          title: 'Request Instructor Role',
-          description: 'I am a TA for the OS course.',
-          category: 'Request Instructor Role',
-          status: 'Closed',
-          created_at: '2026-08-10T08:00:00Z',
-          introduction: 'I have been teaching for 3 years and would like to contribute solutions.',
-          replies: [
-            {
-              id: 1,
-              user: 'admin',
-              message: 'Your request has been approved.',
-              created_at: '2026-08-11T09:00:00Z'
-            }
-          ]
-        }
-      ];
-      
-      setTickets(mockTickets);
+      // Real API call
+      const response = await api.get('/support/tickets/');
+      setTickets(extractResults(response));
     } catch (error) {
       console.error('Error fetching tickets:', error);
+      setTickets([]);
     } finally {
       setLoading(false);
     }
@@ -119,10 +76,7 @@ const SupportCenter = () => {
 
   /**
    * Submit ticket form
-   * Phase 6 Update: Backend endpoints do not exist - mock submission only
-   * 
-   * Static notice displayed for instructor role requests:
-   * "Role changes are managed by administrators. Contact support offline."
+   * API Endpoint: POST /support/tickets/
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -134,20 +88,12 @@ const SupportCenter = () => {
       return;
     }
 
-    // Phase 6: Prevent submission for instructor role requests with static notice
-    if (formData.category === 'Request Instructor Role') {
-      setFormStatus({ 
-        type: 'info', 
-        message: 'Role changes are managed by administrators. Contact support offline.' 
-      });
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Phase 6: Mock API call - backend endpoint /support/tickets/ does not exist
-      setFormStatus({ type: 'success', message: 'Ticket submitted successfully! (Mock)' });
+      // Real API call
+      await api.post('/support/tickets/', formData);
+      setFormStatus({ type: 'success', message: 'Ticket submitted successfully!' });
       
       // Reset form
       setFormData({
@@ -161,7 +107,7 @@ const SupportCenter = () => {
       console.error('Error submitting ticket:', error);
       setFormStatus({ 
         type: 'error', 
-        message: 'Failed to submit ticket. (Backend endpoint not available)' 
+        message: error.response?.data?.message || 'Failed to submit ticket.' 
       });
     } finally {
       setLoading(false);
@@ -254,12 +200,6 @@ const SupportCenter = () => {
                     ></textarea>
                   </div>
 
-                  {/* Phase 6: "Request Instructor Role" category removed - static notice shown if selected */}
-                  {formData.category === 'Request Instructor Role' && (
-                    <div className="alert alert-info" role="alert">
-                      <strong>Notice:</strong> Role changes are managed by administrators. Contact support offline.
-                    </div>
-                  )}
 
                   <button 
                     type="submit" 
