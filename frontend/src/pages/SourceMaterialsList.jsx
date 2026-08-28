@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api, { extractResults } from '../services/api';
 
 /**
  * SourceMaterialsList Component - Display All Source Materials
- * 
  * Fetches and displays source materials from the backend API.
  * Each material is shown as a card with:
  * - Title
@@ -12,12 +12,11 @@ import api, { extractResults } from '../services/api';
  * - Created date (Jalali)
  * - Download buttons for question_pdf and answer_pdf (if available)
  * - "Explore Questions" button to navigate to questions for that material
- * 
  * Uses the academic-card styling for consistency.
  * Implements pagination support via the API response structure.
  */
-
 const SourceMaterialsList = () => {
+  const { t } = useTranslation();
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,7 +34,6 @@ const SourceMaterialsList = () => {
   const fetchMaterials = async (url = '/source-materials/') => {
     setLoading(true);
     setError(null);
-
     try {
       const response = await api.get(url);
       const results = extractResults(response);
@@ -47,7 +45,7 @@ const SourceMaterialsList = () => {
       });
     } catch (err) {
       console.error('Failed to fetch source materials:', err);
-      setError('Failed to load source materials. Please try again later.');
+      setError(t('common.error', 'Failed to load source materials. Please try again later.'));
       setMaterials([]);
     } finally {
       setLoading(false);
@@ -75,9 +73,9 @@ const SourceMaterialsList = () => {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+          <span className="visually-hidden">{t('common.loading', 'Loading...')}</span>
         </div>
-        <p className="mt-2">Loading source materials...</p>
+        <p className="mt-2">{t('source_materials.loading', 'Loading source materials...')}</p>
       </div>
     );
   }
@@ -92,14 +90,14 @@ const SourceMaterialsList = () => {
 
   return (
     <div className="source-materials-list p-4">
-      <h2 className="mb-4">Source Materials</h2>
+      <h2 className="mb-4">{t('source_materials.title', 'Source Materials')}</h2>
       
       {/* Search Input */}
       <div className="mb-4">
         <input
           type="text"
           className="form-control"
-          placeholder="Search by title..."
+          placeholder={t('source_materials.search_placeholder', 'Search by title...')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -112,7 +110,9 @@ const SourceMaterialsList = () => {
         
         return filteredMaterials.length === 0 ? (
           <div className="alert alert-info">
-            {searchTerm ? 'No matching source materials found.' : 'No source materials available yet.'}
+            {searchTerm 
+              ? t('source_materials.no_match', 'No matching source materials found.') 
+              : t('source_materials.no_materials', 'No source materials available yet.')}
           </div>
         ) : (
           <div className="row g-4">
@@ -128,14 +128,14 @@ const SourceMaterialsList = () => {
                   {/* Year (if available) */}
                   {material.year && (
                     <p className="card-text">
-                      <strong>Year:</strong> {material.year}
+                      <strong>{t('source_materials.year', 'Year:')}</strong> {material.year}
                     </p>
                   )}
                   
                   {/* Created Date (Jalali) */}
                   {material.created_at_jalali && (
                     <p className="card-text text-muted small">
-                      <strong>Created:</strong> {material.created_at_jalali}
+                      <strong>{t('source_materials.created', 'Created:')}</strong> {material.created_at_jalali.split('T')[0]}
                     </p>
                   )}
                   
@@ -149,7 +149,7 @@ const SourceMaterialsList = () => {
                         className="btn btn-outline-primary btn-sm w-100 mb-2"
                       >
                         <i className="bi bi-file-earmark-pdf me-2"></i>
-                        Download Exam PDF
+                        {t('source_materials.download_exam', 'Download Exam PDF')}
                       </a>
                     )}
                     
@@ -161,7 +161,7 @@ const SourceMaterialsList = () => {
                         className="btn btn-outline-success btn-sm w-100 mb-2"
                       >
                         <i className="bi bi-file-earmark-check me-2"></i>
-                        Download Official Answers PDF
+                        {t('source_materials.download_answers', 'Download Official Answers PDF')}
                       </a>
                     )}
                   </div>
@@ -172,7 +172,7 @@ const SourceMaterialsList = () => {
                     className="btn btn-primary mt-auto"
                   >
                     <i className="bi bi-search me-2"></i>
-                    Explore Questions
+                    {t('source_materials.explore_questions', 'Explore Questions')}
                   </Link>
                 </div>
               </div>
@@ -191,12 +191,12 @@ const SourceMaterialsList = () => {
                 onClick={() => handlePageChange(pagination.previous)}
                 disabled={!pagination.previous}
               >
-                Previous
+                {t('source_materials.previous', 'Previous')}
               </button>
             </li>
             <li className="page-item disabled">
               <span className="page-link">
-                Page {pagination.count > 0 ? `of ${Math.ceil(pagination.count / 10)}` : ''}
+                {t('source_materials.page', 'Page')} {pagination.count > 0 ? `${t('source_materials.of', 'of')} ${Math.ceil(pagination.count / 10)}` : ''}
               </span>
             </li>
             <li className={`page-item ${!pagination.next ? 'disabled' : ''}`}>
@@ -205,7 +205,7 @@ const SourceMaterialsList = () => {
                 onClick={() => handlePageChange(pagination.next)}
                 disabled={!pagination.next}
               >
-                Next
+                {t('source_materials.next', 'Next')}
               </button>
             </li>
           </ul>
