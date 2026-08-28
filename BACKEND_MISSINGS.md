@@ -67,3 +67,16 @@ The frontend sidebar features a "Widgets Panel" that displays trending and recen
     }
   ]
 }
+
+```
+
+---
+
+## 3. Instructor Analytics (Optional / Future)
+
+Currently, the `/instructor/dashboard` in the frontend is an empty placeholder.
+
+* **Endpoint:** `GET /api/users/me/stats/`
+* **Purpose:** Return analytics for the instructor (e.g., total answers provided, total upvotes received, total accepted answers).
+
+```
