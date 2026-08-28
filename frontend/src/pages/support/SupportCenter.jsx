@@ -7,14 +7,26 @@ import api, { extractResults } from '../../services/api';
  * SupportCenter Component - User Facing Support Dashboard
  * Connected to real backend API endpoints:
  * - GET /support/tickets/ - Fetch user tickets
- * - POST /support/tickets/ - Submit new ticket (Fixed 400 Error by mapping payload)
+ * - POST /support/tickets/ - Submit new ticket
+ * - GET /support/tickets/{id}/ - Fetch ticket details and messages
+ * - POST /support/tickets/{id}/reply/ - Submit a reply to a ticket
  */
 const SupportCenter = () => {
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('submit'); // 'submit' or 'my-tickets'
   const [tickets, setTickets] = useState([]);
+  
+  // Expanded ticket details state
   const [expandedTicket, setExpandedTicket] = useState(null);
+  const [ticketDetails, setTicketDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  
+  // Reply state
+  const [replyMessage, setReplyMessage] = useState('');
+  const [replying, setReplying] = useState(false);
+  const [replyError, setReplyError] = useState(null);
+
   const [loading, setLoading] = useState(false);
 
   // Form state for ticket submission
@@ -66,7 +78,6 @@ const SupportCenter = () => {
 
   /**
    * Submit ticket form
-   * Fixes 400 Bad Request by mapping UI 'description' to Backend 'message'
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,7 +101,7 @@ const SupportCenter = () => {
       const payload = {
         title: formData.title,
         category: formData.category,
-        message: combinedMessage // Backend expects 'message', not 'description'
+        message: combinedMessage 
       };
 
       await api.post('/support/tickets/', payload);
@@ -117,8 +128,64 @@ const SupportCenter = () => {
     }
   };
 
-  const toggleTicketExpand = (ticketId) => {
-    setExpandedTicket(expandedTicket === ticketId ? null : ticketId);
+  /**
+   * Toggle ticket expansion and fetch details
+   */
+  const handleToggleTicket = async (ticketId) => {
+    if (expandedTicket === ticketId) {
+      setExpandedTicket(null);
+      setTicketDetails(null);
+      return;
+    }
+
+    setExpandedTicket(ticketId);
+    setLoadingDetails(true);
+    setReplyError(null);
+    setReplyMessage('');
+
+    try {
+      // Fetch full ticket details including chat messages
+      const response = await api.get(`/support/tickets/${ticketId}/`);
+      setTicketDetails(response.data);
+    } catch (error) {
+      console.error('Error fetching ticket details:', error);
+      setReplyError(t('common.error', 'Failed to load ticket details.'));
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  /**
+   * Submit a reply to the currently expanded ticket
+   */
+  const handleReplySubmit = async (e) => {
+    e.preventDefault();
+    if (!replyMessage.trim()) return;
+
+    setReplying(true);
+    setReplyError(null);
+
+    try {
+      const response = await api.post(`/support/tickets/${expandedTicket}/reply/`, {
+        message: replyMessage
+      });
+      
+      // Update local state to include the new message
+      setTicketDetails(prev => ({
+        ...prev,
+        messages: [...(prev.messages || []), response.data]
+      }));
+      
+      setReplyMessage('');
+    } catch (error) {
+      console.error('Error submitting reply:', error);
+      setReplyError(
+        error.response?.data?.message || 
+        t('answers.submit_failed', 'Failed to submit reply.')
+      );
+    } finally {
+      setReplying(false);
+    }
   };
 
   return (
@@ -248,7 +315,7 @@ const SupportCenter = () => {
                       <div key={ticket.id} className="list-group-item list-group-item-action mb-2 border rounded">
                         <div 
                           className="d-flex w-100 justify-content-between align-items-center"
-                          onClick={() => toggleTicketExpand(ticket.id)}
+                          onClick={() => handleToggleTicket(ticket.id)}
                           style={{ cursor: 'pointer' }}
                         >
                           <div>
@@ -268,15 +335,77 @@ const SupportCenter = () => {
                         
                         {expandedTicket === ticket.id && (
                           <div className="mt-3 pt-3 border-top">
-                            {/* Backend schema for TicketList doesn't return full message in list,
-                                but we can display the date cleanly */}
-                            <small className="text-muted d-block mb-2">
-                              <i className="bi bi-calendar me-1"></i>
-                              {t('support.created', 'Created')}: {ticket.created_at ? ticket.created_at.split('T')[0] : ''}
-                            </small>
-                            <p className="small text-muted mb-0">
-                              <em>(Ticket details and replies are loaded in the Admin/Support Panel workflow.)</em>
-                            </p>
+                            {loadingDetails ? (
+                              <div className="text-center py-2">
+                                <span className="spinner-border spinner-border-sm text-primary"></span>
+                              </div>
+                            ) : ticketDetails ? (
+                              <div className="ticket-chat-section">
+                                {/* Chat Messages */}
+                                <div className="messages-list mb-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                                  {ticketDetails.messages && ticketDetails.messages.length > 0 ? (
+                                    ticketDetails.messages.map((msg, index) => {
+                                      // If the sender matches logged in user ID, it's 'My Message', else 'Admin Message'
+                                      const isMyMessage = user?.id === msg.sender;
+                                      return (
+                                        <div key={msg.id || index} className={`mb-3 d-flex flex-column ${isMyMessage ? 'align-items-end' : 'align-items-start'}`}>
+                                          <div 
+                                            className={`p-2 rounded shadow-sm ${isMyMessage ? 'bg-primary text-white' : 'bg-light text-dark'}`}
+                                            style={{ maxWidth: '80%', display: 'inline-block' }}
+                                          >
+                                            <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px' }}>
+                                              {msg.message}
+                                            </div>
+                                          </div>
+                                          <small className="text-muted mt-1" style={{ fontSize: '11px' }}>
+                                            {msg.created_at ? msg.created_at.split('T')[0] : ''} {isMyMessage ? t('common.you', '(You)') : t('common.support', '(Support)')}
+                                          </small>
+                                        </div>
+                                      );
+                                    })
+                                  ) : (
+                                    <div className="text-muted small text-center">{t('support.no_messages', 'No messages yet.')}</div>
+                                  )}
+                                </div>
+
+                                {/* Reply Error */}
+                                {replyError && <div className="alert alert-danger py-2 small">{replyError}</div>}
+
+                                {/* Reply Form */}
+                                {ticketDetails.status !== 'Closed' && ticketDetails.status !== 'Resolved' ? (
+                                  <form onSubmit={handleReplySubmit} className="mt-2 border-top pt-3">
+                                    <div className="input-group">
+                                      <textarea
+                                        className="form-control"
+                                        rows="2"
+                                        placeholder={t('support.type_reply', 'Type your reply here...')}
+                                        value={replyMessage}
+                                        onChange={(e) => setReplyMessage(e.target.value)}
+                                        disabled={replying}
+                                        style={{ resize: 'none' }}
+                                      />
+                                      <button 
+                                        className="btn btn-primary px-4" 
+                                        type="submit"
+                                        disabled={replying || !replyMessage.trim()}
+                                      >
+                                        {replying ? (
+                                          <span className="spinner-border spinner-border-sm"></span>
+                                        ) : (
+                                          <i className="bi bi-send"></i>
+                                        )}
+                                      </button>
+                                    </div>
+                                  </form>
+                                ) : (
+                                  <div className="alert alert-secondary py-2 mt-2 text-center small">
+                                    {t('support.ticket_closed', 'This ticket is closed and cannot receive new replies.')}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="alert alert-danger py-2">{t('common.error', 'Failed to load details.')}</div>
+                            )}
                           </div>
                         )}
                       </div>

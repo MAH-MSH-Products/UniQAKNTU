@@ -4,12 +4,10 @@ import { jwtDecode } from 'jwt-decode';
 
 /**
  * AuthContext - Authentication State Management
- * 
  * Provides authentication state and methods throughout the application.
  * Manages user session with JWT tokens (access/refresh), and role-based access control.
  * Decodes JWT tokens to extract user information (user_id, role, username).
  */
-
 const AuthContext = createContext(null);
 
 // Role-based access control helpers
@@ -29,10 +27,22 @@ export const AuthProvider = ({ children }) => {
   const decodeUserFromToken = (token) => {
     try {
       const decoded = jwtDecode(token);
+      
+      console.log("Decoded Token Payload from Backend:", decoded);
+
+      let assignedRole = decoded.role;
+      if (!assignedRole) {
+        if (decoded.is_superuser || decoded.is_staff) {
+          assignedRole = 'ADMIN';
+        } else {
+          assignedRole = 'STUDENT';
+        }
+      }
+
       return {
         id: decoded.user_id || decoded.id,
         username: decoded.username,
-        role: decoded.role || 'STUDENT',
+        role: assignedRole,
       };
     } catch (error) {
       console.error('Failed to decode JWT token:', error);
@@ -102,7 +112,7 @@ export const AuthProvider = ({ children }) => {
    */
   const userRole = user?.role || 'STUDENT';
   const canModerateFlag = canModerate(userRole);
-  
+
   /**
    * Helper to check if user is authenticated
    */
