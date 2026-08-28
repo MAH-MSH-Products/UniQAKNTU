@@ -5,20 +5,18 @@ import api, { extractResults } from '../../services/api';
 
 /**
  * SupportCenter Component - User Facing Support Dashboard
- * 
- * Un-mocked version connected to real backend API endpoints:
+ * Connected to real backend API endpoints:
  * - GET /support/tickets/ - Fetch user tickets
- * - POST /support/tickets/ - Submit new ticket
+ * - POST /support/tickets/ - Submit new ticket (Fixed 400 Error by mapping payload)
  */
-
 const SupportCenter = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('submit'); // 'submit' or 'my-tickets'
   const [tickets, setTickets] = useState([]);
   const [expandedTicket, setExpandedTicket] = useState(null);
   const [loading, setLoading] = useState(false);
-  
+
   // Form state for ticket submission
   const [formData, setFormData] = useState({
     title: '',
@@ -26,21 +24,18 @@ const SupportCenter = () => {
     category: 'General Support',
     introduction: ''
   });
-  
   const [formStatus, setFormStatus] = useState({ type: '', message: '' });
 
-  // Categories for tickets - including "Request Instructor Role"
-  // Values remain in English for API, but display is translated
+  // Categories for tickets
   const categories = [
-    { value: 'General Support', label: t('support.categories.general') },
-    { value: 'Technical Issue', label: t('support.categories.technical') },
-    { value: 'Content Error', label: t('support.categories.content') },
-    { value: 'Request Instructor Role', label: t('support.categories.instructor_request') }
+    { value: 'General Support', label: t('support.categories.general', 'General Support') },
+    { value: 'Technical Issue', label: t('support.categories.technical', 'Technical Issue') },
+    { value: 'Content Error', label: t('support.categories.content', 'Content Error') },
+    { value: 'Request Instructor Role', label: t('support.categories.instructor_request', 'Request Instructor Role') }
   ];
 
   /**
    * Fetch user's tickets on component mount
-   * Only executes if user is authenticated to prevent 401 errors
    */
   useEffect(() => {
     if (isAuthenticated) {
@@ -48,14 +43,9 @@ const SupportCenter = () => {
     }
   }, [isAuthenticated]);
 
-  /**
-   * Fetch user tickets from API
-   * API Endpoint: GET /support/tickets/
-   */
   const fetchUserTickets = async () => {
     setLoading(true);
     try {
-      // Real API call
       const response = await api.get('/support/tickets/');
       setTickets(extractResults(response));
     } catch (error) {
@@ -66,9 +56,6 @@ const SupportCenter = () => {
     }
   };
 
-  /**
-   * Handle form input changes
-   */
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -79,24 +66,35 @@ const SupportCenter = () => {
 
   /**
    * Submit ticket form
-   * API Endpoint: POST /support/tickets/
+   * Fixes 400 Bad Request by mapping UI 'description' to Backend 'message'
    */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setFormStatus({ type: '', message: '' });
 
-    // Validate form
     if (!formData.title || !formData.description) {
-      setFormStatus({ type: 'error', message: 'Please fill in all required fields.' });
+      setFormStatus({ type: 'error', message: t('common.error', 'Please fill in all required fields.') });
       return;
     }
 
     setLoading(true);
-
     try {
-      // Real API call
-      await api.post('/support/tickets/', formData);
-      setFormStatus({ type: 'success', message: 'Ticket submitted successfully!' });
+      // Construct payload matching schema.yml TicketDetail
+      let combinedMessage = formData.description;
+      
+      // If requesting instructor role, append the introduction to the message body
+      if (formData.category === 'Request Instructor Role' && formData.introduction) {
+        combinedMessage += `\n\n--- Introduction/Resume ---\n${formData.introduction}`;
+      }
+
+      const payload = {
+        title: formData.title,
+        category: formData.category,
+        message: combinedMessage // Backend expects 'message', not 'description'
+      };
+
+      await api.post('/support/tickets/', payload);
+      setFormStatus({ type: 'success', message: t('answers.submit_success', 'Ticket submitted successfully!') });
       
       // Reset form
       setFormData({
@@ -106,20 +104,19 @@ const SupportCenter = () => {
         introduction: ''
       });
       
+      // Refresh list
+      fetchUserTickets();
     } catch (error) {
       console.error('Error submitting ticket:', error);
       setFormStatus({ 
         type: 'error', 
-        message: error.response?.data?.message || 'Failed to submit ticket.' 
+        message: error.response?.data?.message || t('answers.submit_failed', 'Failed to submit ticket.') 
       });
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Toggle ticket expansion to show replies
-   */
   const toggleTicketExpand = (ticketId) => {
     setExpandedTicket(expandedTicket === ticketId ? null : ticketId);
   };
@@ -128,29 +125,29 @@ const SupportCenter = () => {
     <div className="container-fluid py-4">
       <div className="row">
         <div className="col-12">
-          <h2 className="page-heading mb-4">{t('support.title')}</h2>
+          <h2 className="page-heading mb-4">{t('support.title', 'Support Center')}</h2>
           
-          {/* Coursera-Style Tab Navigation */}
+          {/* Tabs Navigation */}
           <div className="coursera-tabs mb-4">
             <button
               className={activeTab === 'submit' ? 'coursera-tab-active' : 'coursera-tab'}
               onClick={() => setActiveTab('submit')}
             >
-              {t('support.submit_ticket_tab')}
+              {t('support.submit_ticket_tab', 'Submit Ticket')}
             </button>
             <button
               className={activeTab === 'my-tickets' ? 'coursera-tab-active' : 'coursera-tab'}
               onClick={() => setActiveTab('my-tickets')}
             >
-              {t('support.my_tickets_tab')}
+              {t('support.my_tickets_tab', 'My Tickets')}
             </button>
           </div>
 
           {/* Submit Ticket Tab */}
           {activeTab === 'submit' && (
-            <div className="card">
+            <div className="card shadow-sm border-0">
               <div className="card-body">
-                <h5 className="card-title mb-3">{t('support.submit_ticket_title')}</h5>
+                <h5 className="card-title mb-3 fw-bold">{t('support.submit_ticket_title', 'Submit a Support Ticket')}</h5>
                 
                 {formStatus.message && (
                   <div className={`alert alert-${formStatus.type === 'success' ? 'success' : 'danger'}`}>
@@ -160,7 +157,7 @@ const SupportCenter = () => {
 
                 <form onSubmit={handleSubmit}>
                   <div className="mb-3">
-                    <label htmlFor="category" className="form-label">{t('support.category_label')}</label>
+                    <label htmlFor="category" className="form-label fw-bold">{t('support.category_label', 'Category')}</label>
                     <select
                       id="category"
                       name="category"
@@ -176,7 +173,7 @@ const SupportCenter = () => {
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="title" className="form-label">{t('support.title_label')} *</label>
+                    <label htmlFor="title" className="form-label fw-bold">{t('support.title_label', 'Title')} <span className="text-danger">*</span></label>
                     <input
                       type="text"
                       id="title"
@@ -184,13 +181,13 @@ const SupportCenter = () => {
                       className="form-control"
                       value={formData.title}
                       onChange={handleInputChange}
-                      placeholder={t('support.title_placeholder')}
+                      placeholder={t('support.title_placeholder', 'Brief summary of your issue')}
                       required
                     />
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="description" className="form-label">{t('support.description_label')} *</label>
+                    <label htmlFor="description" className="form-label fw-bold">{t('support.description_label', 'Description')} <span className="text-danger">*</span></label>
                     <textarea
                       id="description"
                       name="description"
@@ -198,18 +195,33 @@ const SupportCenter = () => {
                       rows="4"
                       value={formData.description}
                       onChange={handleInputChange}
-                      placeholder={t('support.description_placeholder')}
+                      placeholder={t('support.description_placeholder', 'Describe your issue in detail')}
                       required
                     ></textarea>
                   </div>
 
+                  {formData.category === 'Request Instructor Role' && (
+                    <div className="mb-3">
+                      <label htmlFor="introduction" className="form-label fw-bold">{t('support.introduction', 'Introduction')} <span className="text-danger">*</span></label>
+                      <textarea
+                        id="introduction"
+                        name="introduction"
+                        className="form-control"
+                        rows="4"
+                        value={formData.introduction}
+                        onChange={handleInputChange}
+                        placeholder="Explain why you want to become an instructor and your qualifications"
+                        required
+                      ></textarea>
+                    </div>
+                  )}
 
                   <button 
                     type="submit" 
-                    className="btn btn-primary"
+                    className="btn btn-primary px-4"
                     disabled={loading}
                   >
-                    {loading ? t('support.submitting') : t('support.submit_button')}
+                    {loading ? t('common.submitting', 'Submitting...') : t('support.submit_button', 'Submit Ticket')}
                   </button>
                 </form>
               </div>
@@ -218,70 +230,53 @@ const SupportCenter = () => {
 
           {/* My Tickets Tab */}
           {activeTab === 'my-tickets' && (
-            <div className="card">
+            <div className="card shadow-sm border-0">
               <div className="card-body">
-                <h5 className="card-title mb-3">{t('support.your_tickets_title')}</h5>
+                <h5 className="card-title mb-3 fw-bold">{t('support.your_tickets_title', 'Your Support Tickets')}</h5>
                 
                 {loading ? (
                   <div className="text-center py-4">
                     <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">{t('common.loading')}</span>
+                      <span className="visually-hidden">{t('common.loading', 'Loading...')}</span>
                     </div>
                   </div>
                 ) : tickets.length === 0 ? (
-                  <p className="text-muted">{t('support.no_tickets')}</p>
+                  <div className="alert alert-info">{t('support.no_tickets', 'No tickets found.')}</div>
                 ) : (
                   <div className="list-group">
                     {tickets.map(ticket => (
-                      <div key={ticket.id} className="list-group-item list-group-item-action">
+                      <div key={ticket.id} className="list-group-item list-group-item-action mb-2 border rounded">
                         <div 
                           className="d-flex w-100 justify-content-between align-items-center"
                           onClick={() => toggleTicketExpand(ticket.id)}
                           style={{ cursor: 'pointer' }}
                         >
                           <div>
-                            <h6 className="mb-1">{ticket.title}</h6>
+                            <h6 className="mb-1 text-primary fw-bold">{ticket.title}</h6>
                             <small className="text-muted">
-                              {t('support.category')}: {ticket.category} | {t('support.status')}: 
+                              {t('support.category', 'Category')}: {ticket.category} | {t('support.status', 'Status')}: 
                               <span className={`badge ms-1 ${
                                 ticket.status === 'Open' ? 'bg-success' : 
-                                ticket.status === 'Closed' ? 'bg-secondary' : 'bg-warning'
+                                ticket.status === 'Closed' ? 'bg-secondary' : 'bg-warning text-dark'
                               }`}>
                                 {ticket.status}
                               </span>
                             </small>
                           </div>
-                          <span className="text-muted">
-                            {expandedTicket === ticket.id ? '▼' : '▶'}
-                          </span>
+                          <i className={`bi bi-chevron-${expandedTicket === ticket.id ? 'up' : 'down'} text-muted`}></i>
                         </div>
                         
                         {expandedTicket === ticket.id && (
                           <div className="mt-3 pt-3 border-top">
-                            <p className="mb-2"><strong>{t('support.description')}:</strong> {ticket.description}</p>
-                            {ticket.introduction && (
-                              <p className="mb-2"><strong>{t('support.introduction')}:</strong> {ticket.introduction}</p>
-                            )}
+                            {/* Backend schema for TicketList doesn't return full message in list,
+                                but we can display the date cleanly */}
                             <small className="text-muted d-block mb-2">
-                              {t('support.created')}: {new Date(ticket.created_at).toLocaleDateString()}
+                              <i className="bi bi-calendar me-1"></i>
+                              {t('support.created', 'Created')}: {ticket.created_at ? ticket.created_at.split('T')[0] : ''}
                             </small>
-                            
-                            {ticket.replies && ticket.replies.length > 0 && (
-                              <div className="mt-3">
-                                <h6 className="border-bottom pb-2">{t('support.replies')}</h6>
-                                {ticket.replies.map(reply => (
-                                  <div key={reply.id} className="bg-light p-3 rounded mb-2">
-                                    <div className="d-flex justify-content-between">
-                                      <strong>{reply.user}</strong>
-                                      <small className="text-muted">
-                                        {new Date(reply.created_at).toLocaleString()}
-                                      </small>
-                                    </div>
-                                    <p className="mb-0 mt-2">{reply.message}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                            <p className="small text-muted mb-0">
+                              <em>(Ticket details and replies are loaded in the Admin/Support Panel workflow.)</em>
+                            </p>
                           </div>
                         )}
                       </div>
