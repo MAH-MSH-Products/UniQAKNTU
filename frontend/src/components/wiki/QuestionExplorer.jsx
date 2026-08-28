@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { FiThumbsUp, FiThumbsDown } from 'react-icons/fi';
 import api, { getAnswersByQuestionId, getSourceMaterials, extractResults } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
 import CommentSection from './CommentSection';
+import QuestionForm from './QuestionForm';
 import { useAuth } from '../../context/AuthContext';
 import { useSourceMaterials } from '../../context/SourceMaterialsContext';
 
@@ -33,6 +35,8 @@ const QuestionExplorer = ({ examId: propExamId }) => {
   const { examId: paramExamId } = useParams();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showQuestionForm, setShowQuestionForm] = useState(false);
   const { user, isInstructor, isAuthenticated } = useAuth();
   const { materials } = useSourceMaterials();
   
@@ -47,14 +51,20 @@ const QuestionExplorer = ({ examId: propExamId }) => {
    * Fetch questions from API
    * Implements pagination adapter pattern from api.js
    * Filters by source_material (exam) and status=APPROVED for public visibility
+   * Supports optional search parameter
    */
   useEffect(() => {
     const fetchQuestions = async () => {
       setLoading(true);
 
       try {
-        // Fetch questions filtered by source_material (exam) and status=APPROVED
-        const response = await api.get(`/questions/?source_material=${currentExamId}&status=APPROVED`);
+        // Build query string with optional search
+        let url = `/questions/?source_material=${currentExamId}&status=APPROVED`;
+        if (searchTerm) {
+          url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        const response = await api.get(url);
         
         // Use extractResults utility for standardized parsing
         const results = extractResults(response);
@@ -71,7 +81,7 @@ const QuestionExplorer = ({ examId: propExamId }) => {
     if (currentExamId) {
       fetchQuestions();
     }
-  }, [currentExamId]);
+  }, [currentExamId, searchTerm]);
 
   /**
    * Handle successful answer submission
@@ -138,7 +148,55 @@ const QuestionExplorer = ({ examId: propExamId }) => {
 
   return (
     <div className="question-explorer">
-      <h2 className="mb-4">Exam Questions</h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2 className="mb-0">Exam Questions</h2>
+        
+        {/* Ask a Question Button - Only for authenticated users */}
+        {isAuthenticated && (
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowQuestionForm(!showQuestionForm)}
+          >
+            {showQuestionForm ? 'Cancel' : 'Ask a Question'}
+          </button>
+        )}
+      </div>
+      
+      {/* Question Form */}
+      {showQuestionForm && (
+        <QuestionForm
+          onSuccess={() => {
+            // Refresh questions after successful submission
+            if (currentExamId) {
+              setLoading(true);
+              api.get(`/questions/?source_material=${currentExamId}&status=APPROVED`)
+                .then(response => {
+                  const results = extractResults(response);
+                  setQuestions(results);
+                })
+                .catch(error => console.error('Failed to refetch questions:', error))
+                .finally(() => {
+                  setLoading(false);
+                  setShowQuestionForm(false);
+                });
+            } else {
+              setShowQuestionForm(false);
+            }
+          }}
+          onClose={() => setShowQuestionForm(false)}
+        />
+      )}
+      
+      {/* Search Input */}
+      <div className="mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search questions..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
       {!currentExamId ? (
         <div className="alert alert-warning">
@@ -159,23 +217,23 @@ const QuestionExplorer = ({ examId: propExamId }) => {
                     Question {question.question_number || question.id}
                   </h4>
                   
-                  {/* Voting Buttons - Phase 7.1 */}
-                  <div className="btn-group btn-group-sm" role="group">
+                  {/* Voting Buttons - Phase 7.1 Redesigned */}
+                  <div className="btn-group" role="group">
                     <button 
-                      className={`btn ${question.user_vote === 1 ? 'btn-success' : 'btn-outline-success'}`}
+                      className={`btn ${question.user_vote === 1 ? 'btn-success' : 'btn-outline-success'} btn-lg`}
                       onClick={() => handleQuestionVote(question.id, 1)}
                       disabled={votingQuestionId === question.id || !isAuthenticated}
                       title={isAuthenticated ? 'Upvote' : 'Login to vote'}
                     >
-                      <i className={`bi bi-arrow-up${question.user_vote === 1 ? '-fill' : ''}`}></i>
+                      <FiThumbsUp className="me-1" /> {question.score || 0}
                     </button>
                     <button 
-                      className={`btn ${question.user_vote === -1 ? 'btn-danger' : 'btn-outline-danger'}`}
+                      className={`btn ${question.user_vote === -1 ? 'btn-danger' : 'btn-outline-danger'} btn-lg`}
                       onClick={() => handleQuestionVote(question.id, -1)}
                       disabled={votingQuestionId === question.id || !isAuthenticated}
                       title={isAuthenticated ? 'Downvote' : 'Login to vote'}
                     >
-                      <i className={`bi bi-arrow-down${question.user_vote === -1 ? '-fill' : ''}`}></i>
+                      <FiThumbsDown className="me-1" /> {question.score || 0}
                     </button>
                   </div>
                 </div>
@@ -249,13 +307,6 @@ const QuestionExplorer = ({ examId: propExamId }) => {
           <small>{voteError}</small>
         </div>
       )}
-
-      {/* Phase 4 Verification Notice */}
-      <div className="alert alert-info mt-4">
-        <strong>ℹ️ Phase 4 Update:</strong> This component now uses the flat endpoint structure.
-        Answers are fetched via <code>GET /api/answers/?question={'{questionId}'}</code> instead of nested paths.
-        Source materials are cached in <code>SourceMaterialsContext</code> for dropdown population.
-      </div>
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FiThumbsUp, FiThumbsDown } from 'react-icons/fi';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import SuggestEditModal from './SuggestEditModal';
@@ -203,23 +204,23 @@ const AnswerCard = ({ answer, question, onAcceptSuccess }) => {
             </h6>
           </div>
           <div className="d-flex align-items-center gap-2">
-            {/* Voting Buttons - Phase 7.1 */}
-            <div className="btn-group btn-group-sm" role="group">
+            {/* Voting Buttons - Phase 7.1 Redesigned */}
+            <div className="btn-group" role="group">
               <button 
-                className={`btn ${currentVote === 1 ? 'btn-success' : 'btn-outline-success'}`}
+                className={`btn ${currentVote === 1 ? 'btn-success' : 'btn-outline-success'} btn-lg`}
                 onClick={() => handleVote(1)}
                 disabled={voting || !isAuthenticated}
                 title={isAuthenticated ? 'Upvote' : 'Login to vote'}
               >
-                <i className={`bi bi-arrow-up${currentVote === 1 ? '-fill' : ''}`}></i>
+                <FiThumbsUp className="me-1" /> {answer.score || 0}
               </button>
               <button 
-                className={`btn ${currentVote === -1 ? 'btn-danger' : 'btn-outline-danger'}`}
+                className={`btn ${currentVote === -1 ? 'btn-danger' : 'btn-outline-danger'} btn-lg`}
                 onClick={() => handleVote(-1)}
                 disabled={voting || !isAuthenticated}
                 title={isAuthenticated ? 'Downvote' : 'Login to vote'}
               >
-                <i className={`bi bi-arrow-down${currentVote === -1 ? '-fill' : ''}`}></i>
+                <FiThumbsDown className="me-1" /> {answer.score || 0}
               </button>
             </div>
             

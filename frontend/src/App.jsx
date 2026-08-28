@@ -97,6 +97,7 @@ function App() {
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<div className="p-4">Forgot Password Component (Work in Progress)</div>} />
             </Route>
           </Routes>
         </SourceMaterialsProvider>

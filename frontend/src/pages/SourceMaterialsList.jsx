@@ -21,6 +21,7 @@ const SourceMaterialsList = () => {
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState({
     count: 0,
     next: null,
@@ -93,13 +94,29 @@ const SourceMaterialsList = () => {
     <div className="source-materials-list p-4">
       <h2 className="mb-4">Source Materials</h2>
       
-      {materials.length === 0 ? (
-        <div className="alert alert-info">
-          No source materials available yet.
-        </div>
-      ) : (
-        <div className="row g-4">
-          {materials.map((material) => (
+      {/* Search Input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Search by title..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      
+      {(() => {
+        const filteredMaterials = materials.filter(material => 
+          material.title && material.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        
+        return filteredMaterials.length === 0 ? (
+          <div className="alert alert-info">
+            {searchTerm ? 'No matching source materials found.' : 'No source materials available yet.'}
+          </div>
+        ) : (
+          <div className="row g-4">
+            {filteredMaterials.map((material) => (
             <div key={material.id} className="col-md-6 col-lg-4">
               <div className="academic-card h-100">
                 <div className="card-body d-flex flex-column">
@@ -162,7 +179,7 @@ const SourceMaterialsList = () => {
             </div>
           ))}
         </div>
-      )}
+      )})()}
 
       {/* Pagination Controls */}
       {(pagination.next || pagination.previous) && (
