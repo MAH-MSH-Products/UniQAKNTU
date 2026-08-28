@@ -1,33 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import MarkdownEditor from '../editor/MarkdownEditor';
 import api from '../../services/api';
+import { useSourceMaterials } from '../../context/SourceMaterialsContext';
 
 /**
  * QuestionForm Component
- * 
  * Form for students to submit new questions.
  * Includes:
  * - Title input
  * - MarkdownEditor with orphan-claiming attachment workflow
  * - Tags multi-select dropdown
- * - Source material selection
- * 
+ * - Source material selection (auto-populated and auto-selected if context/examId exists)
  * Submit payload to POST /api/questions/
  * Shows success message indicating question is "PENDING" review.
- * 
  * @param {Function} onSuccess - Callback when question is submitted successfully
  * @param {Function} onClose - Callback to close the form
+ * @param {number|string} examId - Optional ID to pre-select source material
  */
-const QuestionForm = ({ onSuccess, onClose }) => {
+const QuestionForm = ({ onSuccess, onClose, examId }) => {
+  const { materials, loading: materialsLoading } = useSourceMaterials();
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
-  const [sourceMaterial, setSourceMaterial] = useState('');
+  const [sourceMaterial, setSourceMaterial] = useState(examId || '');
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const [attachmentIds, setAttachmentIds] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  // Set the default source material if navigating from a specific exam explorer
+  useEffect(() => {
+    if (examId) {
+      setSourceMaterial(examId);
+    }
+  }, [examId]);
 
   /**
    * Handle attachment upload from MarkdownEditor
@@ -64,7 +71,7 @@ const QuestionForm = ({ onSuccess, onClose }) => {
     try {
       const payload = {
         title: title.trim(),
-        text: text,
+        body: text, // Matched with backend schema (was 'text' previously)
         source_material: parseInt(sourceMaterial, 10),
         tag_ids: selectedTagIds,
         attachment_ids: attachmentIds,
@@ -148,11 +155,24 @@ const QuestionForm = ({ onSuccess, onClose }) => {
               value={sourceMaterial}
               onChange={(e) => setSourceMaterial(e.target.value)}
               required
+              disabled={!!examId}
             >
               <option value="">Select a source material...</option>
-              {/* This would ideally be populated from SourceMaterialsContext */}
-              {/* For now, it's a placeholder - actual implementation should fetch materials */}
+              {materialsLoading ? (
+                <option value="" disabled>Loading materials...</option>
+              ) : (
+                materials.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.title || `Source Material #${m.id}`}
+                  </option>
+                ))
+              )}
             </select>
+            {examId && (
+              <small className="text-muted d-block mt-1">
+                Automatically selected based on the current exam view.
+              </small>
+            )}
           </div>
 
           {/* Tags Multi-Select */}
