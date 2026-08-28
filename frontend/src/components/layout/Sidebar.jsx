@@ -15,7 +15,7 @@ import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit } from 'react-icons/
 
 const Sidebar = () => {
   const { t } = useTranslation();
-  const { isAuthenticated, isInstructor } = useAuth();
+  const { isAuthenticated, canModerate } = useAuth();
 
   const navLinkStyle = {
     transition: 'all 0.2s ease-in-out',
@@ -78,8 +78,8 @@ const Sidebar = () => {
           )}
         </ul>
 
-        {/* Instructor-only section - Only visible to verified instructors */}
-        {isInstructor && (
+        {/* Moderator/Admin-only section - Only visible to users with canModerate permission */}
+        {canModerate && (
           <>
             <h6 className="sidebar-heading text-uppercase text-muted small fw-bold mb-3 mt-4" style={{ color: 'var(--text-light)' }}>
               {t('sidebar.instructor_tools')}
@@ -107,6 +107,18 @@ const Sidebar = () => {
                 >
                   <FiEdit />
                   <span>{t('sidebar.manage_answers')}</span>
+                </Link>
+              </li>
+              <li className="nav-item">
+                <Link 
+                  className="nav-link text-dark d-flex align-items-center gap-2" 
+                  onMouseEnter={(e) => Object.assign(e.currentTarget.style, navLinkHoverStyle)}
+                  onMouseLeave={(e) => Object.assign(e.currentTarget.style, { backgroundColor: 'transparent', color: 'var(--text-secondary)' })}
+                  style={navLinkStyle}
+                  to="/admin/support"
+                >
+                  <FiAlertTriangle/>
+                  <span>{t('pages.admin_panel')}</span>
                 </Link>
               </li>
             </ul>

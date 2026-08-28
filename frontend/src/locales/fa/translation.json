@@ -16,7 +16,9 @@
     "register_here": "اینجا ثبت‌نام کنید",
     "dont_have_account": "حساب کاربری ندارید؟",
     "already_have_account": "قبلاً ثبت‌نام کرده‌اید؟",
-    "login_here": "اینجا وارد شوید"
+    "login_here": "اینجا وارد شوید",
+    "my_tickets": "تیکت‌های من",
+    "reports": "گزارش‌ها"
   },
   "sidebar": {
     "navigation": "ناوبری",

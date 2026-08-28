@@ -16,7 +16,9 @@
     "register_here": "Register here",
     "dont_have_account": "Don't have an account?",
     "already_have_account": "Already have an account?",
-    "login_here": "Login here"
+    "login_here": "Login here",
+    "my_tickets": "My Tickets",
+    "reports": "Reports"
   },
   "sidebar": {
     "navigation": "Navigation",
