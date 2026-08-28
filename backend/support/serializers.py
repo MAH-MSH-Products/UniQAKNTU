@@ -76,3 +76,17 @@ class ContentReportSerializer(serializers.ModelSerializer):
         validated_data['reporter'] = self.context['request'].user
         return super().create(validated_data)
 
+
+class ContentReportStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContentReport
+        fields = ['status']
+
+class AdminContentReportSerializer(serializers.ModelSerializer):
+    target_type = serializers.CharField(source='content_type.model', read_only=True)
+    target_id = serializers.IntegerField(source='object_id', read_only=True)
+    class Meta:
+        model = ContentReport
+        fields = ['id', 'reporter', 'target_type', 'target_id', 'reason', 'status', 'created_at']
+        read_only_fields = fields
+

@@ -6,7 +6,7 @@ from users.permissions import IsAdminOrModerator
 from .models import Ticket, ContentReport, TicketStatus
 from .serializers import (
     TicketListSerializer, TicketDetailSerializer, TicketMessageSerializer,
-    TicketStatusUpdateSerializer, ContentReportSerializer
+    TicketStatusUpdateSerializer, ContentReportSerializer, AdminContentReportSerializer, ContentReportStatusUpdateSerializer
 )
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -96,4 +96,24 @@ class ContentReportViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ContentReportSerializer
     queryset = ContentReport.objects.all()
+
+
+class AdminContentReportViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [IsAdminOrModerator]
+    queryset = ContentReport.objects.all().order_by('-created_at')
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {'status': ['exact'], 'reporter': ['exact']}
+
+    def get_serializer_class(self):
+        if self.action == 'status':
+            return ContentReportStatusUpdateSerializer
+        return AdminContentReportSerializer
+
+    @action(detail=True, methods=['patch'], serializer_class=ContentReportStatusUpdateSerializer)
+    def status(self, request, pk=None):
+        report = self.get_object()
+        serializer = self.get_serializer(report, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
