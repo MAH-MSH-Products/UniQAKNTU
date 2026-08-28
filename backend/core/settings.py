@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'qna.apps.QnaConfig',
     'tags.apps.TagsConfig',
     'support.apps.SupportConfig',
+    'widgets.apps.WidgetsConfig',
     'django_cleanup.apps.CleanupConfig',
 ]
 
