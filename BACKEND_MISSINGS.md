@@ -12,18 +12,21 @@ Create a new Django app named `support` to handle user inquiries, role requests,
    - `title` (CharField)
    - `description` (TextField)
    - `category` (CharField choices: 'General Support', 'Technical Issue', 'Content Error', 'Request Instructor Role')
+   - `introduction` (TextField, null=True, blank=True) -> *Used specifically when users request an instructor role to provide their resume/background.*
    - `status` (CharField choices: 'Open', 'In-progress', 'Closed', 'Resolved' - default: 'Open')
    - `created_at` / `updated_at` (DateTimeField)
+
 2. **TicketReply**
    - `ticket` (ForeignKey to Ticket, related_name='replies')
    - `user` (ForeignKey to User)
    - `message` (TextField)
    - `created_at` (DateTimeField)
+
 3. **ContentReport**
    - `reporter` (ForeignKey to User)
    - `content_type` & `object_id` (GenericForeignKey to link to either Question or Answer)
    - `reason` (TextField)
-   - `status` (CharField choices: 'Pending', 'Resolved', 'Dismissed')
+   - `status` (CharField choices: 'Pending', 'Resolved', 'Dismissed' - default: 'Pending')
    - `created_at` (DateTimeField)
 
 ### API Endpoints
@@ -31,13 +34,16 @@ Create a new Django app named `support` to handle user inquiries, role requests,
 
 | Method | Endpoint | Auth | Role | Description |
 |--------|----------|------|------|-------------|
-| GET | `/api/support/tickets/` | Yes | Any | List tickets created by `request.user` (include nested `replies`). |
-| POST | `/api/support/tickets/` | Yes | Any | Create a new ticket. |
+| GET | `/api/support/tickets/` | Yes | Any | List tickets created by `request.user` (include nested `replies` in the serializer). |
+| POST | `/api/support/tickets/` | Yes | Any | Create a new ticket. Payload includes `title`, `description`, `category`, and `introduction` (optional). |
 | POST | `/api/support/tickets/{id}/reply/`| Yes | Ticket Author / Admin | Add a `TicketReply` to a ticket. |
-| GET | `/api/support/admin/tickets/`| Yes | Admin/Mod | List ALL tickets in the system (for Admin Panel). |
-| POST | `/api/support/reports/` | Yes | Any | Create a new `ContentReport`. Payload: `{ "question_id": ID, "answer_id": ID (optional), "reason": "text" }` |
+| GET | `/api/support/admin/tickets/`| Yes | Admin/Mod | List ALL tickets in the system (for Admin Support Panel). |
+| GET | `/api/support/reports/` | Yes | Admin/Mod | List all content reports for admins to review. |
+| POST | `/api/support/reports/` | Yes | Any | Create a new `ContentReport`. Expected Frontend Payload: `{ "question_id": ID, "answer_id": ID (optional), "reason": "text" }` |
 
-**Note on Instructor Requests:** A student will submit a ticket with category `"Request Instructor Role"`. The Admin will read this ticket in the `AdminSupportPanel`, and if approved, the admin will navigate to the User Management dashboard (`PATCH /api/users/{id}/role/`) to perform the actual promotion.
+**Note on Instructor Requests (Workflow Alignment):** 
+Do **NOT** build a new role-promotion API logic here. The frontend already handles role promotions via the existing User Management panel (`PATCH /api/users/{id}/role/`). 
+The ticketing system's only job is to act as a communication inbox. A student will submit a ticket with the category `"Request Instructor Role"` and fill out the `introduction` field. The Admin will read this ticket in the `AdminSupportPanel`. If convinced, the admin will manually navigate to the Users table and change the role. 
 
 ---
 
@@ -53,9 +59,8 @@ The frontend sidebar features a "Widgets Panel" that displays trending and recen
 | GET | `/api/widgets/popular-courses/`| Optional | Returns top 5 `SourceMaterial` objects, ordered by the count of related questions. |
 | GET | `/api/widgets/latest-exams/` | Optional | Returns top 5 most recently created `SourceMaterial` objects. |
 
-**Expected Payload Structure for Widgets:**
+**Expected Payload Structure for Widgets (Example for recent-answers):**
 ```json
-// Example for recent-answers
 {
   "results": [
     {
@@ -72,11 +77,9 @@ The frontend sidebar features a "Widgets Panel" that displays trending and recen
 
 ---
 
-## 3. Instructor Analytics (Optional / Future)
+## 3. Instructor Analytics (Optional / Future Feature)
 
-Currently, the `/instructor/dashboard` in the frontend is an empty placeholder.
+Currently, the `/instructor/dashboard` route in the frontend is an empty UI placeholder. To make it functional in the future, the backend will need:
 
 * **Endpoint:** `GET /api/users/me/stats/`
 * **Purpose:** Return analytics for the instructor (e.g., total answers provided, total upvotes received, total accepted answers).
-
-```
