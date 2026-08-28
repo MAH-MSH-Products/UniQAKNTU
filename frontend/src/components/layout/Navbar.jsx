@@ -153,6 +153,12 @@ const Navbar = () => {
                         {renderRoleBadge()}
                       </h6>
                     </li>
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2" to="/profile">
+                        <FiUser />
+                        {t('profile.title', 'My Profile')}
+                      </Link>
+                    </li>
                     
                     {/* Divider */}
                     <li><hr className="dropdown-divider" /></li>
