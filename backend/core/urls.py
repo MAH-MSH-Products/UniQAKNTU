@@ -37,6 +37,7 @@ urlpatterns = [
     path('api/', include('qna.urls')),
     path('api/tags/', include('tags.urls')),
     path('api/users/', include('users.urls')),
+    path('api/support/', include('support.urls')),
 ]
 
 from django.conf import settings
