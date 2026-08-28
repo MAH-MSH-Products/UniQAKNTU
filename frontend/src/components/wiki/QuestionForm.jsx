@@ -22,7 +22,9 @@ const QuestionForm = ({ onSuccess, onClose, examId }) => {
   const { materials, loading: materialsLoading } = useSourceMaterials();
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
-  const [sourceMaterial, setSourceMaterial] = useState(examId || '');
+  
+  // Ensure examId is treated as a string for exact matching with <select> values
+  const [sourceMaterial, setSourceMaterial] = useState(examId ? String(examId) : '');
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const [attachmentIds, setAttachmentIds] = useState([]);
   const [submitting, setSubmitting] = useState(false);
@@ -32,7 +34,7 @@ const QuestionForm = ({ onSuccess, onClose, examId }) => {
   // Set the default source material if navigating from a specific exam explorer
   useEffect(() => {
     if (examId) {
-      setSourceMaterial(examId);
+      setSourceMaterial(String(examId));
     }
   }, [examId]);
 
@@ -155,7 +157,7 @@ const QuestionForm = ({ onSuccess, onClose, examId }) => {
               value={sourceMaterial}
               onChange={(e) => setSourceMaterial(e.target.value)}
               required
-              disabled={!!examId}
+              disabled={!!examId} // Locks the dropdown if examId was passed
             >
               <option value="">Select a source material...</option>
               {materialsLoading ? (
