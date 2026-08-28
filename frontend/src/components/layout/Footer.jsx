@@ -139,17 +139,6 @@ const Footer = () => {
                 </Link>
               </li>
               <li className="mb-2">
-                <a 
-                  href="/documentations" 
-                  className="text-decoration-none text-muted small"
-                  style={{ transition: 'color 0.2s ease' }}
-                  onMouseEnter={(e) => e.target.style.color = 'var(--secondary-color)'}
-                  onMouseLeave={(e) => e.target.style.color = 'var(--text-secondary)'}
-                >
-                  {t('footer.documentation')}
-                </a>
-              </li>
-              <li className="mb-2">
                 <Link 
                   to="/support" 
                   className="text-decoration-none text-muted small"
