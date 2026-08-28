@@ -10,3 +10,9 @@ class UserSerializer(serializers.ModelSerializer):
 class ChangeRoleSerializer(serializers.Serializer):
     role = serializers.ChoiceField(choices=UserRole.choices)
 
+
+class UserStatsSerializer(serializers.Serializer):
+    total_answers = serializers.IntegerField(read_only=True)
+    total_upvotes = serializers.IntegerField(read_only=True)
+    total_accepted_answers = serializers.IntegerField(read_only=True)
+

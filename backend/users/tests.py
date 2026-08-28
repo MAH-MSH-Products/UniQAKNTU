@@ -62,3 +62,21 @@ class UserAPITests(TestCase):
         response = self.client.patch(self.url_role, {'role': 'SUPER_ADMIN'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+
+    def test_me_stats(self):
+        from qna.models import Answer, Question, Vote, PostStatus
+        from django.contrib.contenttypes.models import ContentType
+        self.client.force_authenticate(user=self.student)
+        q = Question.objects.create(author=self.student, title='Q1')
+        Answer.objects.create(author=self.student, question=q, status=PostStatus.APPROVED, is_accepted=True)
+        Answer.objects.create(author=self.student, question=q, status=PostStatus.APPROVED, is_accepted=False)
+        Answer.objects.create(author=self.admin, question=q, status=PostStatus.APPROVED) # Another user's answer
+        
+        Vote.objects.create(user=self.admin, content_type=ContentType.objects.get_for_model(Question), object_id=q.id, value=1)
+        
+        response = self.client.get('/api/users/me/stats/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['total_answers'], 2)
+        self.assertEqual(response.data['total_accepted_answers'], 1)
+        self.assertEqual(response.data['total_upvotes'], 1)
+
