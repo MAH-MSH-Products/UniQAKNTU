@@ -36,8 +36,8 @@ const ContentReportModal = ({ isOpen, onClose, questionId, answerId = null }) =>
         reason: reason
       };
 
-      // Actual API call (uncomment when backend is ready):
-      // const response = await api.post('/support/reports/', payload);
+      // Real API call
+      await api.post('/support/reports/', payload);
       
       setStatus({ type: 'success', message: 'Report submitted successfully!' });
       
