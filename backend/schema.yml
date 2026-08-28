@@ -1296,6 +1296,362 @@ paths:
               schema:
                 $ref: '#/components/schemas/RejectEditResponse'
           description: ''
+  /api/support/admin/reports/:
+    get:
+      operationId: support_admin_reports_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: reporter
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - Dismissed
+          - Pending
+          - Resolved
+        description: |-
+          * `Pending` - Pending
+          * `Resolved` - Resolved
+          * `Dismissed` - Dismissed
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminContentReportList'
+          description: ''
+  /api/support/admin/reports/{id}/:
+    get:
+      operationId: support_admin_reports_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this content report.
+        required: true
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminContentReport'
+          description: ''
+  /api/support/admin/reports/{id}/status/:
+    patch:
+      operationId: support_admin_reports_status_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this content report.
+        required: true
+      tags:
+      - support
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedContentReportStatusUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedContentReportStatusUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedContentReportStatusUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentReportStatusUpdate'
+          description: ''
+  /api/support/admin/tickets/:
+    get:
+      operationId: support_admin_tickets_list
+      parameters:
+      - in: query
+        name: author
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: created_at__date
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: created_at__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_at__lte
+        schema:
+          type: string
+          format: date-time
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - Closed
+          - In-progress
+          - Open
+          - Resolved
+        description: |-
+          * `Open` - Open
+          * `In-progress` - In-progress
+          * `Closed` - Closed
+          * `Resolved` - Resolved
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketListList'
+          description: ''
+  /api/support/admin/tickets/{id}/:
+    get:
+      operationId: support_admin_tickets_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ticket.
+        required: true
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetail'
+          description: ''
+  /api/support/admin/tickets/{id}/reply/:
+    post:
+      operationId: support_admin_tickets_reply_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ticket.
+        required: true
+      tags:
+      - support
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketMessage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketMessage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketMessage'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketMessage'
+          description: ''
+  /api/support/admin/tickets/{id}/status/:
+    patch:
+      operationId: support_admin_tickets_status_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this ticket.
+        required: true
+      tags:
+      - support
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketStatusUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketStatusUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTicketStatusUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketStatusUpdate'
+          description: ''
+  /api/support/reports/:
+    post:
+      operationId: support_reports_create
+      tags:
+      - support
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentReport'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContentReport'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContentReport'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentReport'
+          description: ''
+  /api/support/tickets/:
+    get:
+      operationId: support_tickets_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTicketListList'
+          description: ''
+    post:
+      operationId: support_tickets_create
+      tags:
+      - support
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketDetail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketDetail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketDetail'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetail'
+          description: ''
+  /api/support/tickets/{id}/:
+    get:
+      operationId: support_tickets_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - support
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDetail'
+          description: ''
+  /api/support/tickets/{id}/reply/:
+    post:
+      operationId: support_tickets_reply_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - support
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketMessage'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TicketMessage'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TicketMessage'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketMessage'
+          description: ''
   /api/tags/:
     get:
       operationId: tags_list
@@ -1716,6 +2072,41 @@ components:
           type: string
       required:
       - message
+    AdminContentReport:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        reporter:
+          type: string
+          format: uuid
+          readOnly: true
+        target_type:
+          type: string
+          readOnly: true
+        target_id:
+          type: integer
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusB82Enum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - reason
+      - reporter
+      - status
+      - target_id
+      - target_type
     Answer:
       type: object
       properties:
@@ -1735,7 +2126,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/StatusDcaEnum'
           readOnly: true
         author:
           type: string
@@ -1836,6 +2227,18 @@ components:
         * `question` - question
         * `answer` - answer
         * `suggestededit` - suggestededit
+    CategoryEnum:
+      enum:
+      - General Support
+      - Technical Issue
+      - Content Error
+      - Request Instructor Role
+      type: string
+      description: |-
+        * `General Support` - General Support
+        * `Technical Issue` - Technical Issue
+        * `Content Error` - Content Error
+        * `Request Instructor Role` - Request Instructor Role
     Comment:
       type: object
       properties:
@@ -1883,6 +2286,46 @@ components:
           type: string
       required:
       - body
+    ContentReport:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        reporter:
+          type: string
+          format: uuid
+          readOnly: true
+        target_type:
+          allOf:
+          - $ref: '#/components/schemas/TargetTypeEnum'
+          writeOnly: true
+        target_id:
+          type: integer
+          writeOnly: true
+        reason:
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusB82Enum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - reason
+      - reporter
+      - status
+      - target_id
+      - target_type
+    ContentReportStatusUpdate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusB82Enum'
     FileAttachment:
       type: object
       properties:
@@ -1915,6 +2358,29 @@ components:
       - object_id
       - uploaded_at
       - uploaded_at_jalali
+    PaginatedAdminContentReportList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminContentReport'
     PaginatedAnswerList:
       type: object
       required:
@@ -2076,6 +2542,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tag'
+    PaginatedTicketListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketList'
     PaginatedUserList:
       type: object
       required:
@@ -2118,7 +2607,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/StatusDcaEnum'
           readOnly: true
         author:
           type: string
@@ -2159,6 +2648,11 @@ components:
       properties:
         role:
           $ref: '#/components/schemas/RoleEnum'
+    PatchedContentReportStatusUpdate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusB82Enum'
     PatchedQuestion:
       type: object
       properties:
@@ -2183,7 +2677,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/StatusDcaEnum'
           readOnly: true
         author:
           type: string
@@ -2284,6 +2778,11 @@ components:
           type: string
           description: e.g., 'Subject', 'Chapter', 'Year'
           maxLength: 50
+    PatchedTicketStatusUpdate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status487Enum'
     Question:
       type: object
       properties:
@@ -2308,7 +2807,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/StatusDcaEnum'
           readOnly: true
         author:
           type: string
@@ -2451,7 +2950,29 @@ components:
       - created_at_jalali
       - id
       - title
-    StatusEnum:
+    Status487Enum:
+      enum:
+      - Open
+      - In-progress
+      - Closed
+      - Resolved
+      type: string
+      description: |-
+        * `Open` - Open
+        * `In-progress` - In-progress
+        * `Closed` - Closed
+        * `Resolved` - Resolved
+    StatusB82Enum:
+      enum:
+      - Pending
+      - Resolved
+      - Dismissed
+      type: string
+      description: |-
+        * `Pending` - Pending
+        * `Resolved` - Resolved
+        * `Dismissed` - Dismissed
+    StatusDcaEnum:
       enum:
       - PENDING
       - APPROVED
@@ -2481,7 +3002,7 @@ components:
           description: List of FileAttachment IDs to delete upon approval.
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/StatusDcaEnum'
           readOnly: true
         author:
           type: string
@@ -2553,6 +3074,130 @@ components:
       description: |-
         * `question` - question
         * `answer` - answer
+    TicketDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status487Enum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/TicketMessage'
+          readOnly: true
+        message:
+          type: string
+          writeOnly: true
+        attachment_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+      required:
+      - author
+      - category
+      - created_at
+      - id
+      - message
+      - messages
+      - status
+      - title
+      - updated_at
+    TicketList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        author:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/CategoryEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/Status487Enum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - author
+      - category
+      - created_at
+      - id
+      - status
+      - title
+      - updated_at
+    TicketMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        sender:
+          type: string
+          format: uuid
+          readOnly: true
+        message:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        attachment_ids:
+          type: array
+          items:
+            type: integer
+          writeOnly: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileAttachment'
+          readOnly: true
+      required:
+      - attachments
+      - created_at
+      - id
+      - message
+      - sender
+    TicketStatusUpdate:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/Status487Enum'
     TokenObtainPair:
       type: object
       properties:
