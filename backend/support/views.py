@@ -8,6 +8,7 @@ from .serializers import (
     TicketListSerializer, TicketDetailSerializer, TicketMessageSerializer,
     TicketStatusUpdateSerializer, ContentReportSerializer
 )
+from django_filters.rest_framework import DjangoFilterBackend
 
 class TicketViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
@@ -25,6 +26,9 @@ class TicketViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.L
     @action(detail=True, methods=['post'], serializer_class=TicketMessageSerializer)
     def reply(self, request, pk=None):
         ticket = self.get_object()
+        if ticket.status == TicketStatus.CLOSED:
+            return Response({'detail': 'Cannot reply to a closed ticket.'}, status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(ticket=ticket, sender=request.user)
@@ -33,12 +37,22 @@ class TicketViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.L
             if ticket.status == TicketStatus.OPEN:
                 ticket.status = TicketStatus.IN_PROGRESS
                 ticket.save()
+        else:
+            if ticket.status != TicketStatus.OPEN:
+                ticket.status = TicketStatus.OPEN
+                ticket.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class AdminTicketViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAdminOrModerator]
     queryset = Ticket.objects.all().order_by('-created_at')
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = {
+        'status': ['exact'],
+        'author': ['exact'],
+        'created_at': ['date', 'gte', 'lte']
+    }
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -60,13 +74,21 @@ class AdminTicketViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, views
     @action(detail=True, methods=['post'], serializer_class=TicketMessageSerializer)
     def reply(self, request, pk=None):
         ticket = self.get_object()
+        if ticket.status == TicketStatus.CLOSED:
+            return Response({'detail': 'Cannot reply to a closed ticket.'}, status=status.HTTP_400_BAD_REQUEST)
+            
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(ticket=ticket, sender=request.user)
 
-        if ticket.status == TicketStatus.OPEN:
-            ticket.status = TicketStatus.IN_PROGRESS
-            ticket.save()
+        if request.user.is_admin() or request.user.is_moderator():
+            if ticket.status == TicketStatus.OPEN:
+                ticket.status = TicketStatus.IN_PROGRESS
+                ticket.save()
+        else:
+            if ticket.status != TicketStatus.OPEN:
+                ticket.status = TicketStatus.OPEN
+                ticket.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 

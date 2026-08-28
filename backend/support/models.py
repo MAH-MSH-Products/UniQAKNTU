@@ -33,6 +33,9 @@ class TicketMessage(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ticket_messages')
     message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    from django.contrib.contenttypes.fields import GenericRelation
+    attachments = GenericRelation('qna.FileAttachment')
 
     def __str__(self):
         return f'Message by {self.sender.username} on Ticket {self.ticket.id}'

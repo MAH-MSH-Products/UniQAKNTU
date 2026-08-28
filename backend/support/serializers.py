@@ -3,12 +3,14 @@ from django.contrib.contenttypes.models import ContentType
 from qna.models import FileAttachment, Question, Answer
 from .models import Ticket, TicketMessage, ContentReport, TicketStatus
 
+from qna.serializers import FileAttachmentSerializer
 class TicketMessageSerializer(serializers.ModelSerializer):
     attachment_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
+    attachments = FileAttachmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = TicketMessage
-        fields = ['id', 'sender', 'message', 'created_at', 'attachment_ids']
+        fields = ['id', 'sender', 'message', 'created_at', 'attachment_ids', 'attachments']
         read_only_fields = ['id', 'sender', 'created_at']
 
     def create(self, validated_data):
