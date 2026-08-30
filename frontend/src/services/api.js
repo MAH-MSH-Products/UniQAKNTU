@@ -2,7 +2,6 @@ import axios from 'axios';
 
 /**
  * API Service - Configured Axios Instance
- * 
  * This module provides a pre-configured axios instance for all API requests.
  * It automatically handles JWT authentication tokens with request/response interceptors.
  * Implements automatic token refresh on 401 Unauthorized responses.
@@ -73,15 +72,22 @@ api.interceptors.response.use(
 /**
  * Response Transformer Utilities
  * Standardizes API response parsing for list endpoints
- * All GET list endpoints return { count, next, previous, results }
+ * All GET list endpoints return { count, next, previous, results } or a flat array
  */
 
 /**
- * Extract results array from paginated API response
+ * Extract results array from API response (Handles both Paginated and Flat Array responses)
  * @param {Object} response - Axios response object
  * @returns {Array} - Array of result objects or empty array
  */
-export const extractResults = (response) => response.data?.results || [];
+export const extractResults = (response) => {
+  // Check if the backend returned a flat array instead of a paginated object
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  // Otherwise, extract from the paginated results property
+  return response.data?.results || [];
+};
 
 /**
  * Extract pagination metadata from API response

@@ -14,6 +14,7 @@ import SupportCenter from './pages/support/SupportCenter';
 import AdminSupportPanel from './pages/admin/AdminSupportPanel';
 import UserReports from './pages/support/UserReports';
 import QuestionExplorer from './components/wiki/QuestionExplorer';
+import QuestionDetail from './components/wiki/QuestionDetail';
 import AnswerDetail from './components/wiki/AnswerDetail';
 import './i18n';
 import i18n from 'i18next';
@@ -37,16 +38,19 @@ function App() {
       <AuthProvider>
         <SourceMaterialsProvider>
           <Routes>
-            {/* Public Routes */}
+            {/* Public Routes - Accessible to everyone */}
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/source-materials" element={<SourceMaterialsList />} />
               <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
               <Route path="/profile" element={<Profile />} />
+              
               <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
+              {/* New Route for individual question details */}
+              <Route path="/questions/:id" element={<QuestionDetail />} />
             </Route>
 
-            {/* Protected Routes */}
+            {/* Protected Routes - Require Authentication */}
             <Route element={<RequireAuth />}>
               <Route element={<MainLayout />}>
                 <Route path="/support" element={<SupportCenter />} />
@@ -58,7 +62,7 @@ function App() {
               </Route>
             </Route>
 
-            {/* Instructor Routes */}
+            {/* Instructor Routes - Require Instructor Role */}
             <Route element={<RequireInstructor />}>
               <Route element={<MainLayout />}>
                 <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />
@@ -66,7 +70,7 @@ function App() {
               </Route>
             </Route>
             
-            {/* Auth Routes */}
+            {/* Auth Routes - Login/Register with AuthLayout */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
