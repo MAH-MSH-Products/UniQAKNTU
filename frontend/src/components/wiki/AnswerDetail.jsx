@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { getAnswerById } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { FiArrowLeft } from 'react-icons/fi';
+import { processMarkdown, typesetMathJax, getAuthorDisplayName } from '../../services/utils';
 
 const AnswerDetail = () => {
   const { answerId } = useParams();
@@ -26,10 +27,17 @@ const AnswerDetail = () => {
         setLoading(false);
       }
     };
+    
     if (answerId) {
       fetchAnswer();
     }
   }, [answerId, t]);
+
+  useEffect(() => {
+    if (answer && answer.body) {
+      setTimeout(() => { typesetMathJax(); }, 100);
+    }
+  }, [answer]);
 
   if (loading) {
     return (
@@ -52,20 +60,7 @@ const AnswerDetail = () => {
     );
   }
 
-  const processMarkdown = (text) => {
-    let processed = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-      .replace(/\*(.*)\*/gim, '<em>$1</em>')
-      .replace(/`([^`]+)`/gim, '<code>$1</code>')
-      .replace(/\n/gim, '<br>');
-    return processed;
-  };
+  const displayAuthorName = getAuthorDisplayName(answer.author, answer.author_name, user);
 
   const getStatusBadge = () => {
     if (answer.status === 'APPROVED') {
@@ -102,12 +97,12 @@ const AnswerDetail = () => {
         <div className="card-body">
           <div className="d-flex justify-content-between mb-3 border-bottom pb-3">
             <div>
-              <strong>{t('answer_detail.author', 'Author:')}</strong> {answer.author?.username || answer.author?.name || t('common.unknown_author', 'Unknown')}
+              <strong>{t('answer_detail.author', 'Author:')}</strong> {displayAuthorName}
               {answer.author?.role && (
                 <span className="badge bg-secondary ms-2">{answer.author.role}</span>
               )}
             </div>
-            {/* FIXED LINK TO DEDICATED QUESTION PAGE */}
+            
             {answer.question && (
               <div>
                 <strong>{t('answer_detail.question', 'Question:')}</strong>
@@ -120,7 +115,7 @@ const AnswerDetail = () => {
 
           <div 
             className="answer-content my-4 p-4 bg-light rounded"
-            dangerouslySetInnerHTML={{ __html: processMarkdown(answer.body || '') }}
+            dangerouslySetInnerHTML={{ __html: processMarkdown(answer.body || answer.text || '') }}
             style={{ lineHeight: '1.7', fontSize: '16px' }}
           />
 
