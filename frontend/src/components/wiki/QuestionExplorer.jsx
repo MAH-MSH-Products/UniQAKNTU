@@ -5,10 +5,10 @@ import api, { extractResults } from '../../services/api';
 import QuestionForm from './QuestionForm';
 import { useAuth } from '../../context/AuthContext';
 
-/**
- * Lightweight QuestionItem Component for the Explorer list
- */
 const QuestionItemLight = ({ question }) => {
+  // Fix for author display
+  const displayAuthorName = question.author?.username || question.author_name || (typeof question.author === 'string' ? question.author : 'Unknown Author');
+
   return (
     <div className="card mb-3 academic-card border-0 shadow-sm transition-hover">
       <div className="card-body">
@@ -22,7 +22,7 @@ const QuestionItemLight = ({ question }) => {
             <div className="text-muted small mb-2">
               <span className="me-3">
                 <i className="bi bi-person me-1"></i>
-                {question.author_name || question.author?.username || 'Unknown Author'}
+                {displayAuthorName}
               </span>
               <span>
                 <i className="bi bi-calendar me-1"></i>
@@ -62,7 +62,7 @@ const QuestionExplorer = ({ examId: propExamId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const { isAuthenticated } = useAuth();
-
+  
   const currentExamId = propExamId || paramExamId;
 
   const fetchQuestions = async () => {
