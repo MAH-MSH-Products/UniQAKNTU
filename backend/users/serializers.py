@@ -83,24 +83,19 @@ class LoginSerializer(serializers.Serializer):
         identifier = attrs.get('identifier', '').strip()
         password = attrs.get('password', '')
 
-        # Try to find the user by email first, then username
-        user = None
+        username_for_auth = identifier
         if '@' in identifier:
             try:
                 user_obj = User.objects.get(email__iexact=identifier)
-                user = authenticate(
-                    request=self.context.get('request'),
-                    username=user_obj.username,
-                    password=password,
-                )
+                username_for_auth = user_obj.username
             except User.DoesNotExist:
                 pass
-        else:
-            user = authenticate(
-                request=self.context.get('request'),
-                username=identifier,
-                password=password,
-            )
+
+        user = authenticate(
+            request=self.context.get('request'),
+            username=username_for_auth,
+            password=password,
+        )
 
         if user is None:
             raise serializers.ValidationError(
@@ -202,3 +197,20 @@ class MeSerializer(serializers.ModelSerializer):
             'role', 'is_email_verified', 'date_joined',
         ]
         read_only_fields = fields
+
+class ChangeEmailRequestSerializer(serializers.Serializer):
+    current_password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+    )
+    new_email = serializers.EmailField()
+
+    def validate_new_email(self, value):
+        value = value.lower()
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('A user with this email already exists.')
+        return value
+
+
+class ChangeEmailVerifySerializer(serializers.Serializer):
+    otp = serializers.CharField(min_length=6, max_length=6)

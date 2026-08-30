@@ -16,6 +16,8 @@ from .auth_views import (
     ResetPasswordView,
     MeView,
     ChangePasswordView,
+    ChangeEmailRequestView,
+    ChangeEmailVerifyView,
 )
 
 urlpatterns = [
@@ -37,4 +39,6 @@ urlpatterns = [
     # Authenticated user
     path('me/', MeView.as_view(), name='auth-me'),
     path('change-password/', ChangePasswordView.as_view(), name='auth-change-password'),
+    path('change-email/request/', ChangeEmailRequestView.as_view(), name='auth-change-email-request'),
+    path('change-email/verify/', ChangeEmailVerifyView.as_view(), name='auth-change-email-verify'),
 ]

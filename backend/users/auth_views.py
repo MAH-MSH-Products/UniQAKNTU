@@ -31,6 +31,8 @@ from .serializers import (
     ResetPasswordSerializer,
     MeSerializer,
     ChangePasswordSerializer,
+    ChangeEmailRequestSerializer,
+    ChangeEmailVerifySerializer,
 )
 from .utils import (
     OTPType,
@@ -41,6 +43,11 @@ from .utils import (
     can_resend,
     increment_resend_count,
     send_otp_email,
+    store_pending_email,
+    get_pending_email,
+    clear_pending_email,
+    send_security_alert_email,
+    check_sensitive_password,
 )
 
 
@@ -106,7 +113,7 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
 
-        # Run validation — catch the unverified-email case specifically so we can
+        # Run validation â€” catch the unverified-email case specifically so we can
         # return a structured 403 that the frontend can act on (redirect to verify flow).
         try:
             serializer.is_valid(raise_exception=True)
@@ -194,7 +201,7 @@ class VerifyEmailView(APIView):
             400: OpenApiResponse(description='Invalid OTP.'),
             404: OpenApiResponse(description='No account with this email.'),
             410: OpenApiResponse(description='OTP expired or already used.'),
-            429: OpenApiResponse(description='Too many wrong attempts — code invalidated.'),
+            429: OpenApiResponse(description='Too many wrong attempts â€” code invalidated.'),
         },
     )
     def post(self, request):
@@ -336,7 +343,7 @@ class ResetPasswordView(APIView):
             400: OpenApiResponse(description='Invalid OTP or validation error.'),
             404: OpenApiResponse(description='No account with this email.'),
             410: OpenApiResponse(description='OTP expired or already used.'),
-            429: OpenApiResponse(description='Too many wrong attempts — code invalidated.'),
+            429: OpenApiResponse(description='Too many wrong attempts â€” code invalidated.'),
         },
     )
     def post(self, request):
@@ -432,7 +439,7 @@ class ChangePasswordView(APIView):
         current_password = serializer.validated_data['current_password']
         new_password = serializer.validated_data['new_password']
 
-        if not user.check_password(current_password):
+        if not check_sensitive_password(user, current_password):
             return Response(
                 {'detail': 'Current password is incorrect.'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -444,4 +451,144 @@ class ChangePasswordView(APIView):
         return Response(
             {'detail': 'Password changed successfully.'},
             status=status.HTTP_200_OK,
+        )
+
+# -------------------------------------------------
+# Change Email
+# -------------------------------------------------
+
+@extend_schema(tags=['Auth'])
+class ChangeEmailRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Request to change email address',
+        description=(
+            'Provide current password and a new email address. '
+            'An OTP will be sent to the new email address. '
+            'Limited to 3 requests per hour.'
+        ),
+        request=ChangeEmailRequestSerializer,
+        responses={
+            200: OpenApiResponse(description='OTP sent to the new email address.'),
+            400: OpenApiResponse(description='Validation error or wrong password.'),
+            429: OpenApiResponse(description='Rate limit reached. Try again in an hour.'),
+        },
+    )
+    def post(self, request):
+        serializer = ChangeEmailRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        current_password = serializer.validated_data['current_password']
+        new_email = serializer.validated_data['new_email']
+
+        if not check_sensitive_password(user, current_password):
+            return Response(
+                {'detail': 'Current password is incorrect.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+            
+        if new_email == user.email:
+            return Response(
+                {'detail': 'The new email is the same as the current email.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not can_resend(user.id, OTPType.CHANGE_EMAIL):
+            return Response(
+                {'detail': 'You have requested too many codes. Please try again in an hour.'},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        increment_resend_count(user.id, OTPType.CHANGE_EMAIL)
+        otp = generate_otp()
+        
+        # Store both the pending email and the OTP in cache
+        store_pending_email(user.id, new_email)
+        store_otp(user.id, OTPType.CHANGE_EMAIL, otp)
+        
+        # Send OTP to the new email
+        send_otp_email(user, OTPType.CHANGE_EMAIL, otp, to_email=new_email)
+
+        return Response(
+            {'detail': 'A verification code has been sent to your new email address.'},
+            status=status.HTTP_200_OK,
+        )
+
+
+@extend_schema(tags=['Auth'])
+class ChangeEmailVerifyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Verify and apply new email address',
+        description=(
+            'Provide the OTP sent to the new email address. '
+            'If valid, the account email is updated immediately and the old email is notified.'
+        ),
+        request=ChangeEmailVerifySerializer,
+        responses={
+            200: OpenApiResponse(description='Email changed successfully.'),
+            400: OpenApiResponse(description='Invalid OTP or pending email not found.'),
+            410: OpenApiResponse(description='OTP expired.'),
+            429: OpenApiResponse(description='Too many wrong attempts — code invalidated.'),
+        },
+    )
+    def post(self, request):
+        serializer = ChangeEmailVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        user = request.user
+        otp = serializer.validated_data['otp']
+        
+        new_email = get_pending_email(user.id)
+        if not new_email:
+            return Response(
+                {'detail': 'No pending email change request found or it has expired.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        result = verify_otp(user.id, OTPType.CHANGE_EMAIL, otp)
+
+        if result == OTPVerifyResult.SUCCESS:
+            old_email = user.email
+            
+            # Apply changes
+            user.email = new_email
+            user.is_email_verified = True
+            user.save(update_fields=['email', 'is_email_verified'])
+            
+            # Clean up
+            clear_pending_email(user.id)
+            
+            # Notify old email
+            send_security_alert_email(user, old_email, new_email)
+            
+            return Response(
+                {'detail': 'Your email address has been successfully changed.'},
+                status=status.HTTP_200_OK,
+            )
+
+        if result == OTPVerifyResult.LOCKED:
+            return Response(
+                {
+                    'detail': (
+                        'Too many incorrect attempts. Your verification code has been '
+                        'invalidated. Please request a new one.'
+                    )
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+
+        if result == OTPVerifyResult.EXPIRED:
+            return Response(
+                {'detail': 'Verification code has expired or was already used. Please request a new one.'},
+                status=status.HTTP_410_GONE,
+            )
+
+        # OTPVerifyResult.INVALID
+        return Response(
+            {'detail': 'Invalid verification code. Please check and try again.'},
+            status=status.HTTP_400_BAD_REQUEST,
         )

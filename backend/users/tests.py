@@ -469,3 +469,78 @@ class AuthAPITests(TestCase):
             'new_password2': 'NewPass123!',
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # -- Change Email ------------------------------------------
+
+    CHANGE_EMAIL_REQUEST_URL = '/api/auth/change-email/request/'
+    CHANGE_EMAIL_VERIFY_URL = '/api/auth/change-email/verify/'
+
+    def test_change_email_request_success(self):
+        self.client.force_authenticate(user=self.verified_user)
+        response = self.client.post(self.CHANGE_EMAIL_REQUEST_URL, {
+            'current_password': self.VALID_PASSWORD,
+            'new_email': 'new_email@test.com',
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check cache if pending email was stored
+        from .utils import get_pending_email
+        self.assertEqual(get_pending_email(self.verified_user.id), 'new_email@test.com')
+
+    def test_change_email_request_duplicate(self):
+        self.client.force_authenticate(user=self.verified_user)
+        # unverified@test.com is already in use by self.unverified_user
+        response = self.client.post(self.CHANGE_EMAIL_REQUEST_URL, {
+            'current_password': self.VALID_PASSWORD,
+            'new_email': 'unverified@test.com',
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('new_email', response.data)
+
+    def test_change_email_request_same_email(self):
+        self.client.force_authenticate(user=self.verified_user)
+        response = self.client.post(self.CHANGE_EMAIL_REQUEST_URL, {
+            'current_password': self.VALID_PASSWORD,
+            'new_email': 'verified@test.com',
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_change_email_verify_success(self):
+        self.client.force_authenticate(user=self.verified_user)
+        from .utils import store_pending_email
+        store_pending_email(self.verified_user.id, 'new_email@test.com')
+        otp = generate_otp()
+        store_otp(self.verified_user.id, OTPType.CHANGE_EMAIL, otp)
+
+        response = self.client.post(self.CHANGE_EMAIL_VERIFY_URL, {
+            'otp': otp,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.verified_user.refresh_from_db()
+        self.assertEqual(self.verified_user.email, 'new_email@test.com')
+
+    def test_sensitive_password_lockout(self):
+        """5 wrong password guesses triggers 429 lockout for sensitive actions."""
+        self.client.force_authenticate(user=self.verified_user)
+        
+        # Clear cache before testing to make sure state is clean
+        from django.core.cache import cache
+        cache.delete(f'sensitive_fails:{self.verified_user.id}')
+        
+        for i in range(6):
+            resp = self.client.post(self.CHANGE_PASSWORD_URL, {
+                'current_password': 'WrongPassword123!',
+                'new_password': 'SuperSecretPass999!',
+                'new_password2': 'SuperSecretPass999!',
+            })
+            if i < 5:
+                self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST, msg=f"Attempt {i+1} failed")
+            else:
+                self.assertEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS, msg="Attempt 6 should be locked out")
+
+        # After lockout, even correct password returns 429
+        resp = self.client.post(self.CHANGE_PASSWORD_URL, {
+            'current_password': self.VALID_PASSWORD,
+            'new_password': 'SuperSecretPass999!',
+            'new_password2': 'SuperSecretPass999!',
+        })
+        self.assertEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
