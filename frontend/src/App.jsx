@@ -22,7 +22,7 @@ import InstructorDashboard from './pages/instructor/InstructorDashboard';
 import ManageAnswers from './pages/instructor/ManageAnswers';
 import './i18n';
 import i18n from 'i18next';
-
+import ForgotPassword from './pages/ForgotPassword';
 function App() {
   useEffect(() => {
     const handleLanguageChange = (lng) => {
@@ -78,7 +78,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/forgot-password" element={<div className="p-4">Forgot Password Component (Work in Progress)</div>} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
             </Route>
           </Routes>
         </SourceMaterialsProvider>
