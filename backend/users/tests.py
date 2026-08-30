@@ -218,7 +218,7 @@ class AuthAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_login_returns_role_in_token(self):
-        """JWT access and refresh tokens must contain the user's role as a claim."""
+        """JWT access and refresh tokens must contain the user's role and username as claims."""
         import base64, json
 
         response = self.client.post(self.LOGIN_URL, {
@@ -228,9 +228,7 @@ class AuthAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         def decode_payload(token: str) -> dict:
-            # JWT payload is the middle segment, base64url-encoded (no padding)
             payload_b64 = token.split('.')[1]
-            # Add padding so Python can decode it
             padding = 4 - len(payload_b64) % 4
             payload_b64 += '=' * (padding % 4)
             return json.loads(base64.urlsafe_b64decode(payload_b64))
@@ -242,6 +240,11 @@ class AuthAPITests(TestCase):
         self.assertIn('role', refresh_payload)
         self.assertEqual(access_payload['role'], self.verified_user.role)
         self.assertEqual(refresh_payload['role'], self.verified_user.role)
+
+        self.assertIn('username', access_payload)
+        self.assertIn('username', refresh_payload)
+        self.assertEqual(access_payload['username'], self.verified_user.username)
+        self.assertEqual(refresh_payload['username'], self.verified_user.username)
 
 
     # ── Email Verification ────────────────────────────────────

@@ -127,11 +127,13 @@ class LoginView(APIView):
 
         user = serializer.validated_data['user']
 
-        # Build JWT tokens and embed role as a custom claim so the frontend
-        # can read the user's role directly from the token without an extra API call.
+        # Build JWT tokens and embed role + username as custom claims so the frontend
+        # can identify the user and their role without an extra API call.
         refresh = RefreshToken.for_user(user)
-        refresh['role'] = user.role          # added to refresh token payload
-        refresh.access_token['role'] = user.role   # added to access token payload
+        refresh['role'] = user.role
+        refresh['username'] = user.username
+        refresh.access_token['role'] = user.role
+        refresh.access_token['username'] = user.username
 
         return Response({
             'access': str(refresh.access_token),
