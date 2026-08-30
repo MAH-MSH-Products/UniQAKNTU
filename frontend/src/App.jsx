@@ -17,9 +17,11 @@ import UserReports from './pages/support/UserReports';
 import QuestionExplorer from './components/wiki/QuestionExplorer';
 import QuestionDetail from './components/wiki/QuestionDetail';
 import AnswerDetail from './components/wiki/AnswerDetail';
+import Profile from './pages/Profile';
+import InstructorDashboard from './pages/instructor/InstructorDashboard';
+import ManageAnswers from './pages/instructor/ManageAnswers';
 import './i18n';
 import i18n from 'i18next';
-import Profile from './pages/Profile';
 
 function App() {
   useEffect(() => {
@@ -66,8 +68,8 @@ function App() {
             {/* Instructor Routes - Require Instructor Role */}
             <Route element={<RequireInstructor />}>
               <Route element={<MainLayout />}>
-                <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />
-                <Route path="/instructor/answers" element={<div className="p-4"><h2>Manage Answers</h2></div>} />
+                <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
+                <Route path="/instructor/answers" element={<ManageAnswers />} />
               </Route>
             </Route>
             
