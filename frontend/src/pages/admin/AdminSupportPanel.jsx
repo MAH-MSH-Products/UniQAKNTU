@@ -11,7 +11,7 @@ import api, { extractResults } from '../../services/api';
  */
 
 const AdminSupportPanel = () => {
-  const { user } = useAuth();
+  const { user, canModerate } = useAuth();
   const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' or 'reports'
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -20,9 +20,9 @@ const AdminSupportPanel = () => {
   const [replyStatus, setReplyStatus] = useState({ type: '', message: '' });
 
   /**
-   * Check if user is staff - render 403 if not
+   * Check if user has moderator/admin permissions - render 403 if not
    */
-  if (!user || !user.is_staff) {
+  if (!user || !canModerate) {
     return (
       <div className="container-fluid py-5">
         <div className="row justify-content-center">

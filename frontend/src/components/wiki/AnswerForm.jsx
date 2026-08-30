@@ -1,35 +1,29 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import MarkdownEditor from '../editor/MarkdownEditor';
-import api, { getAnswersByQuestionId } from '../../services/api';
-import { useSourceMaterials } from '../../context/SourceMaterialsContext';
+import api from '../../services/api';
 
 /**
  * AnswerForm Component
- * 
- * Form component for instructors to submit answers to questions.
+ * Form component for users to submit answers to questions.
  * Implements the two-step Orphan Claiming pattern for attachments.
  * Supports markdown text with MathJax formulas and inline image attachments.
- * 
- * Phase 4 Updates:
- * - Integrated SourceMaterialsContext for accessing cached source materials
- * - Uses flat endpoint structure for API calls
- * 
  * @param {number} questionId - The ID of the question to answer
  * @param {function} onSubmit - Callback function when form is submitted (optional)
  */
 const AnswerForm = ({ questionId, onSubmit }) => {
+  const { t } = useTranslation();
   const [markdownText, setMarkdownText] = useState('');
   const [attachmentIds, setAttachmentIds] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
-  const { materials, loading: materialsLoading } = useSourceMaterials();
+  const [submitMessage, setSubmitMessage] = useState({ type: '', text: '' });
 
   /**
    * Handle attachment upload from MarkdownEditor
    * @param {{id: number, url: string}} attachment - Uploaded attachment info
    */
-  const handleAttachmentUpload = ({ id, url }) => {
-    setAttachmentIds(prev => [...prev, id]);
+  const handleAttachmentUpload = (attachment) => {
+    setAttachmentIds(prev => [...prev, attachment.id]);
   };
 
   /**
@@ -40,7 +34,7 @@ const AnswerForm = ({ questionId, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitMessage('');
+    setSubmitMessage({ type: '', text: '' });
 
     // Construct JSON payload matching API spec
     const payload = {
@@ -56,21 +50,25 @@ const AnswerForm = ({ questionId, onSubmit }) => {
         },
       });
       
-      if (response.data) {
-        setSubmitMessage('✅ Answer submitted successfully! Pending approval.');
-        
-        // Reset form on successful submission
-        setMarkdownText('');
-        setAttachmentIds([]);
-        
-        if (onSubmit) {
-          onSubmit({ success: true, data: response.data });
-        }
+      setSubmitMessage({ 
+        type: 'success', 
+        text: t('answers.submit_success', 'Answer submitted successfully! Pending approval.') 
+      });
+      
+      // Reset form on successful submission
+      setMarkdownText('');
+      setAttachmentIds([]);
+      
+      if (onSubmit) {
+        onSubmit({ success: true, data: response.data });
       }
     } catch (error) {
       console.error('API Error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to submit answer';
-      setSubmitMessage('❌ Failed to submit answer: ' + errorMessage);
+      const errorMessage = error.response?.data?.message || error.message || t('common.error', 'Failed to submit answer');
+      setSubmitMessage({ 
+        type: 'danger', 
+        text: `${t('answers.submit_failed', 'Failed to submit answer:')} ${errorMessage}` 
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +77,7 @@ const AnswerForm = ({ questionId, onSubmit }) => {
   return (
     <div className="answer-form-container card mt-4">
       <div className="card-header bg-primary text-white">
-        <h5 className="mb-0">Submit Your Answer (Instructor)</h5>
+        <h5 className="mb-0">{t('answers.submit_instructor_answer', 'Submit Your Answer')}</h5>
       </div>
       <div className="card-body">
         <form onSubmit={handleSubmit}>
@@ -95,43 +93,11 @@ const AnswerForm = ({ questionId, onSubmit }) => {
           {/* Attachment Info */}
           {attachmentIds.length > 0 && (
             <div className="alert alert-info mb-3">
-              <strong>📎 Attached Files:</strong> {attachmentIds.length} file(s) uploaded
+              <strong>{t('answers.attached_files', 'Attached Files:')}</strong> {attachmentIds.length} {t('answers.files_uploaded', 'file(s) uploaded')}
               <small className="d-block text-muted">
-                Attachments are embedded in the markdown text as ![attachment](url)
+                {t('answers.attachment_help', 'Attachments are embedded in the markdown text as ![attachment](url)')}
               </small>
             </div>
-          )}
-
-          {/* Source Materials Dropdown (Phase 4 caching implementation) */}
-          {materialsLoading ? (
-            <div className="alert alert-info mb-3">
-              <small>Loading source materials...</small>
-            </div>
-          ) : (
-            materials.length > 0 && (
-              <div className="mb-3">
-                <label htmlFor="source-material" className="form-label">
-                  Related Source Material:
-                </label>
-                <select 
-                  id="source-material" 
-                  className="form-select"
-                  disabled
-                  title="Source material is set at question level"
-                >
-                  <option value="">Select source material (disabled - set by question)</option>
-                  {materials.map(material => (
-                    <option key={material.id} value={material.id}>
-                      {material.title || material.name}
-                    </option>
-                  ))}
-                </select>
-                <small className="text-muted">
-                  Source materials are cached globally and used when creating questions.
-                  Answers inherit the source material from their parent question.
-                </small>
-              </div>
-            )
           )}
 
           {/* Submit Button */}
@@ -144,30 +110,20 @@ const AnswerForm = ({ questionId, onSubmit }) => {
               {isSubmitting ? (
                 <>
                   <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Submitting...
+                  {t('common.submitting', 'Submitting...')}
                 </>
               ) : (
-                'Submit Answer'
+                t('answers.submit_button', 'Submit Answer')
               )}
             </button>
           </div>
 
           {/* Status Message */}
-          {submitMessage && (
-            <div className={`alert mt-3 ${submitMessage.includes('✅') ? 'alert-success' : 'alert-danger'}`}>
-              {submitMessage}
+          {submitMessage.text && (
+            <div className={`alert mt-3 alert-${submitMessage.type}`}>
+              {submitMessage.text}
             </div>
           )}
-
-          {/* Integration Notice */}
-          <div className="alert alert-info mt-3 mb-0">
-            <strong>Note:</strong> This form uses the two-step orphan claiming pattern.
-            Images dropped/pasted into the editor are uploaded immediately to <code>POST /api/attachments/</code>,
-            then the attachment IDs are sent with the answer submission.
-            <br /><br />
-            <strong>Phase 4:</strong> Source materials are now cached in <code>SourceMaterialsContext</code> 
-            for dropdown population in forms.
-          </div>
         </form>
       </div>
     </div>

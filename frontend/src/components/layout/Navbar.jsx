@@ -3,22 +3,20 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTag, FiFileText } from 'react-icons/fi';
+import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTag, FiFileText, FiShield } from 'react-icons/fi';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import logo from '../../assets/azHubNasir.png';
 
 /**
  * Navbar Component - Responsive Navigation Bar
- *
  * Displays branding with AzmoonHub Nasir logo, user information, and authentication controls.
  * Conditionally renders content based on user authentication status and role.
  * Includes language switcher for English/Persian (EN/FA).
  * Uses react-icons for professional iconography.
  * Features sticky positioning with scroll-triggered shadow effect.
  * Dynamically adapts styling for auth pages (/login, /register) using glassmorphism effect.
- * Phase 13: Implements Bootstrap profile dropdown for authenticated users with navigation links.
+ * Implements Bootstrap profile dropdown for authenticated users with navigation links.
  */
-
 const Navbar = () => {
   const { user, isAuthenticated, logout, canModerate, userRole } = useAuth();
   const navigate = useNavigate();
@@ -34,7 +32,6 @@ const Navbar = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -73,13 +70,13 @@ const Navbar = () => {
     if (userRole === 'ADMIN') {
       return (
         <span className="badge" style={{ backgroundColor: '#dc3545', color: 'white' }}>
-          {t('nav.admin_badge') || 'Admin'}
+          {t('nav.admin_badge', 'Admin')}
         </span>
       );
     } else if (userRole === 'MODERATOR') {
       return (
         <span className="badge" style={{ backgroundColor: 'var(--secondary-color)', color: 'white' }}>
-          {t('nav.moderator_badge') || 'Moderator'}
+          {t('nav.moderator_badge', 'Moderator')}
         </span>
       );
     }
@@ -156,21 +153,40 @@ const Navbar = () => {
                         {renderRoleBadge()}
                       </h6>
                     </li>
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2" to="/profile">
+                        <FiUser />
+                        {t('profile.title', 'My Profile')}
+                      </Link>
+                    </li>
                     
                     {/* Divider */}
                     <li><hr className="dropdown-divider" /></li>
                     
-                    {/* Navigation Links */}
+                    {/* Admin Panel Link (Only for Moderators and Admins) */}
+                    {canModerate && (
+                      <>
+                        <li>
+                          <Link className="dropdown-item d-flex align-items-center gap-2" to="/admin/support">
+                            <FiShield />
+                            {t('pages.admin_panel', 'Admin Support Panel')}
+                          </Link>
+                        </li>
+                        <li><hr className="dropdown-divider" /></li>
+                      </>
+                    )}
+
+                    {/* Standard Navigation Links */}
                     <li>
                       <Link className="dropdown-item d-flex align-items-center gap-2" to="/tickets">
                         <FiTag />
-                        {t('nav.my_tickets')}
+                        {t('nav.my_tickets', 'My Tickets')}
                       </Link>
                     </li>
                     <li>
                       <Link className="dropdown-item d-flex align-items-center gap-2" to="/reports">
                         <FiFileText />
-                        {t('nav.reports')}
+                        {t('nav.reports', 'Reports')}
                       </Link>
                     </li>
                     
@@ -184,7 +200,7 @@ const Navbar = () => {
                         onClick={handleLogout}
                       >
                         <FiLogOut />
-                        {t('nav.logout')}
+                        {t('nav.logout', 'Logout')}
                       </button>
                     </li>
                   </ul>
@@ -196,14 +212,14 @@ const Navbar = () => {
                 <li className="nav-item me-2">
                   <Link className="btn btn-outline-light btn-sm d-flex align-items-center gap-1" to="/login">
                     <FiLogIn />
-                    {t('nav.login')}
+                    {t('nav.login', 'Login')}
                   </Link>
                 </li>
                 {/* Register button for unauthenticated users */}
                 <li className="nav-item">
                   <Link className="btn btn-outline-light btn-sm d-flex align-items-center gap-1" to="/register">
                     <FiUserPlus />
-                    {t('nav.register')}
+                    {t('nav.register', 'Register')}
                   </Link>
                 </li>
               </>

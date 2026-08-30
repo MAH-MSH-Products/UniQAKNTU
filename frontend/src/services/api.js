@@ -105,7 +105,7 @@ export const getPaginationMeta = (response) => ({
  * GET /api/source-materials/?id={id} - Get single source material by ID
  */
 export const getSourceMaterials = (params = {}) => {
-  return api.get('/source-materials', { params });
+  return api.get('/source-materials/', { params });
 };
 
 /**
@@ -114,7 +114,7 @@ export const getSourceMaterials = (params = {}) => {
  * @param {number} id - Source material ID
  */
 export const getSourceMaterialById = (id) => {
-  return api.get('/source-materials', { params: { id } });
+  return api.get('/source-materials/', { params: { id } });
 };
 
 /**
@@ -123,7 +123,7 @@ export const getSourceMaterialById = (id) => {
  * @param {number} questionId - Question ID to fetch answers for
  */
 export const getAnswersByQuestionId = (questionId) => {
-  return api.get('/answers', { params: { question: questionId } });
+  return api.get('/answers/', { params: { question: questionId } });
 };
 
 /**
