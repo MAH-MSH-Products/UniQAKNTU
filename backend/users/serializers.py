@@ -132,19 +132,12 @@ class VerifyEmailSerializer(serializers.Serializer):
         return value.lower()
 
 
-class ResendOTPSerializer(serializers.Serializer):
+class SendOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp_type = serializers.ChoiceField(
         choices=[(t, t) for t in OTPType.ALL],
-        help_text='Type of OTP to resend: "verify_email" or "password_reset".',
+        help_text='Type of OTP to send: "verify_email" or "password_reset".',
     )
-
-    def validate_email(self, value):
-        return value.lower()
-
-
-class ForgotPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField()
 
     def validate_email(self, value):
         return value.lower()

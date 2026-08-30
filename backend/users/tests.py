@@ -109,8 +109,7 @@ class AuthAPITests(TestCase):
     LOGIN_URL = '/api/auth/login/'
     LOGOUT_URL = '/api/auth/logout/'
     VERIFY_EMAIL_URL = '/api/auth/verify-email/'
-    RESEND_OTP_URL = '/api/auth/resend-otp/'
-    FORGOT_PASSWORD_URL = '/api/auth/forgot-password/'
+    SEND_OTP_URL = '/api/auth/send-otp/'
     RESET_PASSWORD_URL = '/api/auth/reset-password/'
     ME_URL = '/api/auth/me/'
     CHANGE_PASSWORD_URL = '/api/auth/change-password/'
@@ -186,11 +185,13 @@ class AuthAPITests(TestCase):
     # ── Login ─────────────────────────────────────────────────
 
     def test_login_blocked_unverified(self):
+        """Unverified email → 403 with machine-readable code so frontend can redirect."""
         response = self.client.post(self.LOGIN_URL, {
             'identifier': 'unverified',
             'password': self.VALID_PASSWORD,
         })
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data.get('code'), 'email_not_verified')
 
     def test_login_with_username(self):
         response = self.client.post(self.LOGIN_URL, {
@@ -215,6 +216,33 @@ class AuthAPITests(TestCase):
             'password': 'WrongPassword!',
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_login_returns_role_in_token(self):
+        """JWT access and refresh tokens must contain the user's role as a claim."""
+        import base64, json
+
+        response = self.client.post(self.LOGIN_URL, {
+            'identifier': 'verified',
+            'password': self.VALID_PASSWORD,
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        def decode_payload(token: str) -> dict:
+            # JWT payload is the middle segment, base64url-encoded (no padding)
+            payload_b64 = token.split('.')[1]
+            # Add padding so Python can decode it
+            padding = 4 - len(payload_b64) % 4
+            payload_b64 += '=' * (padding % 4)
+            return json.loads(base64.urlsafe_b64decode(payload_b64))
+
+        access_payload = decode_payload(response.data['access'])
+        refresh_payload = decode_payload(response.data['refresh'])
+
+        self.assertIn('role', access_payload)
+        self.assertIn('role', refresh_payload)
+        self.assertEqual(access_payload['role'], self.verified_user.role)
+        self.assertEqual(refresh_payload['role'], self.verified_user.role)
+
 
     # ── Email Verification ────────────────────────────────────
 
@@ -284,44 +312,61 @@ class AuthAPITests(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # ── Resend OTP ────────────────────────────────────────────
+    # ── Send OTP ──────────────────────────────────────────────
 
-    def test_resend_otp_success(self):
-        response = self.client.post(self.RESEND_OTP_URL, {
+    def test_send_otp_success(self):
+        response = self.client.post(self.SEND_OTP_URL, {
             'email': 'unverified@test.com',
             'otp_type': OTPType.VERIFY_EMAIL,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_resend_otp_rate_limit(self):
-        # Exhaust the limit (default 3)
+    def test_send_otp_unknown_email_returns_404(self):
+        """Unknown email → 404 (simpler; no enumeration protection needed here)."""
+        response = self.client.post(self.SEND_OTP_URL, {
+            'email': 'nobody@test.com',
+            'otp_type': OTPType.VERIFY_EMAIL,
+        })
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_send_otp_rate_limit(self):
+        """Rate limit applies to all OTP types through the same endpoint."""
         for _ in range(3):
-            self.client.post(self.RESEND_OTP_URL, {
+            self.client.post(self.SEND_OTP_URL, {
                 'email': 'unverified@test.com',
                 'otp_type': OTPType.VERIFY_EMAIL,
             })
         # 4th attempt should be rate-limited
-        response = self.client.post(self.RESEND_OTP_URL, {
+        response = self.client.post(self.SEND_OTP_URL, {
             'email': 'unverified@test.com',
             'otp_type': OTPType.VERIFY_EMAIL,
         })
         self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
-    def test_resend_otp_already_verified(self):
-        response = self.client.post(self.RESEND_OTP_URL, {
+    def test_send_otp_already_verified(self):
+        response = self.client.post(self.SEND_OTP_URL, {
             'email': 'verified@test.com',
             'otp_type': OTPType.VERIFY_EMAIL,
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    # ── Forgot / Reset Password ───────────────────────────────
-
-    def test_forgot_password_always_200(self):
-        """Should return 200 even for unknown emails (no enumeration)."""
-        response = self.client.post(self.FORGOT_PASSWORD_URL, {
-            'email': 'nobody@test.com',
+    def test_send_otp_password_reset_success(self):
+        """send-otp with otp_type=password_reset works for known email."""
+        response = self.client.post(self.SEND_OTP_URL, {
+            'email': 'verified@test.com',
+            'otp_type': OTPType.PASSWORD_RESET,
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_send_otp_password_reset_unknown_email(self):
+        """password_reset for unknown email → 404 (no forgot-password endpoint any more)."""
+        response = self.client.post(self.SEND_OTP_URL, {
+            'email': 'nobody@test.com',
+            'otp_type': OTPType.PASSWORD_RESET,
+        })
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # ── Reset Password ────────────────────────────────────────
 
     def test_reset_password_success(self):
         otp = generate_otp()

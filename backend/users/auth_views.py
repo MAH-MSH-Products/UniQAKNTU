@@ -27,8 +27,7 @@ from .serializers import (
     LoginSerializer,
     LogoutSerializer,
     VerifyEmailSerializer,
-    ResendOTPSerializer,
-    ForgotPasswordSerializer,
+    SendOTPSerializer,
     ResetPasswordSerializer,
     MeSerializer,
     ChangePasswordSerializer,
@@ -93,27 +92,53 @@ class LoginView(APIView):
         summary='Login with username or email',
         description=(
             'Authenticate with either a username or email address plus password. '
-            'Returns a JWT access and refresh token pair. '
-            'The account must have a verified email address.'
+            'Returns a JWT access and refresh token pair with role embedded in the token. '
+            'If the email is not verified, returns HTTP 403 with code="email_not_verified" '
+            'so the frontend can redirect to the verification flow.'
         ),
         request=LoginSerializer,
         responses={
             200: OpenApiResponse(description='JWT token pair returned.'),
-            400: OpenApiResponse(description='Invalid credentials or unverified email.'),
-            403: OpenApiResponse(description='Account locked due to too many failed attempts.'),
+            400: OpenApiResponse(description='Invalid credentials.'),
+            403: OpenApiResponse(description='Email not verified (code=email_not_verified) or account locked.'),
         },
     )
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
+
+        # Run validation — catch the unverified-email case specifically so we can
+        # return a structured 403 that the frontend can act on (redirect to verify flow).
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as exc:
+            errors = getattr(exc, 'detail', {})
+            # DRF puts non-field errors under 'non_field_errors'
+            non_field = errors.get('non_field_errors', [])
+            for err in non_field:
+                if getattr(err, 'code', None) == 'email_not_verified':
+                    return Response(
+                        {
+                            'code': 'email_not_verified',
+                            'detail': str(err),
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
+            raise  # re-raise any other validation error as normal 400
+
         user = serializer.validated_data['user']
 
+        # Build JWT tokens and embed role as a custom claim so the frontend
+        # can read the user's role directly from the token without an extra API call.
         refresh = RefreshToken.for_user(user)
+        refresh['role'] = user.role          # added to refresh token payload
+        refresh.access_token['role'] = user.role   # added to access token payload
+
         return Response({
             'access': str(refresh.access_token),
             'refresh': str(refresh),
             'user': MeSerializer(user).data,
         }, status=status.HTTP_200_OK)
+
 
 
 # -------------------------------------------------
@@ -226,30 +251,31 @@ class VerifyEmailView(APIView):
 
 
 # -------------------------------------------------
-# Resend OTP
+# Send OTP
 # -------------------------------------------------
 
 @extend_schema(tags=['Auth'])
-class ResendOTPView(APIView):
+class SendOTPView(APIView):
     permission_classes = [AllowAny]
 
     @extend_schema(
-        summary='Resend OTP code',
+        summary='Send or resend an OTP',
         description=(
-            'Resend an OTP to the given email. '
-            'Limited to 3 requests per hour per OTP type. '
-            'otp_type must be "verify_email" or "password_reset".'
+            'Send an OTP to the given email address for the requested purpose. '
+            'Use otp_type="verify_email" to get an email verification code, '
+            'or otp_type="password_reset" to get a password reset code. '
+            'Limited to 3 requests per hour per OTP type.'
         ),
-        request=ResendOTPSerializer,
+        request=SendOTPSerializer,
         responses={
-            200: OpenApiResponse(description='OTP resent.'),
-            400: OpenApiResponse(description='Validation error or already verified.'),
-            404: OpenApiResponse(description='No account with this email.'),
-            429: OpenApiResponse(description='Resend limit reached.'),
+            200: OpenApiResponse(description='OTP sent successfully.'),
+            400: OpenApiResponse(description='Validation error or email already verified.'),
+            404: OpenApiResponse(description='No account found with this email.'),
+            429: OpenApiResponse(description='Rate limit reached. Try again in an hour.'),
         },
     )
     def post(self, request):
-        serializer = ResendOTPSerializer(data=request.data)
+        serializer = SendOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data['email']
@@ -258,13 +284,12 @@ class ResendOTPView(APIView):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Return 200 to prevent email enumeration
             return Response(
-                {'detail': 'If an account exists, a new code has been sent.'},
-                status=status.HTTP_200_OK,
+                {'detail': 'No account found with this email address.'},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Guard: don't resend verification to an already-verified account
+        # Guard: block sending verification OTP to an already-verified account
         if otp_type == OTPType.VERIFY_EMAIL and user.is_email_verified:
             return Response(
                 {'detail': 'This email is already verified.'},
@@ -283,54 +308,10 @@ class ResendOTPView(APIView):
         send_otp_email(user, otp_type, otp)
 
         return Response(
-            {'detail': 'If an account exists, a new code has been sent.'},
+            {'detail': 'A new code has been sent to your email address.'},
             status=status.HTTP_200_OK,
         )
 
-
-# -------------------------------------------------
-# Forgot Password
-# -------------------------------------------------
-
-@extend_schema(tags=['Auth'])
-class ForgotPasswordView(APIView):
-    permission_classes = [AllowAny]
-
-    @extend_schema(
-        summary='Request a password reset OTP',
-        description=(
-            'Sends a password reset OTP to the given email address. '
-            'Always returns 200 regardless of whether the email exists '
-            '(prevents user enumeration).'
-        ),
-        request=ForgotPasswordSerializer,
-        responses={
-            200: OpenApiResponse(description='OTP sent if email exists.'),
-        },
-    )
-    def post(self, request):
-        serializer = ForgotPasswordSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        email = serializer.validated_data['email']
-
-        # Silently ignore unknown emails to prevent enumeration
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response(
-                {'detail': 'If an account with this email exists, a reset code has been sent.'},
-                status=status.HTTP_200_OK,
-            )
-
-        otp = generate_otp()
-        store_otp(user.id, OTPType.PASSWORD_RESET, otp)
-        send_otp_email(user, OTPType.PASSWORD_RESET, otp)
-
-        return Response(
-            {'detail': 'If an account with this email exists, a reset code has been sent.'},
-            status=status.HTTP_200_OK,
-        )
 
 
 # -------------------------------------------------

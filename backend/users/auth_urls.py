@@ -1,4 +1,4 @@
-﻿"""
+"""
 users/auth_urls.py
 ------------------
 URL patterns for the authentication endpoints.
@@ -12,8 +12,7 @@ from .auth_views import (
     LoginView,
     LogoutView,
     VerifyEmailView,
-    ResendOTPView,
-    ForgotPasswordView,
+    SendOTPView,
     ResetPasswordView,
     MeView,
     ChangePasswordView,
@@ -28,12 +27,11 @@ urlpatterns = [
     # Token management
     path('token/refresh/', TokenRefreshView.as_view(), name='auth-token-refresh'),
 
-    # Email verification
-    path('verify-email/', VerifyEmailView.as_view(), name='auth-verify-email'),
-    path('resend-otp/', ResendOTPView.as_view(), name='auth-resend-otp'),
+    # OTP dispatch (email verification & password reset)
+    path('send-otp/', SendOTPView.as_view(), name='auth-send-otp'),
 
-    # Password reset
-    path('forgot-password/', ForgotPasswordView.as_view(), name='auth-forgot-password'),
+    # Email verification & password reset (consume the OTP)
+    path('verify-email/', VerifyEmailView.as_view(), name='auth-verify-email'),
     path('reset-password/', ResetPasswordView.as_view(), name='auth-reset-password'),
 
     # Authenticated user
