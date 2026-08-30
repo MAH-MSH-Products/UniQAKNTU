@@ -1,3 +1,4 @@
+// src/pages/admin/AdminSupportPanel.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -7,11 +8,14 @@ import { FiSend } from 'react-icons/fi';
 const AdminSupportPanel = () => {
   const { user, canModerate } = useAuth();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' or 'reports'
+  
+  // Added 'pending-questions' and 'pending-answers' to active tabs
+  const [activeTab, setActiveTab] = useState('tickets'); 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  
   const [replyMessage, setReplyMessage] = useState('');
   const [replyStatus, setReplyStatus] = useState({ type: '', message: '' });
   const [replying, setReplying] = useState(false);
@@ -43,8 +47,14 @@ const AdminSupportPanel = () => {
       if (activeTab === 'tickets') {
         const response = await api.get('/support/admin/tickets/');
         setItems(extractResults(response));
-      } else {
+      } else if (activeTab === 'reports') {
         const response = await api.get('/support/admin/reports/');
+        setItems(extractResults(response));
+      } else if (activeTab === 'pending-questions') {
+        const response = await api.get('/questions/?status=PENDING');
+        setItems(extractResults(response));
+      } else if (activeTab === 'pending-answers') {
+        const response = await api.get('/answers/?status=PENDING');
         setItems(extractResults(response));
       }
     } catch (error) {
@@ -82,9 +92,9 @@ const AdminSupportPanel = () => {
     e.preventDefault();
     
     if (!replyMessage.trim()) return;
-
     setReplying(true);
     setReplyStatus({ type: '', message: '' });
+
     try {
       const response = await api.post(`/support/admin/tickets/${selectedItem.id}/reply/`, { message: replyMessage });
       
@@ -122,7 +132,6 @@ const AdminSupportPanel = () => {
       setItems(prevItems => prevItems.map(item => 
         item.id === selectedItem.id ? { ...item, status: newStatus } : item
       ));
-
     } catch (error) {
       console.error('Error updating status:', error);
       alert(t('common.error', 'Failed to update status.'));
@@ -131,18 +140,39 @@ const AdminSupportPanel = () => {
     }
   };
 
+  // Method to approve or reject questions/answers
+  const handleApproveReject = async (action) => {
+    setLoadingDetails(true);
+    try {
+      const resource = activeTab === 'pending-questions' ? 'questions' : 'answers';
+      await api.post(`/${resource}/${selectedItem.id}/${action}/`);
+      
+      alert(action === 'approve' ? t('admin.msg_approved', 'Approved successfully.') : t('admin.msg_rejected', 'Rejected successfully.'));
+      handleCloseModal();
+      fetchItems();
+    } catch (error) {
+      console.error(`Error ${action}ing item:`, error);
+      alert(t('common.error', 'Action failed.'));
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status?.toLowerCase()) {
       case 'open':
-      case 'pending':
+      case 'approved':
         return 'bg-success';
       case 'closed':
       case 'dismissed':
         return 'bg-secondary';
       case 'in-progress':
+      case 'pending':
         return 'bg-warning text-dark';
       case 'resolved':
         return 'bg-primary';
+      case 'rejected':
+        return 'bg-danger';
       default:
         return 'bg-info';
     }
@@ -170,6 +200,18 @@ const AdminSupportPanel = () => {
         >
           {t('admin.content_reports', 'Content Reports')}
         </button>
+        <button
+          className={activeTab === 'pending-questions' ? 'coursera-tab-active' : 'coursera-tab'}
+          onClick={() => setActiveTab('pending-questions')}
+        >
+          {t('admin.pending_questions', 'Pending Questions')}
+        </button>
+        <button
+          className={activeTab === 'pending-answers' ? 'coursera-tab-active' : 'coursera-tab'}
+          onClick={() => setActiveTab('pending-answers')}
+        >
+          {t('admin.pending_answers', 'Pending Answers')}
+        </button>
       </div>
 
       <div className="card">
@@ -189,8 +231,14 @@ const AdminSupportPanel = () => {
                   <tr>
                     <th>{t('admin.th_id', 'ID')}</th>
                     <th>{t('admin.th_user', 'User')}</th>
+                    
                     {activeTab === 'tickets' && <th>{t('admin.th_title', 'Title')}</th>}
-                    <th>{t('admin.th_category', 'Category/Target')}</th>
+                    {activeTab === 'pending-questions' && <th>{t('admin.th_title', 'Title')}</th>}
+                    {activeTab === 'pending-answers' && <th>{t('admin.th_question_id', 'Question ID')}</th>}
+                    
+                    {activeTab === 'reports' && <th>{t('admin.th_category', 'Target')}</th>}
+                    {(activeTab === 'tickets' || activeTab === 'reports') && !['reports'].includes(activeTab) && <th>{t('admin.th_category', 'Category')}</th>}
+                    
                     <th>{t('admin.th_status', 'Status')}</th>
                     <th>{t('admin.th_created', 'Created At')}</th>
                     <th>{t('admin.th_action', 'Action')}</th>
@@ -200,19 +248,27 @@ const AdminSupportPanel = () => {
                   {items.map(item => (
                     <tr key={item.id}>
                       <td>#{item.id}</td>
-                      <td>{item.author || item.reporter || 'Unknown'}</td>
+                      <td>{item.author?.username || item.author || item.reporter || 'Unknown'}</td>
                       
                       {activeTab === 'tickets' && (
                         <td><strong>{item.title}</strong></td>
+                      )}
+                      
+                      {activeTab === 'pending-questions' && (
+                        <td><strong>{item.title}</strong></td>
+                      )}
+
+                      {activeTab === 'pending-answers' && (
+                        <td>#{item.question}</td>
                       )}
                       
                       {activeTab === 'reports' ? (
                         <td>
                           {item.target_type} #{item.target_id}
                         </td>
-                      ) : (
+                      ) : activeTab === 'tickets' ? (
                         <td>{item.category}</td>
-                      )}
+                      ) : null}
                       
                       <td>
                         <span className={`badge ${getStatusBadgeClass(item.status)}`}>
@@ -256,7 +312,9 @@ const AdminSupportPanel = () => {
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">
-                    {activeTab === 'tickets' ? 'Ticket' : 'Report'} #{selectedItem.id}
+                    {activeTab === 'tickets' ? 'Ticket' : 
+                     activeTab === 'reports' ? 'Report' : 
+                     activeTab === 'pending-questions' ? 'Question' : 'Answer'} #{selectedItem.id}
                   </h5>
                   <button 
                     type="button" 
@@ -273,7 +331,7 @@ const AdminSupportPanel = () => {
                       <tbody>
                         <tr>
                           <th style={{ width: '150px' }}>{t('admin.user_id', 'User ID:')}</th>
-                          <td>{selectedItem.author || selectedItem.reporter || 'Unknown'}</td>
+                          <td>{selectedItem.author?.username || selectedItem.author || selectedItem.reporter || 'Unknown'}</td>
                         </tr>
                         {activeTab === 'tickets' && (
                           <>
@@ -299,32 +357,58 @@ const AdminSupportPanel = () => {
                             </tr>
                           </>
                         )}
+                        {activeTab === 'pending-questions' && (
+                          <>
+                            <tr>
+                              <th>{t('admin.th_title', 'Title:')}</th>
+                              <td>{selectedItem.title}</td>
+                            </tr>
+                            <tr>
+                              <th>{t('source_materials.title', 'Source Material:')}</th>
+                              <td>{selectedItem.source_material || 'N/A'}</td>
+                            </tr>
+                          </>
+                        )}
+                        {activeTab === 'pending-answers' && (
+                          <>
+                            <tr>
+                              <th>{t('admin.th_question_id', 'Question ID:')}</th>
+                              <td>#{selectedItem.question}</td>
+                            </tr>
+                          </>
+                        )}
                         <tr>
                           <th>{t('admin.th_status', 'Status:')}</th>
                           <td>
-                            <div className="d-flex align-items-center gap-2">
-                              <select 
-                                className="form-select form-select-sm w-auto fw-bold"
-                                value={selectedItem.status}
-                                onChange={(e) => handleStatusChange(e.target.value)}
-                                disabled={loading}
-                              >
-                                {activeTab === 'tickets' ? (
-                                  <>
-                                    <option value="Open">Open</option>
-                                    <option value="In-progress">In-progress</option>
-                                    <option value="Resolved">Resolved</option>
-                                    <option value="Closed">Closed</option>
-                                  </>
-                                ) : (
-                                  <>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Resolved">Resolved</option>
-                                    <option value="Dismissed">Dismissed</option>
-                                  </>
-                                )}
-                              </select>
-                            </div>
+                            {(activeTab === 'tickets' || activeTab === 'reports') ? (
+                              <div className="d-flex align-items-center gap-2">
+                                <select 
+                                  className="form-select form-select-sm w-auto fw-bold"
+                                  value={selectedItem.status}
+                                  onChange={(e) => handleStatusChange(e.target.value)}
+                                  disabled={loading}
+                                >
+                                  {activeTab === 'tickets' ? (
+                                    <>
+                                      <option value="Open">Open</option>
+                                      <option value="In-progress">In-progress</option>
+                                      <option value="Resolved">Resolved</option>
+                                      <option value="Closed">Closed</option>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <option value="Pending">Pending</option>
+                                      <option value="Resolved">Resolved</option>
+                                      <option value="Dismissed">Dismissed</option>
+                                    </>
+                                  )}
+                                </select>
+                              </div>
+                            ) : (
+                              <span className={`badge ${getStatusBadgeClass(selectedItem.status)}`}>
+                                {selectedItem.status}
+                              </span>
+                            )}
                           </td>
                         </tr>
                         <tr>
@@ -335,21 +419,32 @@ const AdminSupportPanel = () => {
                     </table>
                   </div>
 
-                  <div className="mb-4">
-                    <h6 className="fw-bold text-primary">{t('admin.description_reason', 'Description / Reason')}</h6>
-                    <div className="bg-light p-3 rounded border">
-                      {activeTab === 'tickets' 
-                        ? (selectedItem.messages?.[0]?.message || 'Loading description...')
-                        : selectedItem.reason
-                      }
+                  {(activeTab === 'tickets' || activeTab === 'reports') && (
+                    <div className="mb-4">
+                      <h6 className="fw-bold text-primary">{t('admin.description_reason', 'Description / Reason')}</h6>
+                      <div className="bg-light p-3 rounded border">
+                        {activeTab === 'tickets' 
+                          ? (selectedItem.messages?.[0]?.message || 'Loading description...')
+                          : selectedItem.reason
+                        }
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  {selectedItem.introduction && (
+                  {selectedItem.introduction && activeTab === 'tickets' && (
                     <div className="mb-4">
                       <h6 className="fw-bold text-primary">{t('admin.intro_role_req', 'Introduction (Role Request)')}</h6>
                       <div className="bg-light p-3 rounded border">
                         {selectedItem.introduction}
+                      </div>
+                    </div>
+                  )}
+
+                  {(activeTab === 'pending-questions' || activeTab === 'pending-answers') && (
+                    <div className="mb-4">
+                      <h6 className="fw-bold text-primary">{t('admin.th_body', 'Body / Content')}</h6>
+                      <div className="bg-light p-3 rounded border" style={{ maxHeight: '350px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
+                        {selectedItem.body || selectedItem.text || 'No content provided.'}
                       </div>
                     </div>
                   )}
@@ -366,7 +461,6 @@ const AdminSupportPanel = () => {
                         ) : selectedItem.messages && selectedItem.messages.length > 1 ? (
                           <div className="ticket-chat-section p-3 bg-light rounded border" style={{ maxHeight: '350px', overflowY: 'auto' }}>
                             {selectedItem.messages.slice(1).map((reply, index) => {
-                              // Determine if the message is from the admin (current user) or the user who opened the ticket
                               const isAdminReply = reply.sender === user.id;
                               return (
                                 <div key={reply.id || index} className={`mb-3 d-flex flex-column ${isAdminReply ? 'align-items-end' : 'align-items-start'}`}>
@@ -435,13 +529,32 @@ const AdminSupportPanel = () => {
                       {t('admin.review_report_notice', 'Review the reported content on the public page and take appropriate action. Update the status above once handled.')}
                     </div>
                   )}
-
                 </div>
                 
                 <div className="modal-footer border-top">
+                  {(activeTab === 'pending-questions' || activeTab === 'pending-answers') && selectedItem.status === 'PENDING' && (
+                    <>
+                      <button 
+                        type="button" 
+                        className="btn btn-success" 
+                        onClick={() => handleApproveReject('approve')}
+                        disabled={loadingDetails}
+                      >
+                        {t('admin.btn_approve', 'Approve')}
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn btn-danger" 
+                        onClick={() => handleApproveReject('reject')}
+                        disabled={loadingDetails}
+                      >
+                        {t('admin.btn_reject', 'Reject')}
+                      </button>
+                    </>
+                  )}
                   <button 
                     type="button" 
-                    className="btn btn-secondary"
+                    className="btn btn-secondary" 
                     onClick={handleCloseModal}
                   >
                     {t('common.close', 'Close')}
