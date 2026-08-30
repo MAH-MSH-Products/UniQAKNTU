@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SourceMaterialsProvider } from './context/SourceMaterialsContext';
 import MainLayout from './components/layout/MainLayout';
@@ -17,40 +17,16 @@ import QuestionExplorer from './components/wiki/QuestionExplorer';
 import AnswerDetail from './components/wiki/AnswerDetail';
 import './i18n';
 import i18n from 'i18next';
-// خط زیر را به بخش importها اضافه کنید
 import Profile from './pages/Profile';
 
-/**
- * App Component - Main Application Entry Point
- * 
- * Sets up routing structure and provides authentication context.
- * Configures protected and public routes with layout wrappers.
- * Handles RTL/LTR direction switching based on active language.
- * Implements route protection using RequireAuth and RequireInstructor wrappers.
- * 
- * Phase 4 Updates:
- * - Added SourceMaterialsProvider for caching source materials
- * - Updated routes to use flat endpoint structure instead of nested paths
- * - Replaced /curriculum/courses/ with /source-materials/
- * - Replaced /wiki/questions/:id/answers/ with /questions/:questionId/answers/
- * - Added /answers/:answerId/ route for single answer detail
- */
-
 function App() {
-  // Handle RTL/LTR direction switching based on language
   useEffect(() => {
     const handleLanguageChange = (lng) => {
       document.documentElement.dir = lng === 'fa' ? 'rtl' : 'ltr';
       document.documentElement.lang = lng;
     };
-
-    // Set initial direction
     handleLanguageChange(i18n.language);
-
-    // Listen for language changes
     i18n.on('languageChanged', handleLanguageChange);
-
-    // Cleanup listener on unmount
     return () => {
       i18n.off('languageChanged', handleLanguageChange);
     };
@@ -61,34 +37,28 @@ function App() {
       <AuthProvider>
         <SourceMaterialsProvider>
           <Routes>
-            {/* Public Routes - Accessible to everyone */}
+            {/* Public Routes */}
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
-              
-              {/* Phase 4: Source Materials routes (replaces /curriculum/courses/) */}
               <Route path="/source-materials" element={<SourceMaterialsList />} />
               <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
               <Route path="/profile" element={<Profile />} />
-              
-              {/* Phase 10: Source Material Questions route */}
               <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
             </Route>
 
-            {/* Protected Routes - Require Authentication */}
+            {/* Protected Routes */}
             <Route element={<RequireAuth />}>
               <Route element={<MainLayout />}>
-                {/* Support routes */}
                 <Route path="/support" element={<SupportCenter />} />
                 <Route path="/tickets" element={<SupportCenter />} />
                 <Route path="/reports" element={<UserReports />} />
+                <Route path="/admin" element={<Navigate to="/admin/support" replace />} />
                 <Route path="/admin/support" element={<AdminSupportPanel />} />
-                
-                {/* Phase 4: Questions and Answers routes with flat structure */}
                 <Route path="/answers/:answerId" element={<AnswerDetail />} />
               </Route>
             </Route>
 
-            {/* Instructor Routes - Require Instructor Role */}
+            {/* Instructor Routes */}
             <Route element={<RequireInstructor />}>
               <Route element={<MainLayout />}>
                 <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />
@@ -96,7 +66,7 @@ function App() {
               </Route>
             </Route>
             
-            {/* Auth Routes - Login/Register with AuthLayout */}
+            {/* Auth Routes */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
