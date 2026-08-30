@@ -8,12 +8,13 @@ import AnswerForm from './AnswerForm';
 import CommentSection from './CommentSection';
 import SuggestEditModal from './SuggestEditModal';
 import { useAuth } from '../../context/AuthContext';
+import { processMarkdown, getAuthorDisplayName, typesetMathJax } from '../../services/utils';
 
 const QuestionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isAuthenticated, userRole } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
@@ -22,8 +23,9 @@ const QuestionDetail = () => {
   const [voting, setVoting] = useState(false);
   const [error, setError] = useState(null);
 
-  const isQuestionAuthor = user?.id && (question?.author === user.id || question?.author?.id === user.id);
-  const canDirectEdit = ['MODERATOR', 'ADMIN'].includes(userRole);
+  const authorId = typeof question?.author === 'object' ? question?.author?.id : question?.author;
+  const isQuestionAuthor = Boolean(user?.id && authorId && String(authorId).toLowerCase() === String(user.id).toLowerCase());
+  const displayAuthorName = getAuthorDisplayName(question?.author, question?.author_name, user);
 
   const fetchQuestionDetails = async () => {
     setLoading(true);
@@ -45,6 +47,12 @@ const QuestionDetail = () => {
   useEffect(() => {
     fetchQuestionDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (question && question.body) {
+      setTimeout(() => { typesetMathJax(); }, 100);
+    }
+  }, [question]);
 
   const handleVote = async (value) => {
     if (!isAuthenticated) {
@@ -101,7 +109,7 @@ const QuestionDetail = () => {
   return (
     <div className="question-detail-page py-4">
       <button className="btn btn-outline-secondary mb-4 d-flex align-items-center gap-2" onClick={() => navigate(-1)}>
-        <FiArrowLeft /> Back
+        <FiArrowLeft /> {t('common.back')}
       </button>
 
       {/* Question Header & Body */}
@@ -137,7 +145,7 @@ const QuestionDetail = () => {
                 className="question-text mb-4"
                 style={{ fontSize: '16px', lineHeight: '1.7' }}
                 dangerouslySetInnerHTML={{
-                  __html: question.text?.replace(/\$(.*?)\$/g, '<span class="math-inline">$1</span>') || question.body || ''
+                  __html: processMarkdown(question.body || question.text)
                 }}
               />
 
@@ -156,27 +164,26 @@ const QuestionDetail = () => {
               <div className="d-flex justify-content-between align-items-center border-top pt-3 text-muted small">
                 <div>
                   <i className="bi bi-person me-1"></i>
-                  {question.author_name || question.author?.username || 'Unknown Author'}
+                  {displayAuthorName}
                   <span className="mx-2">|</span>
                   <i className="bi bi-calendar me-1"></i>
-                  Asked: {question.created_at_jalali ? question.created_at_jalali.split('T')[0] : ''}
+                  {t('questions.asked')}: {question.created_at_jalali ? question.created_at_jalali.split('T')[0] : ''}
                   
                   <span className={`badge ms-3 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
                     {question.status}
                   </span>
                 </div>
                 
-                {/* Actions */}
-                {(isQuestionAuthor || canDirectEdit) && (
-                  <div className="d-flex gap-2">
-                    <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onClick={() => setShowEditModal(true)}>
-                      <FiEdit /> {canDirectEdit ? 'Edit' : 'Suggest Edit'}
-                    </button>
+                <div className="d-flex gap-2">
+                  <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onClick={() => setShowEditModal(true)}>
+                    <FiEdit /> {isQuestionAuthor ? t('common.edit') : t('common.suggest_edit')}
+                  </button>
+                  {isQuestionAuthor && (
                     <button className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" onClick={handleDelete}>
-                      <FiTrash2 /> Delete
+                      <FiTrash2 /> {t('common.delete')}
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -188,7 +195,7 @@ const QuestionDetail = () => {
       {/* Answers Section */}
       <div className="answers-section mt-5">
         <h4 className="mb-4 pb-2 border-bottom">
-          {answers.length} {answers.length === 1 ? 'Answer' : 'Answers'}
+          {answers.length} {t('questions.answers')}
         </h4>
 
         {answers.length > 0 ? (
@@ -203,7 +210,7 @@ const QuestionDetail = () => {
           ))
         ) : (
           <div className="alert alert-light border text-center text-muted py-4">
-            No answers submitted yet. Be the first to contribute!
+            {t('questions.no_answers')}
           </div>
         )}
       </div>

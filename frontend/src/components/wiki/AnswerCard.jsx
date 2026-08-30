@@ -5,19 +5,8 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import SuggestEditModal from './SuggestEditModal';
 import CommentSection from './CommentSection';
+import { processMarkdown, getAuthorDisplayName, typesetMathJax } from '../../services/utils';
 
-/**
- * AnswerCard Component
- * Displays a single answer to a question with support for:
- * - Author information and verification badge
- * - Markdown text with MathJax formulas
- * - Image attachments & PDF file downloads
- * - Status badges (Pending Review / Approved)
- * - Voting functionality (upvote/downvote) with local score state
- * - Edit suggestion & Delete workflow for authors
- * - Accept answer button for question authors
- * - Comments section
- */
 const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
   const { t } = useTranslation();
   const {
@@ -29,48 +18,40 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
     pdf_file = null,
     user_vote = 0,
     created_at_jalali,
-    updated_at_jalali,
     is_accepted = false,
   } = answer;
 
-  const { user, userRole, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  
   const [showEditModal, setShowEditModal] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState(null);
-
+  
   // Voting state
   const [currentVote, setCurrentVote] = useState(user_vote || 0);
   const [score, setScore] = useState(answer.score || 0);
   const [voting, setVoting] = useState(false);
   const [voteError, setVoteError] = useState(null);
 
-  // Authorization checks
-  const isQuestionAuthor = user?.id && (question?.author === user.id || question?.author?.id === user.id);
-  
-  // Handle both string UUID and object structures for author
-  const authorId = typeof author === 'string' ? author : author?.id;
-  const isAnswerAuthor = user?.id && authorId === user.id;
-  
-  const canDirectEdit = ['MODERATOR', 'ADMIN'].includes(userRole);
+  // Exact ID matching for Author Permissions
+  const questionAuthorId = typeof question?.author === 'object' ? question?.author?.id : question?.author;
+  const isQuestionAuthor = Boolean(user?.id && questionAuthorId && String(questionAuthorId).toLowerCase() === String(user.id).toLowerCase());
 
-  // Formatting Author Name (hides raw UUIDs)
-  const displayAuthorName = author?.username || author?.name || t('common.unknown_author', 'Unknown Author');
+  const answerAuthorId = typeof author === 'object' ? author?.id : author;
+  const isAnswerAuthor = Boolean(user?.id && answerAuthorId && String(answerAuthorId).toLowerCase() === String(user.id).toLowerCase());
 
-  /**
-   * Handle voting on an answer
-   */
+  // Formatting Author Name
+  const displayAuthorName = getAuthorDisplayName(author, null, user);
+
   const handleVote = async (value) => {
     if (!isAuthenticated) {
-      alert(t('common.login_to_vote', 'Please login to vote'));
+      alert(t('common.login_to_vote'));
       return;
     }
     setVoting(true);
     setVoteError(null);
-
     try {
       const response = await api.post(`/answers/${id}/vote/`, { value });
-      
-      // Update local state with the returned vote info and new score
       setCurrentVote(response.data.user_vote !== undefined ? response.data.user_vote : value);
       if (response.data.new_score !== undefined) {
         setScore(response.data.new_score);
@@ -79,31 +60,25 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
       console.error('Failed to vote:', err);
       setVoteError(
         err.response?.data?.message ||
-        t('answers.vote_error', 'Failed to vote. Please try again.')
+        t('answers.vote_error')
       );
     } finally {
       setVoting(false);
     }
   };
 
-  /**
-   * Handle deleting the answer
-   */
   const handleDelete = async () => {
-    if (window.confirm(t('answers.confirm_delete', 'Are you sure you want to delete this answer?'))) {
+    if (window.confirm(t('answers.confirm_delete'))) {
       try {
         await api.delete(`/answers/${id}/`);
         if (onDeleteSuccess) onDeleteSuccess();
       } catch (error) {
         console.error('Failed to delete answer:', error);
-        alert(t('answers.delete_failed', 'Failed to delete the answer.'));
+        alert(t('answers.delete_failed'));
       }
     }
   };
 
-  /**
-   * Handle accepting an answer
-   */
   const handleAcceptAnswer = async () => {
     if (!isQuestionAuthor) return;
     
@@ -119,46 +94,26 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
       console.error('Failed to accept answer:', err);
       setAcceptError(
         err.response?.data?.message ||
-        t('answers.accept_failed', 'Failed to accept answer. Please try again.')
+        t('answers.accept_failed')
       );
     } finally {
       setAccepting(false);
     }
   };
 
-  /**
-   * Process markdown text for display
-   */
-  const processMarkdown = (text) => {
-    let processed = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-      .replace(/\*(.*)\*/gim, '<em>$1</em>')
-      .replace(/`([^`]+)`/gim, '<code>$1</code>')
-      .replace(/\n/gim, '<br>');
-    return processed;
-  };
-
   useEffect(() => {
-    if (window.MathJax && window.MathJax.typesetPromise) {
-      window.MathJax.typesetPromise();
-    }
+    setTimeout(() => { typesetMathJax(); }, 100);
   }, [body]);
 
   const processedContent = processMarkdown(body);
 
   const getStatusBadge = () => {
     if (status === 'APPROVED') {
-      return <span className="badge bg-success">{t('common.approved', 'Approved')}</span>;
+      return <span className="badge bg-success">{t('common.approved')}</span>;
     } else if (status === 'PENDING') {
-      return <span className="badge bg-warning">{t('common.pending', 'Pending Review')}</span>;
+      return <span className="badge bg-warning">{t('common.pending')}</span>;
     } else if (status === 'REJECTED') {
-      return <span className="badge bg-danger">{t('common.rejected', 'Rejected')}</span>;
+      return <span className="badge bg-danger">{t('common.rejected')}</span>;
     }
     return null;
   };
@@ -180,20 +135,18 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
               )}
             </h6>
             
-            {/* Timestamp using Jalali date (Time removed) */}
             {created_at_jalali && (
               <small className="text-muted d-block mt-1" style={{ fontSize: '0.8rem' }}>
-                {t('answers.posted', 'Posted')}: {created_at_jalali.split('T')[0]}
+                {t('answers.posted')}: {created_at_jalali.split('T')[0]}
               </small>
             )}
           </div>
 
           <div className="d-flex align-items-center gap-2">
-            {/* Accepted Answer Badge */}
             {is_accepted && (
               <span className="badge bg-success d-flex align-items-center gap-1">
                 <FiCheckCircle />
-                {t('answers.accepted', 'Accepted Answer')}
+                {t('answers.accepted')}
               </span>
             )}
             {getStatusBadge()}
@@ -204,13 +157,13 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
       <div className="card-body pt-2">
         <div className="d-flex gap-3">
           
-          {/* Voting UI - StackOverflow Style */}
+          {/* Voting UI */}
           <div className="d-flex flex-column align-items-center">
             <button 
               className={`btn btn-sm border-0 p-1 ${currentVote === 1 ? 'text-success' : 'text-secondary'}`}
               onClick={() => handleVote(1)}
               disabled={voting || !isAuthenticated}
-              title={isAuthenticated ? t('common.upvote', 'Upvote') : t('common.login_to_vote', 'Login to vote')}
+              title={isAuthenticated ? t('common.upvote') : t('common.login_to_vote')}
             >
               <FiThumbsUp size={22} className={currentVote === 1 ? 'fill-current' : ''} />
             </button>
@@ -223,7 +176,7 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
               className={`btn btn-sm border-0 p-1 ${currentVote === -1 ? 'text-danger' : 'text-secondary'}`}
               onClick={() => handleVote(-1)}
               disabled={voting || !isAuthenticated}
-              title={isAuthenticated ? t('common.downvote', 'Downvote') : t('common.login_to_vote', 'Login to vote')}
+              title={isAuthenticated ? t('common.downvote') : t('common.login_to_vote')}
             >
               <FiThumbsDown size={22} className={currentVote === -1 ? 'fill-current' : ''} />
             </button>
@@ -237,7 +190,6 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
               style={{ lineHeight: '1.6', fontSize: '15px' }}
             />
 
-            {/* Image Attachment */}
             {image && (
               <div className="answer-image mb-3">
                 <img 
@@ -249,7 +201,6 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
               </div>
             )}
 
-            {/* PDF Attachment */}
             {pdf_file && (
               <div className="answer-pdf mb-3">
                 <a 
@@ -259,14 +210,14 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
                   className="btn btn-outline-primary btn-sm"
                 >
                   <i className="bi bi-file-pdf me-2"></i>
-                  {t('answers.download_pdf', 'View/Download PDF')}
+                  {t('answers.download_pdf')}
                 </a>
               </div>
             )}
 
             {/* Action Buttons (Edit / Delete / Accept) */}
             <div className="d-flex gap-2 mt-3 pt-2 border-top">
-              {/* Accept Answer Button (Only for question author) */}
+              {/* Accept Answer Button */}
               {isQuestionAuthor && !is_accepted && status === 'APPROVED' && (
                 <button 
                   className="btn btn-sm btn-success d-flex align-items-center gap-1"
@@ -274,26 +225,25 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
                   disabled={accepting}
                 >
                   {accepting ? <span className="spinner-border spinner-border-sm"></span> : <FiCheckCircle />}
-                  {t('answers.accept', 'Accept')}
+                  {t('answers.accept')}
                 </button>
               )}
 
-              {/* Edit/Delete for Authors or Admins */}
-              {(isAnswerAuthor || canDirectEdit) && (
-                <>
-                  <button 
-                    className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
-                    onClick={() => setShowEditModal(true)}
-                  >
-                    <FiEdit /> {canDirectEdit ? t('common.edit', 'Edit') : t('common.suggest_edit', 'Suggest Edit')}
-                  </button>
-                  <button 
-                    className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
-                    onClick={handleDelete}
-                  >
-                    <FiTrash2 /> {t('common.delete', 'Delete')}
-                  </button>
-                </>
+              <button 
+                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+                onClick={() => setShowEditModal(true)}
+              >
+                <FiEdit /> {isAnswerAuthor ? t('common.edit') : t('common.suggest_edit')}
+              </button>
+              
+              {/* Delete (ONLY if Exact Author) */}
+              {isAnswerAuthor && (
+                <button 
+                  className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+                  onClick={handleDelete}
+                >
+                  <FiTrash2 /> {t('common.delete')}
+                </button>
               )}
             </div>
 
@@ -303,10 +253,8 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
         </div>
       </div>
 
-      {/* Comments Section */}
       <CommentSection targetType="answers" targetId={id} />
 
-      {/* Suggest/Direct Edit Modal */}
       <SuggestEditModal
         show={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -315,7 +263,6 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
         currentText={body}
         onSuccess={(data) => {
           setShowEditModal(false);
-          // Trigger refresh in parent
           if (onDeleteSuccess) onDeleteSuccess(); 
         }}
       />

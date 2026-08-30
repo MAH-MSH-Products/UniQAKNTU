@@ -4,10 +4,11 @@ import { useTranslation } from 'react-i18next';
 import api, { extractResults } from '../../services/api';
 import QuestionForm from './QuestionForm';
 import { useAuth } from '../../context/AuthContext';
+import { getAuthorDisplayName } from '../../services/utils';
 
 const QuestionItemLight = ({ question }) => {
-  // Fix for author display
-  const displayAuthorName = question.author?.username || question.author_name || (typeof question.author === 'string' ? question.author : 'Unknown Author');
+  const { user } = useAuth();
+  const displayAuthorName = getAuthorDisplayName(question.author, question.author_name, user);
 
   return (
     <div className="card mb-3 academic-card border-0 shadow-sm transition-hover">

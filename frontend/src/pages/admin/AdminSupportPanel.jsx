@@ -1,4 +1,3 @@
-// src/pages/admin/AdminSupportPanel.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -9,13 +8,11 @@ const AdminSupportPanel = () => {
   const { user, canModerate } = useAuth();
   const { t } = useTranslation();
   
-  // Added 'pending-questions' and 'pending-answers' to active tabs
   const [activeTab, setActiveTab] = useState('tickets'); 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  
   const [replyMessage, setReplyMessage] = useState('');
   const [replyStatus, setReplyStatus] = useState({ type: '', message: '' });
   const [replying, setReplying] = useState(false);
@@ -56,6 +53,9 @@ const AdminSupportPanel = () => {
       } else if (activeTab === 'pending-answers') {
         const response = await api.get('/answers/?status=PENDING');
         setItems(extractResults(response));
+      } else if (activeTab === 'suggested-edits') {
+        const response = await api.get('/suggested-edits/');
+        setItems(extractResults(response));
       }
     } catch (error) {
       console.error('Error fetching items:', error);
@@ -70,7 +70,6 @@ const AdminSupportPanel = () => {
     setReplyMessage('');
     setReplyStatus({ type: '', message: '' });
 
-    // Fetch full details for tickets to load complete chat history
     if (activeTab === 'tickets') {
       setLoadingDetails(true);
       try {
@@ -90,23 +89,18 @@ const AdminSupportPanel = () => {
 
   const handleReplySubmit = async (e) => {
     e.preventDefault();
-    
     if (!replyMessage.trim()) return;
     setReplying(true);
     setReplyStatus({ type: '', message: '' });
 
     try {
       const response = await api.post(`/support/admin/tickets/${selectedItem.id}/reply/`, { message: replyMessage });
-      
-      // Update local state to show new reply in the chat
       setSelectedItem(prev => ({
         ...prev,
         messages: [...(prev.messages || []), response.data] 
       }));
-      
       setReplyMessage('');
-      fetchItems(); // Refresh background list to update "updated_at"
-      
+      fetchItems(); 
     } catch (error) {
       console.error('Error submitting reply:', error);
       setReplyStatus({ 
@@ -126,8 +120,6 @@ const AdminSupportPanel = () => {
         : `/support/admin/reports/${selectedItem.id}/status/`;
 
       await api.patch(endpoint, { status: newStatus });
-      
-      // Update local state to reflect the change immediately
       setSelectedItem(prev => ({ ...prev, status: newStatus }));
       setItems(prevItems => prevItems.map(item => 
         item.id === selectedItem.id ? { ...item, status: newStatus } : item
@@ -140,11 +132,14 @@ const AdminSupportPanel = () => {
     }
   };
 
-  // Method to approve or reject questions/answers
   const handleApproveReject = async (action) => {
     setLoadingDetails(true);
     try {
-      const resource = activeTab === 'pending-questions' ? 'questions' : 'answers';
+      let resource = '';
+      if (activeTab === 'pending-questions') resource = 'questions';
+      else if (activeTab === 'pending-answers') resource = 'answers';
+      else if (activeTab === 'suggested-edits') resource = 'suggested-edits';
+      
       await api.post(`/${resource}/${selectedItem.id}/${action}/`);
       
       alert(action === 'approve' ? t('admin.msg_approved', 'Approved successfully.') : t('admin.msg_rejected', 'Rejected successfully.'));
@@ -187,30 +182,21 @@ const AdminSupportPanel = () => {
         </div>
       </div>
 
-      <div className="coursera-tabs mb-4">
-        <button
-          className={activeTab === 'tickets' ? 'coursera-tab-active' : 'coursera-tab'}
-          onClick={() => setActiveTab('tickets')}
-        >
+      <div className="coursera-tabs mb-4 overflow-auto text-nowrap">
+        <button className={activeTab === 'tickets' ? 'coursera-tab-active' : 'coursera-tab'} onClick={() => setActiveTab('tickets')}>
           {t('admin.all_tickets', 'All Tickets')}
         </button>
-        <button
-          className={activeTab === 'reports' ? 'coursera-tab-active' : 'coursera-tab'}
-          onClick={() => setActiveTab('reports')}
-        >
+        <button className={activeTab === 'reports' ? 'coursera-tab-active' : 'coursera-tab'} onClick={() => setActiveTab('reports')}>
           {t('admin.content_reports', 'Content Reports')}
         </button>
-        <button
-          className={activeTab === 'pending-questions' ? 'coursera-tab-active' : 'coursera-tab'}
-          onClick={() => setActiveTab('pending-questions')}
-        >
+        <button className={activeTab === 'pending-questions' ? 'coursera-tab-active' : 'coursera-tab'} onClick={() => setActiveTab('pending-questions')}>
           {t('admin.pending_questions', 'Pending Questions')}
         </button>
-        <button
-          className={activeTab === 'pending-answers' ? 'coursera-tab-active' : 'coursera-tab'}
-          onClick={() => setActiveTab('pending-answers')}
-        >
+        <button className={activeTab === 'pending-answers' ? 'coursera-tab-active' : 'coursera-tab'} onClick={() => setActiveTab('pending-answers')}>
           {t('admin.pending_answers', 'Pending Answers')}
+        </button>
+        <button className={activeTab === 'suggested-edits' ? 'coursera-tab-active' : 'coursera-tab'} onClick={() => setActiveTab('suggested-edits')}>
+          {t('admin.suggested_edits', 'Suggested Edits')}
         </button>
       </div>
 
@@ -218,9 +204,7 @@ const AdminSupportPanel = () => {
         <div className="card-body">
           {loading && items.length === 0 ? (
             <div className="text-center py-4">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">{t('common.loading', 'Loading...')}</span>
-              </div>
+              <div className="spinner-border text-primary" role="status"></div>
             </div>
           ) : items.length === 0 ? (
             <p className="text-muted text-center mb-0">{t('admin.no_items', 'No items found.')}</p>
@@ -237,6 +221,7 @@ const AdminSupportPanel = () => {
                     {activeTab === 'pending-answers' && <th>{t('admin.th_question_id', 'Question ID')}</th>}
                     
                     {activeTab === 'reports' && <th>{t('admin.th_category', 'Target')}</th>}
+                    {activeTab === 'suggested-edits' && <th>{t('admin.target_item', 'Target Item')}</th>}
                     {(activeTab === 'tickets' || activeTab === 'reports') && !['reports'].includes(activeTab) && <th>{t('admin.th_category', 'Category')}</th>}
                     
                     <th>{t('admin.th_status', 'Status')}</th>
@@ -250,22 +235,14 @@ const AdminSupportPanel = () => {
                       <td>#{item.id}</td>
                       <td>{item.author?.username || item.author || item.reporter || 'Unknown'}</td>
                       
-                      {activeTab === 'tickets' && (
-                        <td><strong>{item.title}</strong></td>
-                      )}
-                      
-                      {activeTab === 'pending-questions' && (
-                        <td><strong>{item.title}</strong></td>
-                      )}
-
-                      {activeTab === 'pending-answers' && (
-                        <td>#{item.question}</td>
-                      )}
+                      {activeTab === 'tickets' && <td><strong>{item.title}</strong></td>}
+                      {activeTab === 'pending-questions' && <td><strong>{item.title}</strong></td>}
+                      {activeTab === 'pending-answers' && <td>#{item.question}</td>}
                       
                       {activeTab === 'reports' ? (
-                        <td>
-                          {item.target_type} #{item.target_id}
-                        </td>
+                        <td>{item.target_type} #{item.target_id}</td>
+                      ) : activeTab === 'suggested-edits' ? (
+                        <td className="text-capitalize">{item.target_type} #{item.target_id}</td>
                       ) : activeTab === 'tickets' ? (
                         <td>{item.category}</td>
                       ) : null}
@@ -275,7 +252,7 @@ const AdminSupportPanel = () => {
                           {item.status}
                         </span>
                       </td>
-                      <td>{new Date(item.created_at).toLocaleDateString()}</td>
+                      <td>{item.created_at ? new Date(item.created_at).toLocaleDateString() : (item.created_at_jalali ? item.created_at_jalali.split('T')[0] : '')}</td>
                       <td>
                         <button
                           className="btn btn-sm btn-outline-primary"
@@ -296,32 +273,19 @@ const AdminSupportPanel = () => {
       {/* Item Detail Modal */}
       {selectedItem && (
         <>
-          <div 
-            className="modal-backdrop fade show" 
-            onClick={handleCloseModal}
-            style={{ zIndex: 1050 }}
-          />
+          <div className="modal-backdrop fade show" onClick={handleCloseModal} style={{ zIndex: 1050 }} />
           
-          <div 
-            className="modal fade show d-block" 
-            tabIndex="-1" 
-            role="dialog"
-            style={{ zIndex: 1055 }}
-          >
+          <div className="modal fade show d-block" tabIndex="-1" role="dialog" style={{ zIndex: 1055 }}>
             <div className="modal-dialog modal-lg" role="document">
               <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">
                     {activeTab === 'tickets' ? 'Ticket' : 
                      activeTab === 'reports' ? 'Report' : 
-                     activeTab === 'pending-questions' ? 'Question' : 'Answer'} #{selectedItem.id}
+                     activeTab === 'pending-questions' ? 'Question' : 
+                     activeTab === 'pending-answers' ? 'Answer' : 'Suggested Edit'} #{selectedItem.id}
                   </h5>
-                  <button 
-                    type="button" 
-                    className="btn-close" 
-                    onClick={handleCloseModal}
-                    aria-label="Close"
-                  />
+                  <button type="button" className="btn-close" onClick={handleCloseModal} aria-label="Close" />
                 </div>
                 
                 <div className="modal-body">
@@ -345,7 +309,7 @@ const AdminSupportPanel = () => {
                             </tr>
                           </>
                         )}
-                        {activeTab === 'reports' && (
+                        {(activeTab === 'reports' || activeTab === 'suggested-edits') && (
                           <>
                             <tr>
                               <th>{t('admin.target_type', 'Target Type:')}</th>
@@ -413,7 +377,7 @@ const AdminSupportPanel = () => {
                         </tr>
                         <tr>
                           <th>{t('admin.th_created', 'Created:')}</th>
-                          <td>{new Date(selectedItem.created_at).toLocaleString()}</td>
+                          <td>{selectedItem.created_at ? new Date(selectedItem.created_at).toLocaleString() : (selectedItem.created_at_jalali ? selectedItem.created_at_jalali : 'N/A')}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -427,6 +391,15 @@ const AdminSupportPanel = () => {
                           ? (selectedItem.messages?.[0]?.message || 'Loading description...')
                           : selectedItem.reason
                         }
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'suggested-edits' && (
+                    <div className="mb-4">
+                      <h6 className="fw-bold text-primary">{t('admin.proposed_text', 'Proposed Text')}</h6>
+                      <div className="bg-light p-3 rounded border" style={{ maxHeight: '350px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
+                        {selectedItem.proposed_text || 'No text provided.'}
                       </div>
                     </div>
                   )}
@@ -449,7 +422,6 @@ const AdminSupportPanel = () => {
                     </div>
                   )}
 
-                  {/* Replies Section - Only for tickets */}
                   {activeTab === 'tickets' && (
                     <>
                       <div className="mb-4">
@@ -484,7 +456,6 @@ const AdminSupportPanel = () => {
                         )}
                       </div>
 
-                      {/* Reply Form */}
                       <div className="border-top pt-3">
                         <h6 className="fw-bold">{t('admin.submit_reply', 'Submit Reply')}</h6>
                         {replyStatus.message && (
@@ -532,7 +503,7 @@ const AdminSupportPanel = () => {
                 </div>
                 
                 <div className="modal-footer border-top">
-                  {(activeTab === 'pending-questions' || activeTab === 'pending-answers') && selectedItem.status === 'PENDING' && (
+                  {(activeTab === 'pending-questions' || activeTab === 'pending-answers' || activeTab === 'suggested-edits') && selectedItem.status === 'PENDING' && (
                     <>
                       <button 
                         type="button" 
