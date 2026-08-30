@@ -1,12 +1,5 @@
 import axios from 'axios';
 
-/**
- * API Service - Configured Axios Instance
- * This module provides a pre-configured axios instance for all API requests.
- * It automatically handles JWT authentication tokens with request/response interceptors.
- * Implements automatic token refresh on 401 Unauthorized responses.
- */
-
 // Create axios instance with base configuration
 const api = axios.create({
   baseURL: '/api/',
@@ -16,11 +9,7 @@ const api = axios.create({
   withCredentials: false, // JWT is stateless; CORS handles cross-origin
 });
 
-/**
- * Request Interceptor
- * Attaches JWT access token to outgoing requests if available in localStorage
- * Uses Bearer token format as per backend specification
- */
+// Request Interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -34,11 +23,7 @@ api.interceptors.request.use(
   }
 );
 
-/**
- * Response Interceptor - Auto-Refresh Token
- * Handles 401 Unauthorized responses by attempting to refresh the access token
- * If refresh fails, clears all auth data and redirects to login
- */
+// Response Interceptor - Auto-Refresh Token
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -51,8 +36,11 @@ api.interceptors.response.use(
         const refresh = localStorage.getItem('refreshToken');
         const { data } = await api.post('/auth/token/refresh/', { refresh });
         
-        // Store new access token
+        // Store new access token and new refresh token (Token Rotation)
         localStorage.setItem('accessToken', data.access);
+        if (data.refresh) {
+          localStorage.setItem('refreshToken', data.refresh);
+        }
         
         // Retry original request with new token
         originalRequest.headers.Authorization = `Bearer ${data.access}`;
@@ -70,22 +58,14 @@ api.interceptors.response.use(
 );
 
 /**
- * Response Transformer Utilities
- * Standardizes API response parsing for list endpoints
- * All GET list endpoints return { count, next, previous, results } or a flat array
- */
-
-/**
  * Extract results array from API response (Handles both Paginated and Flat Array responses)
  * @param {Object} response - Axios response object
  * @returns {Array} - Array of result objects or empty array
  */
 export const extractResults = (response) => {
-  // Check if the backend returned a flat array instead of a paginated object
   if (Array.isArray(response.data)) {
     return response.data;
   }
-  // Otherwise, extract from the paginated results property
   return response.data?.results || [];
 };
 
@@ -102,41 +82,20 @@ export const getPaginationMeta = (response) => ({
 
 // ============================================
 // Phase 4: Routing & Query Parameter Alignment
-// Replace nested REST paths with flat endpoints + query parameters
 // ============================================
 
-/**
- * Source Materials API (replaces /curriculum/courses/)
- * GET /api/source-materials/ - List all source materials
- * GET /api/source-materials/?id={id} - Get single source material by ID
- */
 export const getSourceMaterials = (params = {}) => {
   return api.get('/source-materials/', { params });
 };
 
-/**
- * Get single source material by ID
- * Uses query parameter instead of path parameter
- * @param {number} id - Source material ID
- */
 export const getSourceMaterialById = (id) => {
   return api.get('/source-materials/', { params: { id } });
 };
 
-/**
- * Answers API (replaces /wiki/questions/{id}/answers/)
- * GET /api/answers/?question={questionId} - Get answers for a specific question
- * @param {number} questionId - Question ID to fetch answers for
- */
 export const getAnswersByQuestionId = (questionId) => {
   return api.get('/answers/', { params: { question: questionId } });
 };
 
-/**
- * Get single answer by ID
- * GET /api/answers/{id}/ - Path parameter for single answer
- * @param {number} id - Answer ID
- */
 export const getAnswerById = (id) => {
   return api.get(`/answers/${id}/`);
 };

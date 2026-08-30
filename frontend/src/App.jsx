@@ -9,6 +9,7 @@ import RequireInstructor from './components/auth/RequireInstructor';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import SourceMaterialsList from './pages/SourceMaterialsList';
 import SupportCenter from './pages/support/SupportCenter';
 import AdminSupportPanel from './pages/admin/AdminSupportPanel';
@@ -74,6 +75,7 @@ function App() {
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/forgot-password" element={<div className="p-4">Forgot Password Component (Work in Progress)</div>} />
             </Route>
           </Routes>

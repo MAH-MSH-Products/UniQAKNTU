@@ -36,8 +36,8 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUserProfile = async (basicUserData) => {
     try {
-      // Fetch complete user data to supplement missing JWT claims
-      const response = await api.get('/users/me/');
+      // Fetch complete user data from the correct auth endpoint
+      const response = await api.get('/auth/me/');
       return {
         ...basicUserData,
         username: response.data.username || basicUserData.username,
@@ -66,9 +66,10 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (username, password) => {
+  const login = async (identifier, password) => {
     try {
-      const response = await api.post('/auth/token/', { username, password });
+      // Match the new endpoint and payload structure
+      const response = await api.post('/auth/login/', { identifier, password });
       const { access, refresh } = response.data;
       
       localStorage.setItem('accessToken', access);
@@ -84,14 +85,29 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, data: response.data };
     } catch (error) {
+      // Catch specific 403 error for unverified emails to trigger frontend redirect
+      if (error.response?.status === 403 && error.response?.data?.code === 'email_not_verified') {
+        return { success: false, error: 'email_not_verified' };
+      }
       return { 
         success: false, 
-        error: error.response?.data?.message || 'Login failed' 
+        error: error.response?.data?.detail || error.response?.data?.message || 'Login failed' 
       };
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const refresh = localStorage.getItem('refreshToken');
+    if (refresh) {
+      try {
+        // Blacklist the token on the server
+        await api.post('/auth/logout/', { refresh });
+      } catch (error) {
+        console.error('Failed to blacklist token during logout:', error);
+      }
+    }
+    
+    // Clear local state
     setAccessToken(null);
     setUser(null);
     localStorage.removeItem('accessToken');
