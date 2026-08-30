@@ -45,9 +45,12 @@ INSTALLED_APPS = [
     # Third Party Apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',  # Enables refresh token blacklisting on logout
     'drf_spectacular',
     'simple_history',
     'django_filters',
+    'axes',                                       # Brute-force login protection
+
     # Local Apps
     'users.apps.UsersConfig',
     'qna.apps.QnaConfig',
@@ -58,6 +61,13 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = 'users.User'
+
+AUTHENTICATION_BACKENDS = [
+    # axes must be first — it raises PermissionDenied on locked accounts
+    'axes.backends.AxesStandaloneBackend',
+    # Default Django backend
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -85,6 +95,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    # axes: must come AFTER AuthenticationMiddleware
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -159,22 +171,63 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 
-# Email
-# https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
-
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+# ─────────────────────────────────────────────────
+# Email (SMTP — swap to console backend during dev)
+# ─────────────────────────────────────────────────
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend',
+)
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'UniQAKNTU <noreply@uniqakntu.ir>')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Simple JWT Settings
+# ─────────────────────────────────────────────────
+# Simple JWT
+# ─────────────────────────────────────────────────
 from datetime import timedelta
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
+    # Required for token blacklisting on logout
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
+# ─────────────────────────────────────────────────
+# Cache (Redis) — OTP storage
+# ─────────────────────────────────────────────────
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://localhost:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'uniqakntu',
+    }
+}
+
+# ─────────────────────────────────────────────────
+# django-axes (brute-force protection)
+# ─────────────────────────────────────────────────
+AXES_FAILURE_LIMIT = 5                                # Lock after 5 failures
+AXES_COOLOFF_TIME = timedelta(minutes=15)             # Unlock after 15 min
+AXES_LOCKOUT_PARAMETERS = [['username', 'ip_address']]  # Lock by username+IP pair
+AXES_RESET_ON_SUCCESS = True                          # Reset counter on successful login
+AXES_LOCKOUT_CALLABLE = None                          # Use default 403 response
+AXES_HANDLER = 'axes.handlers.cache.AxesCacheHandler'  # Use cache (works with Redis)
+
+# ─────────────────────────────────────────────────
+# OTP Settings
+# ─────────────────────────────────────────────────
+OTP_EXPIRY_SECONDS = 600       # 10 minutes
+OTP_MAX_RESEND_PER_HOUR = 3    # Max resend requests per OTP type per hour
+OTP_MAX_VERIFY_ATTEMPTS = 5     # Wrong guesses before OTP is invalidated (brute-force protection)
