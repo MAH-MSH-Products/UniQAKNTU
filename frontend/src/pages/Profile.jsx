@@ -7,7 +7,6 @@ import api from '../services/api';
 const Profile = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'security'
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +60,6 @@ const Profile = () => {
     }
   };
 
-  // --- Handlers ---
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
@@ -77,7 +75,6 @@ const Profile = () => {
     setEmailData(prev => ({ ...prev, [name]: value }));
   };
 
-  // --- Submits ---
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     setSavingProfile(true);
@@ -98,19 +95,21 @@ const Profile = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (passwordData.new_password !== passwordData.new_password2) {
-      setPasswordStatus({ type: 'danger', message: 'New passwords do not match.' });
+      setPasswordStatus({ type: 'danger', message: t('profile.passwords_mismatch', 'New passwords do not match.') });
       return;
     }
+    
     setSavingPassword(true);
     setPasswordStatus({ type: '', message: '' });
+    
     try {
       await api.post('/auth/change-password/', passwordData);
-      setPasswordStatus({ type: 'success', message: 'Password changed successfully!' });
+      setPasswordStatus({ type: 'success', message: t('profile.update_success', 'Password changed successfully!') });
       setPasswordData({ current_password: '', new_password: '', new_password2: '' });
     } catch (error) {
       setPasswordStatus({ 
         type: 'danger', 
-        message: error.response?.data?.detail || error.response?.data?.new_password?.[0] || 'Failed to change password.' 
+        message: error.response?.data?.detail || error.response?.data?.new_password?.[0] || t('profile.update_failed', 'Failed to change password.') 
       });
     } finally {
       setSavingPassword(false);
@@ -121,17 +120,18 @@ const Profile = () => {
     e.preventDefault();
     setSavingEmail(true);
     setEmailStatus({ type: '', message: '' });
+    
     try {
       await api.post('/auth/change-email/request/', {
         current_password: emailData.current_password,
         new_email: emailData.new_email
       });
-      setEmailStatus({ type: 'success', message: 'OTP sent to your new email.' });
+      setEmailStatus({ type: 'success', message: t('auth.otp_sent_reset', 'OTP sent to your new email.') });
       setEmailStep(2);
     } catch (error) {
       setEmailStatus({ 
         type: 'danger', 
-        message: error.response?.data?.detail || error.response?.data?.new_email?.[0] || 'Failed to request email change.' 
+        message: error.response?.data?.detail || error.response?.data?.new_email?.[0] || t('profile.update_failed', 'Failed to request email change.') 
       });
     } finally {
       setSavingEmail(false);
@@ -142,16 +142,17 @@ const Profile = () => {
     e.preventDefault();
     setSavingEmail(true);
     setEmailStatus({ type: '', message: '' });
+    
     try {
       await api.post('/auth/change-email/verify/', { otp: emailData.otp });
-      setEmailStatus({ type: 'success', message: 'Email address updated successfully!' });
+      setEmailStatus({ type: 'success', message: t('profile.update_success', 'Email address updated successfully!') });
       setCurrentEmail(emailData.new_email);
       setEmailStep(1);
       setEmailData({ current_password: '', new_email: '', otp: '' });
     } catch (error) {
       setEmailStatus({ 
         type: 'danger', 
-        message: error.response?.data?.detail || 'Invalid or expired OTP.' 
+        message: error.response?.data?.detail || t('common.error', 'Invalid or expired OTP.') 
       });
     } finally {
       setSavingEmail(false);
@@ -182,13 +183,13 @@ const Profile = () => {
               className={activeTab === 'profile' ? 'coursera-tab-active' : 'coursera-tab'}
               onClick={() => setActiveTab('profile')}
             >
-              Public Profile
+              {t('profile.public_profile', 'Public Profile')}
             </button>
             <button
               className={activeTab === 'security' ? 'coursera-tab-active' : 'coursera-tab'}
               onClick={() => setActiveTab('security')}
             >
-              Account Security
+              {t('profile.account_security', 'Account Security')}
             </button>
           </div>
 
@@ -200,6 +201,7 @@ const Profile = () => {
                     {profileStatus.message}
                   </div>
                 )}
+                
                 <form onSubmit={handleProfileSubmit}>
                   <div className="mb-3">
                     <label className="form-label fw-bold">{t('login.username', 'Username')}</label>
@@ -214,11 +216,12 @@ const Profile = () => {
                         required
                       />
                     </div>
-                    <small className="text-muted">Must be unique. Allowed characters: letters, digits and @/./+/-/_</small>
+                    <small className="text-muted">{t('profile.username_help', 'Must be unique. Allowed characters: letters, digits and @/./+/-/_')}</small>
                   </div>
+
                   <div className="row">
                     <div className="col-md-6 mb-3">
-                      <label className="form-label fw-bold">First Name</label>
+                      <label className="form-label fw-bold">{t('profile.first_name', 'First Name')}</label>
                       <input
                         type="text"
                         name="first_name"
@@ -228,7 +231,7 @@ const Profile = () => {
                       />
                     </div>
                     <div className="col-md-6 mb-4">
-                      <label className="form-label fw-bold">Last Name</label>
+                      <label className="form-label fw-bold">{t('profile.last_name', 'Last Name')}</label>
                       <input
                         type="text"
                         name="last_name"
@@ -238,6 +241,7 @@ const Profile = () => {
                       />
                     </div>
                   </div>
+
                   <button 
                     type="submit" 
                     className="btn btn-primary w-100 d-flex justify-content-center align-items-center gap-2"
@@ -258,7 +262,7 @@ const Profile = () => {
               <div className="academic-card border-0 shadow-sm">
                 <div className="card-header bg-white border-bottom-0 pt-3 pb-0">
                   <h5 className="fw-bold text-primary mb-0 d-flex align-items-center gap-2">
-                    <FiLock /> Change Password
+                    <FiLock /> {t('profile.change_password', 'Change Password')}
                   </h5>
                 </div>
                 <div className="card-body pt-3">
@@ -269,7 +273,7 @@ const Profile = () => {
                   )}
                   <form onSubmit={handlePasswordSubmit}>
                     <div className="mb-3">
-                      <label className="form-label fw-bold">Current Password</label>
+                      <label className="form-label fw-bold">{t('profile.current_password', 'Current Password')}</label>
                       <input
                         type="password"
                         name="current_password"
@@ -280,7 +284,7 @@ const Profile = () => {
                       />
                     </div>
                     <div className="mb-3">
-                      <label className="form-label fw-bold">New Password</label>
+                      <label className="form-label fw-bold">{t('profile.new_password', 'New Password')}</label>
                       <input
                         type="password"
                         name="new_password"
@@ -291,7 +295,7 @@ const Profile = () => {
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="form-label fw-bold">Confirm New Password</label>
+                      <label className="form-label fw-bold">{t('profile.confirm_new_password', 'Confirm New Password')}</label>
                       <input
                         type="password"
                         name="new_password2"
@@ -307,7 +311,7 @@ const Profile = () => {
                       disabled={savingPassword}
                     >
                       {savingPassword ? <span className="spinner-border spinner-border-sm me-2"></span> : null}
-                      Update Password
+                      {t('profile.update_password_btn', 'Update Password')}
                     </button>
                   </form>
                 </div>
@@ -317,12 +321,12 @@ const Profile = () => {
               <div className="academic-card border-0 shadow-sm">
                 <div className="card-header bg-white border-bottom-0 pt-3 pb-0">
                   <h5 className="fw-bold text-primary mb-0 d-flex align-items-center gap-2">
-                    <FiShield /> Change Email Address
+                    <FiShield /> {t('profile.change_email', 'Change Email Address')}
                   </h5>
                 </div>
                 <div className="card-body pt-3">
                   <p className="small text-muted mb-4">
-                    Current Email: <strong>{currentEmail}</strong>
+                    {t('profile.current_email', 'Current Email:')} <strong>{currentEmail}</strong>
                   </p>
                   
                   {emailStatus.message && (
@@ -334,7 +338,7 @@ const Profile = () => {
                   {emailStep === 1 && (
                     <form onSubmit={handleEmailRequestSubmit}>
                       <div className="mb-3">
-                        <label className="form-label fw-bold">Current Password</label>
+                        <label className="form-label fw-bold">{t('profile.current_password', 'Current Password')}</label>
                         <input
                           type="password"
                           name="current_password"
@@ -345,7 +349,7 @@ const Profile = () => {
                         />
                       </div>
                       <div className="mb-4">
-                        <label className="form-label fw-bold">New Email Address</label>
+                        <label className="form-label fw-bold">{t('profile.new_email', 'New Email Address')}</label>
                         <input
                           type="email"
                           name="new_email"
@@ -361,7 +365,7 @@ const Profile = () => {
                         disabled={savingEmail}
                       >
                         {savingEmail ? <span className="spinner-border spinner-border-sm me-2"></span> : null}
-                        Request Email Change
+                        {t('profile.request_email_change', 'Request Email Change')}
                       </button>
                     </form>
                   )}
@@ -369,10 +373,10 @@ const Profile = () => {
                   {emailStep === 2 && (
                     <form onSubmit={handleEmailVerifySubmit}>
                       <div className="alert alert-warning py-2 small mb-3">
-                        Enter the 6-digit code sent to <strong>{emailData.new_email}</strong>
+                        {t('profile.enter_otp_sent_to', 'Enter the 6-digit code sent to')} <strong>{emailData.new_email}</strong>
                       </div>
                       <div className="mb-4">
-                        <label className="form-label fw-bold">OTP Code</label>
+                        <label className="form-label fw-bold">{t('profile.otp_code', 'OTP Code')}</label>
                         <input
                           type="text"
                           name="otp"
@@ -390,7 +394,7 @@ const Profile = () => {
                           onClick={() => setEmailStep(1)}
                           disabled={savingEmail}
                         >
-                          Cancel
+                          {t('common.cancel', 'Cancel')}
                         </button>
                         <button 
                           type="submit" 
@@ -398,7 +402,7 @@ const Profile = () => {
                           disabled={savingEmail || emailData.otp.length !== 6}
                         >
                           {savingEmail ? <span className="spinner-border spinner-border-sm me-2"></span> : null}
-                          Verify & Change
+                          {t('profile.verify_and_change', 'Verify & Change')}
                         </button>
                       </div>
                     </form>
