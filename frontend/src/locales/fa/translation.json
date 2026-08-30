@@ -280,5 +280,33 @@
     "new_password": "رمز عبور جدید",
     "reset_password_btn": "تغییر رمز عبور",
     "reset_success": "رمز عبور با موفقیت تغییر کرد! در حال انتقال..."
+  },
+  "profile": {
+    "title": "پروفایل من",
+    "public_profile": "پروفایل عمومی",
+    "account_security": "امنیت حساب",
+    "username_help": "باید یکتا باشد. حروف مجاز: حروف، اعداد و @/./+/-/_",
+    "first_name": "نام",
+    "last_name": "نام خانوادگی",
+    "update_success": "پروفایل با موفقیت بروزرسانی شد!",
+    "update_failed": "خطا در بروزرسانی پروفایل.",
+    "change_password": "تغییر رمز عبور",
+    "current_password": "رمز عبور فعلی",
+    "new_password": "رمز عبور جدید",
+    "confirm_new_password": "تایید رمز عبور جدید",
+    "update_password_btn": "بروزرسانی رمز عبور",
+    "passwords_mismatch": "رمز عبور جدید مطابقت ندارد.",
+    "change_email": "تغییر آدرس ایمیل",
+    "current_email": "ایمیل فعلی:",
+    "new_email": "ایمیل جدید",
+    "request_email_change": "درخواست تغییر ایمیل",
+    "enter_otp_sent_to": "کد ۶ رقمی ارسال شده را وارد کنید به",
+    "otp_code": "کد تایید",
+    "verify_and_change": "تایید و تغییر"
+  },
+  "instructor": {
+    "total_answers": "کل پاسخ‌ها",
+    "total_upvotes": "کل رای‌های مثبت",
+    "total_accepted": "پاسخ‌های تایید شده"
   }
 }

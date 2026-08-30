@@ -280,5 +280,33 @@
     "new_password": "New Password",
     "reset_password_btn": "Reset Password",
     "reset_success": "Password reset successfully! Redirecting..."
+  },
+  "profile": {
+    "title": "My Profile",
+    "public_profile": "Public Profile",
+    "account_security": "Account Security",
+    "username_help": "Must be unique. Allowed characters: letters, digits and @/./+/-/_",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "update_success": "Profile updated successfully!",
+    "update_failed": "Failed to update profile.",
+    "change_password": "Change Password",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_new_password": "Confirm New Password",
+    "update_password_btn": "Update Password",
+    "passwords_mismatch": "New passwords do not match.",
+    "change_email": "Change Email Address",
+    "current_email": "Current Email:",
+    "new_email": "New Email Address",
+    "request_email_change": "Request Email Change",
+    "enter_otp_sent_to": "Enter the 6-digit code sent to",
+    "otp_code": "OTP Code",
+    "verify_and_change": "Verify & Change"
+  },
+  "instructor": {
+    "total_answers": "Total Answers",
+    "total_upvotes": "Total Upvotes",
+    "total_accepted": "Accepted Answers"
   }
 }
