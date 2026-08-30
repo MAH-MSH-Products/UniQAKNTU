@@ -529,33 +529,289 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/auth/token/:
+  /api/auth/change-email/request/:
     post:
-      operationId: auth_token_create
-      description: |-
-        Takes a set of user credentials and returns an access and refresh JSON web
-        token pair to prove the authentication of those credentials.
+      operationId: auth_change_email_request_create
+      description: Provide current password and a new email address. An OTP will be
+        sent to the new email address. Limited to 3 requests per hour.
+      summary: Request to change email address
       tags:
-      - auth
+      - Auth
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TokenObtainPair'
+              $ref: '#/components/schemas/ChangeEmailRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/TokenObtainPair'
+              $ref: '#/components/schemas/ChangeEmailRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/TokenObtainPair'
+              $ref: '#/components/schemas/ChangeEmailRequest'
         required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: OTP sent to the new email address.
+        '400':
+          description: Validation error or wrong password.
+        '429':
+          description: Rate limit reached. Try again in an hour.
+  /api/auth/change-email/verify/:
+    post:
+      operationId: auth_change_email_verify_create
+      description: Provide the OTP sent to the new email address. If valid, the account
+        email is updated immediately and the old email is notified.
+      summary: Verify and apply new email address
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailVerify'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailVerify'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailVerify'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Email changed successfully.
+        '400':
+          description: Invalid OTP or pending email not found.
+        '410':
+          description: OTP expired.
+        '429':
+          description: Too many wrong attempts — code invalidated.
+  /api/auth/change-password/:
+    post:
+      operationId: auth_change_password_create
+      description: Change the authenticated user password. Requires the current password.
+      summary: Change password
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Password changed successfully.
+        '400':
+          description: Wrong current password or validation error.
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: Authenticate with either a username or email address plus password.
+        Returns a JWT access and refresh token pair with role embedded in the token.
+        If the email is not verified, returns HTTP 403 with code="email_not_verified"
+        so the frontend can redirect to the verification flow.
+      summary: Login with username or email
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: JWT token pair returned.
+        '400':
+          description: Invalid credentials.
+        '403':
+          description: Email not verified (code=email_not_verified) or account locked.
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: Blacklists the provided refresh token, invalidating it for future
+        use.
+      summary: Logout (blacklist refresh token)
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Logout'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Logout'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: Logged out successfully.
+        '400':
+          description: Invalid or already blacklisted token.
+  /api/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      description: Returns the profile of the currently authenticated user.
+      summary: Get current user profile
+      tags:
+      - Auth
+      security:
+      - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenObtainPair'
+                $ref: '#/components/schemas/Me'
           description: ''
+    patch:
+      operationId: auth_me_partial_update
+      description: Update the profile of the currently authenticated user (e.g. username).
+      summary: Update current user profile
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMeUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMeUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMeUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: Creates a new user account. A 6-digit OTP is sent to the provided
+        email address. The user must verify their email before they can log in.
+      summary: Register a new user
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Register'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Register'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          description: User created. OTP sent to email.
+        '400':
+          description: Validation error.
+  /api/auth/reset-password/:
+    post:
+      operationId: auth_reset_password_create
+      description: Provide the email, OTP received, and the new password to complete
+        the reset. After 5 wrong attempts the code is invalidated and a new one must
+        be requested.
+      summary: Reset password using OTP
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResetPassword'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: Password reset successfully.
+        '400':
+          description: Invalid OTP or validation error.
+        '404':
+          description: No account with this email.
+        '410':
+          description: OTP expired or already used.
+        '429':
+          description: Too many wrong attempts â€” code invalidated.
+  /api/auth/send-otp/:
+    post:
+      operationId: auth_send_otp_create
+      description: Send an OTP to the given email address for the requested purpose.
+        Use otp_type="verify_email" to get an email verification code, or otp_type="password_reset"
+        to get a password reset code. Limited to 3 requests per hour per OTP type.
+      summary: Send or resend an OTP
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendOTP'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SendOTP'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendOTP'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: OTP sent successfully.
+        '400':
+          description: Validation error or email already verified.
+        '404':
+          description: No account found with this email.
+        '429':
+          description: Rate limit reached. Try again in an hour.
   /api/auth/token/refresh/:
     post:
       operationId: auth_token_refresh_create
@@ -583,6 +839,40 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenRefresh'
           description: ''
+  /api/auth/verify-email/:
+    post:
+      operationId: auth_verify_email_create
+      description: Submit the 6-digit OTP received by email to verify the account.
+        After 5 wrong attempts the code is invalidated and a new one must be requested.
+      summary: Verify email address with OTP
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmail'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VerifyEmail'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VerifyEmail'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: Email verified successfully.
+        '400':
+          description: Invalid OTP.
+        '404':
+          description: No account with this email.
+        '410':
+          description: OTP expired or already used.
+        '429':
+          description: Too many wrong attempts â€” code invalidated.
   /api/questions/:
     get:
       operationId: questions_list
@@ -2287,6 +2577,44 @@ components:
         * `Technical Issue` - Technical Issue
         * `Content Error` - Content Error
         * `Request Instructor Role` - Request Instructor Role
+    ChangeEmailRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+        new_email:
+          type: string
+          format: email
+      required:
+      - current_password
+      - new_email
+    ChangeEmailVerify:
+      type: object
+      properties:
+        otp:
+          type: string
+          maxLength: 6
+          minLength: 6
+      required:
+      - otp
+    ChangePassword:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+        new_password:
+          type: string
+          writeOnly: true
+        new_password2:
+          type: string
+          writeOnly: true
+          title: Confirm new password
+      required:
+      - current_password
+      - new_password
+      - new_password2
     Comment:
       type: object
       properties:
@@ -2406,6 +2734,80 @@ components:
       - object_id
       - uploaded_at
       - uploaded_at_jalali
+    Login:
+      type: object
+      properties:
+        identifier:
+          type: string
+          title: Username or Email
+          description: Enter your username or email address.
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - identifier
+      - password
+    Logout:
+      type: object
+      properties:
+        refresh:
+          type: string
+          description: The refresh token to blacklist.
+      required:
+      - refresh
+    Me:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        username:
+          type: string
+          readOnly: true
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+        email:
+          type: string
+          format: email
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+        is_email_verified:
+          type: boolean
+          readOnly: true
+          description: Whether the user has confirmed ownership of their email address.
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - date_joined
+      - email
+      - first_name
+      - id
+      - is_email_verified
+      - last_name
+      - role
+      - username
+    OtpTypeEnum:
+      enum:
+      - change_email
+      - verify_email
+      - password_reset
+      type: string
+      description: |-
+        * `change_email` - change_email
+        * `verify_email` - verify_email
+        * `password_reset` - password_reset
     PaginatedAdminContentReportList:
       type: object
       required:
@@ -2701,6 +3103,21 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/StatusB82Enum'
+    PatchedMeUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
     PatchedQuestion:
       type: object
       properties:
@@ -2931,6 +3348,27 @@ components:
       required:
       - message
       - suggested_edit_id
+    Register:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+        password2:
+          type: string
+          writeOnly: true
+          title: Confirm password
+      required:
+      - email
+      - password
+      - password2
+      - username
     RejectAnswerResponse:
       type: object
       properties:
@@ -2952,6 +3390,28 @@ components:
           type: string
       required:
       - message
+    ResetPassword:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: string
+          maxLength: 6
+          minLength: 6
+        new_password:
+          type: string
+          writeOnly: true
+        new_password2:
+          type: string
+          writeOnly: true
+          title: Confirm new password
+      required:
+      - email
+      - new_password
+      - new_password2
+      - otp
     RoleEnum:
       enum:
       - STUDENT
@@ -2962,6 +3422,24 @@ components:
         * `STUDENT` - Student
         * `MODERATOR` - Moderator
         * `ADMIN` - Admin
+    SendOTP:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        otp_type:
+          allOf:
+          - $ref: '#/components/schemas/OtpTypeEnum'
+          description: |-
+            Type of OTP to send: "verify_email" or "password_reset".
+
+            * `change_email` - change_email
+            * `verify_email` - verify_email
+            * `password_reset` - password_reset
+      required:
+      - email
+      - otp_type
     SourceMaterial:
       type: object
       properties:
@@ -3246,26 +3724,6 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/Status487Enum'
-    TokenObtainPair:
-      type: object
-      properties:
-        username:
-          type: string
-          writeOnly: true
-        password:
-          type: string
-          writeOnly: true
-        access:
-          type: string
-          readOnly: true
-        refresh:
-          type: string
-          readOnly: true
-      required:
-      - access
-      - password
-      - refresh
-      - username
     TokenRefresh:
       type: object
       properties:
@@ -3274,7 +3732,6 @@ components:
           readOnly: true
         refresh:
           type: string
-          writeOnly: true
       required:
       - access
       - refresh
@@ -3294,7 +3751,6 @@ components:
           type: string
           format: email
           readOnly: true
-          title: Email address
         first_name:
           type: string
           readOnly: true
@@ -3341,6 +3797,19 @@ components:
       description: |-
         * `1` - 1
         * `-1` - -1
+    VerifyEmail:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        otp:
+          type: string
+          maxLength: 6
+          minLength: 6
+      required:
+      - email
+      - otp
     VoteRequest:
       type: object
       properties:
