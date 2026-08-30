@@ -255,15 +255,16 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
 
       <CommentSection targetType="answers" targetId={id} />
 
-      <SuggestEditModal
+        <SuggestEditModal
         show={showEditModal}
         onClose={() => setShowEditModal(false)}
         itemId={id}
         itemType="answer"
         currentText={body}
+        currentAttachments={answer.attachments || []}
         onSuccess={(data) => {
           setShowEditModal(false);
-          if (onDeleteSuccess) onDeleteSuccess(); 
+          if (onAcceptSuccess) onAcceptSuccess(); 
         }}
       />
     </div>

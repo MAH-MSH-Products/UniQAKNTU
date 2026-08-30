@@ -229,6 +229,7 @@ const QuestionDetail = () => {
         itemId={question.id}
         itemType="question"
         currentText={question.text || question.body || ''}
+        currentAttachments={question.attachments || []}
         onSuccess={() => {
           setShowEditModal(false);
           fetchQuestionDetails();
