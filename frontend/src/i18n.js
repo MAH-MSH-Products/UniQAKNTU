@@ -5,14 +5,6 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import translationEN from './locales/en/translation.json';
 import translationFA from './locales/fa/translation.json';
 
-/**
- * i18n Configuration - Internationalization Setup
- * 
- * Configures i18next with react-i18next integration.
- * Uses browser language detector with fallback to English.
- * Supports English (LTR) and Persian/Farsi (RTL) languages.
- */
-
 const resources = {
   en: {
     translation: translationEN
@@ -27,10 +19,11 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en',
+    fallbackLng: 'fa', // تغییر به فارسی
+    lng: localStorage.getItem('i18nextLng') || 'fa', // اجبار به فارسی در لود اولیه
     debug: false,
     interpolation: {
-      escapeValue: false // React already escapes values
+      escapeValue: false 
     },
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
