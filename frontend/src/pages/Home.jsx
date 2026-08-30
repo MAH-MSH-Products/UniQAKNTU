@@ -61,7 +61,7 @@ const Home = () => {
               </p>
               <div className="d-flex gap-3 justify-content-center flex-wrap">
                 <Link 
-                  to="/courses" 
+                  to="/source-materials" 
                   className="btn btn-primary btn-lg px-4"
                   style={{ 
                     background: 'var(--gradient-primary)',

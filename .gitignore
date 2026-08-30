@@ -98,3 +98,4 @@ backend/media/exams/questions/*
 
 
 frontend/src/pages/support/SupportCenter.jsx
+Nothing needs to be added to .gitignore since the changes only include source files (.jsx) and no build artifacts, dependencies, or temporary files.
