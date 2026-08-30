@@ -229,6 +229,8 @@
     "subtitle": "Manage all system tickets and content reports",
     "all_tickets": "All Tickets",
     "content_reports": "Content Reports",
+    "pending_questions": "Pending Questions",
+    "pending_answers": "Pending Answers",
     "no_items": "No items found.",
     "th_id": "ID",
     "th_user": "User",
@@ -237,7 +239,11 @@
     "th_status": "Status",
     "th_created": "Created At",
     "th_action": "Action",
+    "th_body": "Body",
+    "th_question_id": "Question ID",
     "btn_view": "View",
+    "btn_approve": "Approve",
+    "btn_reject": "Reject",
     "details": "Details",
     "user_id": "User ID:",
     "target_type": "Target Type:",
@@ -250,6 +256,8 @@
     "submit_reply": "Submit Reply",
     "reply_placeholder": "Enter your response...",
     "cannot_reply_closed": "Cannot reply to closed tickets.",
-    "review_report_notice": "Review the reported content on the public page and take appropriate action. Update the status above once handled."
+    "review_report_notice": "Review the reported content on the public page and take appropriate action. Update the status above once handled.",
+    "msg_approved": "Approved successfully.",
+    "msg_rejected": "Rejected successfully."
   }
 }
