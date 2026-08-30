@@ -27,3 +27,7 @@ drf-spectacular>=0.27.1
 
 django-filter>=24.3
 django-cleanup>=8.1.0
+
+# Authentication Security
+django-axes>=6.5.0       # Brute-force / login lockout protection
+django-redis>=5.4.0      # Redis cache backend for OTP storage
