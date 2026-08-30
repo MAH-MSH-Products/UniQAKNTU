@@ -1,4 +1,4 @@
-from django.test import TestCase, override_settings
+﻿from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
@@ -129,7 +129,7 @@ class AuthAPITests(TestCase):
             password=self.VALID_PASSWORD, is_email_verified=False,
         )
 
-    # ── Register ──────────────────────────────────────────────
+    # â”€â”€ Register â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def test_register_success(self):
         response = self.client.post(self.REGISTER_URL, {
@@ -182,10 +182,10 @@ class AuthAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)
 
-    # ── Login ─────────────────────────────────────────────────
+    # â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def test_login_blocked_unverified(self):
-        """Unverified email → 403 with machine-readable code so frontend can redirect."""
+        """Unverified email â†’ 403 with machine-readable code so frontend can redirect."""
         response = self.client.post(self.LOGIN_URL, {
             'identifier': 'unverified',
             'password': self.VALID_PASSWORD,
@@ -247,7 +247,7 @@ class AuthAPITests(TestCase):
         self.assertEqual(refresh_payload['username'], self.verified_user.username)
 
 
-    # ── Email Verification ────────────────────────────────────
+    # â”€â”€ Email Verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def test_verify_email_success(self):
         otp = generate_otp()
@@ -262,7 +262,7 @@ class AuthAPITests(TestCase):
         self.assertTrue(self.unverified_user.is_email_verified)
 
     def test_verify_email_wrong_otp(self):
-        """Single wrong guess → 400 INVALID, email stays unverified."""
+        """Single wrong guess â†’ 400 INVALID, email stays unverified."""
         store_otp(self.unverified_user.id, OTPType.VERIFY_EMAIL, '123456')
         response = self.client.post(self.VERIFY_EMAIL_URL, {
             'email': 'unverified@test.com',
@@ -273,7 +273,7 @@ class AuthAPITests(TestCase):
         self.assertFalse(self.unverified_user.is_email_verified)
 
     def test_verify_email_expired_otp(self):
-        """No OTP in cache (expired / not requested) → 410 GONE."""
+        """No OTP in cache (expired / not requested) â†’ 410 GONE."""
         response = self.client.post(self.VERIFY_EMAIL_URL, {
             'email': 'unverified@test.com',
             'otp': '123456',
@@ -281,7 +281,7 @@ class AuthAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_410_GONE)
 
     def test_verify_email_lockout(self):
-        """5 wrong guesses exhaust the limit → 429 on the final attempt, OTP invalidated."""
+        """5 wrong guesses exhaust the limit â†’ 429 on the final attempt, OTP invalidated."""
         store_otp(self.unverified_user.id, OTPType.VERIFY_EMAIL, '999999')
 
         for i in range(4):
@@ -299,7 +299,7 @@ class AuthAPITests(TestCase):
         })
         self.assertEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
-        # OTP is now burned — correct code also returns EXPIRED (410)
+        # OTP is now burned â€” correct code also returns EXPIRED (410)
         resp_correct = self.client.post(self.VERIFY_EMAIL_URL, {
             'email': 'unverified@test.com',
             'otp': '999999',
@@ -315,7 +315,7 @@ class AuthAPITests(TestCase):
         })
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # ── Send OTP ──────────────────────────────────────────────
+    # â”€â”€ Send OTP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def test_send_otp_success(self):
         response = self.client.post(self.SEND_OTP_URL, {
@@ -325,7 +325,7 @@ class AuthAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_send_otp_unknown_email_returns_404(self):
-        """Unknown email → 404 (simpler; no enumeration protection needed here)."""
+        """Unknown email â†’ 404 (simpler; no enumeration protection needed here)."""
         response = self.client.post(self.SEND_OTP_URL, {
             'email': 'nobody@test.com',
             'otp_type': OTPType.VERIFY_EMAIL,
@@ -362,14 +362,14 @@ class AuthAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_send_otp_password_reset_unknown_email(self):
-        """password_reset for unknown email → 404 (no forgot-password endpoint any more)."""
+        """password_reset for unknown email â†’ 404 (no forgot-password endpoint any more)."""
         response = self.client.post(self.SEND_OTP_URL, {
             'email': 'nobody@test.com',
             'otp_type': OTPType.PASSWORD_RESET,
         })
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # ── Reset Password ────────────────────────────────────────
+    # â”€â”€ Reset Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def test_reset_password_success(self):
         otp = generate_otp()
@@ -392,7 +392,7 @@ class AuthAPITests(TestCase):
         self.assertEqual(login_resp.status_code, status.HTTP_200_OK)
 
     def test_reset_password_wrong_otp(self):
-        """Single wrong guess → 400 INVALID."""
+        """Single wrong guess â†’ 400 INVALID."""
         store_otp(self.verified_user.id, OTPType.PASSWORD_RESET, '123456')
         response = self.client.post(self.RESET_PASSWORD_URL, {
             'email': 'verified@test.com',
@@ -403,7 +403,7 @@ class AuthAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_reset_password_lockout(self):
-        """5 wrong guesses burn the reset OTP → 429 on the 5th, then 410 on correct code."""
+        """5 wrong guesses burn the reset OTP â†’ 429 on the 5th, then 410 on correct code."""
         store_otp(self.verified_user.id, OTPType.PASSWORD_RESET, '999999')
 
         for i in range(4):
@@ -434,7 +434,7 @@ class AuthAPITests(TestCase):
         })
         self.assertEqual(resp_correct.status_code, status.HTTP_410_GONE)
 
-    # ── Me / Change Password ──────────────────────────────────
+    # â”€â”€ Me / Change Password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def test_me_returns_profile(self):
         self.client.force_authenticate(user=self.verified_user)
@@ -544,3 +544,17 @@ class AuthAPITests(TestCase):
             'new_password2': 'SuperSecretPass999!',
         })
         self.assertEqual(resp.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+
+    def test_me_update_username_success(self):
+        self.client.force_authenticate(user=self.verified_user)
+        response = self.client.patch(self.ME_URL, {'username': 'new_awesome_name'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.verified_user.refresh_from_db()
+        self.assertEqual(self.verified_user.username, 'new_awesome_name')
+
+    def test_me_update_username_duplicate(self):
+        self.client.force_authenticate(user=self.verified_user)
+        # Try to take the unverified user's username
+        response = self.client.patch(self.ME_URL, {'username': 'unverified'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('username', response.data)

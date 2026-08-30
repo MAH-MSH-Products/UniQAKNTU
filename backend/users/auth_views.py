@@ -30,6 +30,7 @@ from .serializers import (
     SendOTPSerializer,
     ResetPasswordSerializer,
     MeSerializer,
+    MeUpdateSerializer,
     ChangePasswordSerializer,
     ChangeEmailRequestSerializer,
     ChangeEmailVerifySerializer,
@@ -412,6 +413,18 @@ class MeView(APIView):
     def get(self, request):
         serializer = MeSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary='Update current user profile',
+        description='Update the profile of the currently authenticated user (e.g. username).',
+        request=MeUpdateSerializer,
+        responses={200: MeSerializer},
+    )
+    def patch(self, request):
+        serializer = MeUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(MeSerializer(request.user).data, status=status.HTTP_200_OK)
 
 
 # -------------------------------------------------
