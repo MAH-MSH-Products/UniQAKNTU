@@ -262,5 +262,23 @@
     "review_report_notice": "Review the reported content on the public page and take appropriate action. Update the status above once handled.",
     "msg_approved": "Approved successfully.",
     "msg_rejected": "Rejected successfully."
+  },
+  "auth": {
+    "verify_email": "Verify Email",
+    "verify_email_desc": "Please enter the 6-digit code sent to your email address.",
+    "invalid_otp_length": "OTP must be exactly 6 digits.",
+    "email_verified_success": "Email verified successfully! Redirecting to login...",
+    "email_required_resend": "Please enter your email to resend the code.",
+    "otp_resent": "A new verification code has been sent to your email.",
+    "otp_placeholder": "6-Digit Code",
+    "verify_button": "Verify Account",
+    "resend_code": "Didn't receive the code? Resend",
+    "forgot_password_desc": "Enter your email to receive a password reset code.",
+    "otp_sent_reset": "OTP code sent to your email.",
+    "send_reset_link": "Send Reset Code",
+    "enter_otp_new_pass": "Enter the OTP sent to your email and your new password.",
+    "new_password": "New Password",
+    "reset_password_btn": "Reset Password",
+    "reset_success": "Password reset successfully! Redirecting..."
   }
 }
