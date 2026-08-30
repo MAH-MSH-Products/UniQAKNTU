@@ -8,7 +8,7 @@ import { getAuthorDisplayName } from '../../services/utils';
 
 const QuestionItemLight = ({ question }) => {
   const { user } = useAuth();
-  const displayAuthorName = getAuthorDisplayName(question.author, question.author_name, user);
+  const displayAuthorName = getAuthorDisplayName(question.author, question.author_name || question.author__username, user);
 
   return (
     <div className="card mb-3 academic-card border-0 shadow-sm transition-hover">
@@ -93,7 +93,7 @@ const QuestionExplorer = ({ examId: propExamId }) => {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status"></div>
-        <p className="mt-2">Loading questions...</p>
+        <p className="mt-2">{t('questions.loading', 'Loading questions...')}</p>
       </div>
     );
   }
@@ -101,13 +101,13 @@ const QuestionExplorer = ({ examId: propExamId }) => {
   return (
     <div className="question-explorer">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="mb-0">Exam Questions</h2>
+        <h2 className="mb-0">{t('questions.exam_questions', 'Exam Questions')}</h2>
         {isAuthenticated && (
           <button
             className="btn btn-primary"
             onClick={() => setShowQuestionForm(!showQuestionForm)}
           >
-            {showQuestionForm ? 'Cancel' : 'Ask a Question'}
+            {showQuestionForm ? t('common.cancel', 'Cancel') : t('questions.ask_question', 'Ask a Question')}
           </button>
         )}
       </div>
@@ -129,7 +129,7 @@ const QuestionExplorer = ({ examId: propExamId }) => {
           <input
             type="text"
             className="form-control border-start-0 ps-0"
-            placeholder="Search questions..."
+            placeholder={t('questions.search_placeholder', 'Search questions...')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -138,11 +138,11 @@ const QuestionExplorer = ({ examId: propExamId }) => {
 
       {!currentExamId ? (
         <div className="alert alert-warning">
-          No exam ID provided. Please navigate from a source material.
+          {t('questions.no_exam_id', 'No exam ID provided. Please navigate from a source material.')}
         </div>
       ) : questions.length === 0 ? (
         <div className="alert alert-info">
-          No questions available for this exam yet.
+          {t('questions.no_questions', 'No questions available for this exam yet.')}
         </div>
       ) : (
         <div className="questions-list">
