@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import api, { extractResults } from '../../services/api';
+import { FiSend } from 'react-icons/fi';
 
 const AdminSupportPanel = () => {
   const { user, canModerate } = useAuth();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' or 'reports'
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [replyMessage, setReplyMessage] = useState('');
   const [replyStatus, setReplyStatus] = useState({ type: '', message: '' });
+  const [replying, setReplying] = useState(false);
 
   if (!user || !canModerate) {
     return (
@@ -39,7 +44,6 @@ const AdminSupportPanel = () => {
         const response = await api.get('/support/admin/tickets/');
         setItems(extractResults(response));
       } else {
-        // FIXED: Pointing to the admin endpoint instead of the user endpoint
         const response = await api.get('/support/admin/reports/');
         setItems(extractResults(response));
       }
@@ -51,10 +55,23 @@ const AdminSupportPanel = () => {
     }
   };
 
-  const handleOpenItem = (item) => {
+  const handleOpenItem = async (item) => {
     setSelectedItem(item);
     setReplyMessage('');
     setReplyStatus({ type: '', message: '' });
+
+    // Fetch full details for tickets to load complete chat history
+    if (activeTab === 'tickets') {
+      setLoadingDetails(true);
+      try {
+        const response = await api.get(`/support/admin/tickets/${item.id}/`);
+        setSelectedItem(response.data);
+      } catch (error) {
+        console.error('Error fetching ticket details:', error);
+      } finally {
+        setLoadingDetails(false);
+      }
+    }
   };
 
   const handleCloseModal = () => {
@@ -64,45 +81,33 @@ const AdminSupportPanel = () => {
   const handleReplySubmit = async (e) => {
     e.preventDefault();
     
-    if (!replyMessage.trim()) {
-      setReplyStatus({ type: 'error', message: 'Please enter a reply message.' });
-      return;
-    }
+    if (!replyMessage.trim()) return;
 
-    setLoading(true);
+    setReplying(true);
     setReplyStatus({ type: '', message: '' });
     try {
-      // FIXED: Using the admin reply endpoint to avoid 404 errors on other users' tickets
-      await api.post(`/support/admin/tickets/${selectedItem.id}/reply/`, { message: replyMessage });
-      setReplyStatus({ type: 'success', message: 'Reply submitted successfully!' });
+      const response = await api.post(`/support/admin/tickets/${selectedItem.id}/reply/`, { message: replyMessage });
       
-      const newReply = {
-        id: Date.now(),
-        sender: user.id, // Match schema structure somewhat for frontend rendering
-        message: replyMessage,
-        created_at: new Date().toISOString()
-      };
-      
+      // Update local state to show new reply in the chat
       setSelectedItem(prev => ({
         ...prev,
-        messages: [...(prev.messages || []), newReply] // Admin endpoints return `messages`
+        messages: [...(prev.messages || []), response.data] 
       }));
       
       setReplyMessage('');
-      fetchItems();
+      fetchItems(); // Refresh background list to update "updated_at"
       
     } catch (error) {
       console.error('Error submitting reply:', error);
       setReplyStatus({ 
-        type: 'error', 
-        message: error.response?.data?.message || 'Failed to submit reply.' 
+        type: 'danger', 
+        message: error.response?.data?.message || t('common.error', 'Failed to submit reply.') 
       });
     } finally {
-      setLoading(false);
+      setReplying(false);
     }
   };
 
-  // NEW FEATURE: Change Status for both Tickets and Reports
   const handleStatusChange = async (newStatus) => {
     setLoading(true);
     try {
@@ -120,7 +125,7 @@ const AdminSupportPanel = () => {
 
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Failed to update status.');
+      alert(t('common.error', 'Failed to update status.'));
     } finally {
       setLoading(false);
     }
@@ -147,8 +152,8 @@ const AdminSupportPanel = () => {
     <div className="container-fluid py-4">
       <div className="row mb-4">
         <div className="col-12">
-          <h2 className="page-heading">Admin Support Panel</h2>
-          <p className="text-muted">Manage all system tickets and content reports</p>
+          <h2 className="page-heading">{t('admin.title', 'Admin Support Panel')}</h2>
+          <p className="text-muted">{t('admin.subtitle', 'Manage all system tickets and content reports')}</p>
         </div>
       </div>
 
@@ -157,13 +162,13 @@ const AdminSupportPanel = () => {
           className={activeTab === 'tickets' ? 'coursera-tab-active' : 'coursera-tab'}
           onClick={() => setActiveTab('tickets')}
         >
-          All Tickets
+          {t('admin.all_tickets', 'All Tickets')}
         </button>
         <button
           className={activeTab === 'reports' ? 'coursera-tab-active' : 'coursera-tab'}
           onClick={() => setActiveTab('reports')}
         >
-          Content Reports
+          {t('admin.content_reports', 'Content Reports')}
         </button>
       </div>
 
@@ -172,30 +177,29 @@ const AdminSupportPanel = () => {
           {loading && items.length === 0 ? (
             <div className="text-center py-4">
               <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+                <span className="visually-hidden">{t('common.loading', 'Loading...')}</span>
               </div>
             </div>
           ) : items.length === 0 ? (
-            <p className="text-muted text-center mb-0">No items found.</p>
+            <p className="text-muted text-center mb-0">{t('admin.no_items', 'No items found.')}</p>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th>ID</th>
-                    <th>User</th>
-                    {activeTab === 'tickets' && <th>Title</th>}
-                    <th>Category/Target</th>
-                    <th>Status</th>
-                    <th>Created At</th>
-                    <th>Action</th>
+                    <th>{t('admin.th_id', 'ID')}</th>
+                    <th>{t('admin.th_user', 'User')}</th>
+                    {activeTab === 'tickets' && <th>{t('admin.th_title', 'Title')}</th>}
+                    <th>{t('admin.th_category', 'Category/Target')}</th>
+                    <th>{t('admin.th_status', 'Status')}</th>
+                    <th>{t('admin.th_created', 'Created At')}</th>
+                    <th>{t('admin.th_action', 'Action')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map(item => (
                     <tr key={item.id}>
                       <td>#{item.id}</td>
-                      {/* Accommodating both ticket (author) and report (reporter) structures */}
                       <td>{item.author || item.reporter || 'Unknown'}</td>
                       
                       {activeTab === 'tickets' && (
@@ -221,7 +225,7 @@ const AdminSupportPanel = () => {
                           className="btn btn-sm btn-outline-primary"
                           onClick={() => handleOpenItem(item)}
                         >
-                          View
+                          {t('admin.btn_view', 'View')}
                         </button>
                       </td>
                     </tr>
@@ -264,21 +268,21 @@ const AdminSupportPanel = () => {
                 
                 <div className="modal-body">
                   <div className="mb-4">
-                    <h6>Details</h6>
+                    <h6 className="fw-bold text-primary">{t('admin.details', 'Details')}</h6>
                     <table className="table table-sm table-bordered">
                       <tbody>
                         <tr>
-                          <th style={{ width: '150px' }}>User ID:</th>
+                          <th style={{ width: '150px' }}>{t('admin.user_id', 'User ID:')}</th>
                           <td>{selectedItem.author || selectedItem.reporter || 'Unknown'}</td>
                         </tr>
                         {activeTab === 'tickets' && (
                           <>
                             <tr>
-                              <th>Title:</th>
+                              <th>{t('admin.th_title', 'Title:')}</th>
                               <td>{selectedItem.title}</td>
                             </tr>
                             <tr>
-                              <th>Category:</th>
+                              <th>{t('admin.th_category', 'Category:')}</th>
                               <td>{selectedItem.category}</td>
                             </tr>
                           </>
@@ -286,20 +290,19 @@ const AdminSupportPanel = () => {
                         {activeTab === 'reports' && (
                           <>
                             <tr>
-                              <th>Target Type:</th>
+                              <th>{t('admin.target_type', 'Target Type:')}</th>
                               <td className="text-capitalize">{selectedItem.target_type}</td>
                             </tr>
                             <tr>
-                              <th>Target ID:</th>
+                              <th>{t('admin.target_id', 'Target ID:')}</th>
                               <td>#{selectedItem.target_id}</td>
                             </tr>
                           </>
                         )}
                         <tr>
-                          <th>Status:</th>
+                          <th>{t('admin.th_status', 'Status:')}</th>
                           <td>
                             <div className="d-flex align-items-center gap-2">
-                              {/* Status Dropdown for Admins */}
                               <select 
                                 className="form-select form-select-sm w-auto fw-bold"
                                 value={selectedItem.status}
@@ -321,14 +324,11 @@ const AdminSupportPanel = () => {
                                   </>
                                 )}
                               </select>
-                              <span className={`badge ${getStatusBadgeClass(selectedItem.status)}`}>
-                                Current: {selectedItem.status}
-                              </span>
                             </div>
                           </td>
                         </tr>
                         <tr>
-                          <th>Created:</th>
+                          <th>{t('admin.th_created', 'Created:')}</th>
                           <td>{new Date(selectedItem.created_at).toLocaleString()}</td>
                         </tr>
                       </tbody>
@@ -336,10 +336,10 @@ const AdminSupportPanel = () => {
                   </div>
 
                   <div className="mb-4">
-                    <h6>Description / Reason</h6>
-                    <div className="bg-light p-3 rounded">
+                    <h6 className="fw-bold text-primary">{t('admin.description_reason', 'Description / Reason')}</h6>
+                    <div className="bg-light p-3 rounded border">
                       {activeTab === 'tickets' 
-                        ? selectedItem.messages?.[0]?.message || 'No initial message'
+                        ? (selectedItem.messages?.[0]?.message || 'Loading description...')
                         : selectedItem.reason
                       }
                     </div>
@@ -347,8 +347,8 @@ const AdminSupportPanel = () => {
 
                   {selectedItem.introduction && (
                     <div className="mb-4">
-                      <h6>Introduction (Role Request)</h6>
-                      <div className="bg-light p-3 rounded">
+                      <h6 className="fw-bold text-primary">{t('admin.intro_role_req', 'Introduction (Role Request)')}</h6>
+                      <div className="bg-light p-3 rounded border">
                         {selectedItem.introduction}
                       </div>
                     </div>
@@ -358,79 +358,93 @@ const AdminSupportPanel = () => {
                   {activeTab === 'tickets' && (
                     <>
                       <div className="mb-4">
-                        <h6 className="border-bottom pb-2">Replies</h6>
-                        {selectedItem.messages && selectedItem.messages.length > 1 ? (
-                          <div className="space-y-3" style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                            {selectedItem.messages.slice(1).map(reply => (
-                              <div key={reply.id} className="bg-light p-3 rounded mb-2">
-                                <div className="d-flex justify-content-between">
-                                  <strong>User: {reply.sender?.substring(0, 8) || 'admin'}</strong>
-                                  <small className="text-muted">
-                                    {new Date(reply.created_at).toLocaleString()}
+                        <h6 className="border-bottom pb-2 fw-bold text-primary">{t('admin.replies', 'Replies')}</h6>
+                        {loadingDetails ? (
+                           <div className="text-center py-3">
+                             <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
+                           </div>
+                        ) : selectedItem.messages && selectedItem.messages.length > 1 ? (
+                          <div className="ticket-chat-section p-3 bg-light rounded border" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                            {selectedItem.messages.slice(1).map((reply, index) => {
+                              // Determine if the message is from the admin (current user) or the user who opened the ticket
+                              const isAdminReply = reply.sender === user.id;
+                              return (
+                                <div key={reply.id || index} className={`mb-3 d-flex flex-column ${isAdminReply ? 'align-items-end' : 'align-items-start'}`}>
+                                  <div 
+                                    className={`p-2 rounded shadow-sm ${isAdminReply ? 'bg-primary text-white' : 'bg-white border text-dark'}`}
+                                    style={{ maxWidth: '85%', display: 'inline-block' }}
+                                  >
+                                    <div style={{ whiteSpace: 'pre-wrap', fontSize: '14px' }}>
+                                      {reply.message}
+                                    </div>
+                                  </div>
+                                  <small className="text-muted mt-1" style={{ fontSize: '11px' }}>
+                                    {new Date(reply.created_at).toLocaleString()} - {isAdminReply ? 'You' : 'User'}
                                   </small>
                                 </div>
-                                <p className="mb-0 mt-2" style={{ whiteSpace: 'pre-wrap' }}>
-                                  {reply.message}
-                                </p>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         ) : (
-                          <p className="text-muted small">No replies yet.</p>
+                          <p className="text-muted small p-3 bg-light rounded border text-center">{t('admin.no_replies', 'No replies yet.')}</p>
                         )}
                       </div>
 
                       {/* Reply Form */}
                       <div className="border-top pt-3">
-                        <h6>Submit Reply</h6>
+                        <h6 className="fw-bold">{t('admin.submit_reply', 'Submit Reply')}</h6>
                         {replyStatus.message && (
-                          <div className={`alert alert-${replyStatus.type === 'success' ? 'success' : 'danger'} mb-3`}>
+                          <div className={`alert alert-${replyStatus.type} py-2 small mb-3`}>
                             {replyStatus.message}
                           </div>
                         )}
                         
-                        <form onSubmit={handleReplySubmit}>
-                          <div className="mb-3">
-                            <textarea
-                              className="form-control"
-                              rows="3"
-                              value={replyMessage}
-                              onChange={(e) => setReplyMessage(e.target.value)}
-                              placeholder="Enter your response to this ticket..."
-                              required
-                            />
+                        {selectedItem.status !== 'Closed' && selectedItem.status !== 'Resolved' ? (
+                          <form onSubmit={handleReplySubmit} className="mt-2">
+                            <div className="input-group shadow-sm">
+                              <textarea
+                                className="form-control"
+                                rows="2"
+                                value={replyMessage}
+                                onChange={(e) => setReplyMessage(e.target.value)}
+                                placeholder={t('admin.reply_placeholder', 'Enter your response...')}
+                                disabled={replying || loadingDetails}
+                                style={{ resize: 'none' }}
+                              />
+                              <button 
+                                type="submit" 
+                                className="btn btn-primary px-4 d-flex align-items-center justify-content-center"
+                                disabled={replying || !replyMessage.trim() || loadingDetails}
+                              >
+                                {replying ? <span className="spinner-border spinner-border-sm"></span> : <FiSend size={20} />}
+                              </button>
+                            </div>
+                          </form>
+                        ) : (
+                          <div className="alert alert-secondary py-2 mt-2 text-center small">
+                            {t('admin.cannot_reply_closed', 'Cannot reply to closed tickets.')}
                           </div>
-                          
-                          <button 
-                            type="submit" 
-                            className="btn btn-primary"
-                            disabled={loading || selectedItem.status === 'Closed'}
-                          >
-                            {loading ? 'Submitting...' : 'Submit Reply'}
-                          </button>
-                          {selectedItem.status === 'Closed' && (
-                            <span className="ms-3 text-muted small">Cannot reply to closed tickets.</span>
-                          )}
-                        </form>
+                        )}
                       </div>
                     </>
                   )}
                   
                   {activeTab === 'reports' && (
-                    <div className="alert alert-info">
-                      Review the reported content on the public page and take appropriate action. Update the status above once handled.
+                    <div className="alert alert-info py-2 small">
+                      <i className="bi bi-info-circle me-2"></i>
+                      {t('admin.review_report_notice', 'Review the reported content on the public page and take appropriate action. Update the status above once handled.')}
                     </div>
                   )}
 
                 </div>
                 
-                <div className="modal-footer">
+                <div className="modal-footer border-top">
                   <button 
                     type="button" 
                     className="btn btn-secondary"
                     onClick={handleCloseModal}
                   >
-                    Close
+                    {t('common.close', 'Close')}
                   </button>
                 </div>
               </div>
