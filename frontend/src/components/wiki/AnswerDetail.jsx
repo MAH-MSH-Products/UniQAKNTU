@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getAnswerById } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { FiArrowLeft } from 'react-icons/fi';
 
-/**
- * AnswerDetail Component
- * 
- * Displays a single answer with full details.
- * Uses the flat endpoint structure: GET /api/answers/{id}/
- * 
- * Phase 4 Implementation:
- * - Replaces old nested route /wiki/answers/{id}/
- * - Uses path parameter for single answer retrieval
- */
 const AnswerDetail = () => {
   const { answerId } = useParams();
+  const { t } = useTranslation();
   const [answer, setAnswer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,55 +17,41 @@ const AnswerDetail = () => {
     const fetchAnswer = async () => {
       try {
         setLoading(true);
-        // Use new flat endpoint: GET /api/answers/{id}/
         const response = await getAnswerById(answerId);
         setAnswer(response.data);
       } catch (err) {
         console.error('Failed to fetch answer:', err);
-        setError(err.message || 'Failed to load answer');
+        setError(err.message || t('answer_detail.error_loading', 'Failed to load answer'));
       } finally {
         setLoading(false);
       }
     };
-
     if (answerId) {
       fetchAnswer();
     }
-  }, [answerId]);
+  }, [answerId, t]);
 
   if (loading) {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+          <span className="visually-hidden">{t('common.loading', 'Loading...')}</span>
         </div>
-        <p className="mt-2">Loading answer...</p>
+        <p className="mt-2">{t('common.loading', 'Loading...')}</p>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !answer) {
     return (
       <div className="alert alert-danger">
-        <h4>Error Loading Answer</h4>
-        <p>{error}</p>
-        <Link to="/" className="btn btn-primary mt-2">Back to Home</Link>
+        <h4>{t('answer_detail.error_loading', 'Error Loading Answer')}</h4>
+        <p>{error || t('answer_detail.not_found', 'Answer not found.')}</p>
+        <Link to="/" className="btn btn-primary mt-2">{t('common.back', 'Back')}</Link>
       </div>
     );
   }
 
-  if (!answer) {
-    return (
-      <div className="alert alert-info">
-        <p>Answer not found.</p>
-        <Link to="/" className="btn btn-primary mt-2">Back to Home</Link>
-      </div>
-    );
-  }
-
-  /**
-   * Process markdown text for display
-   */
   const processMarkdown = (text) => {
     let processed = text
       .replace(/&/g, '&amp;')
@@ -85,17 +64,16 @@ const AnswerDetail = () => {
       .replace(/\*(.*)\*/gim, '<em>$1</em>')
       .replace(/`([^`]+)`/gim, '<code>$1</code>')
       .replace(/\n/gim, '<br>');
-    
     return processed;
   };
 
   const getStatusBadge = () => {
     if (answer.status === 'APPROVED') {
-      return <span className="badge bg-success">✓ Approved</span>;
+      return <span className="badge bg-success">{t('common.approved', 'Approved')}</span>;
     } else if (answer.status === 'PENDING') {
-      return <span className="badge bg-warning">Pending Review</span>;
+      return <span className="badge bg-warning">{t('common.pending', 'Pending Review')}</span>;
     } else if (answer.status === 'REJECTED') {
-      return <span className="badge bg-danger">Rejected</span>;
+      return <span className="badge bg-danger">{t('common.rejected', 'Rejected')}</span>;
     }
     return null;
   };
@@ -103,16 +81,16 @@ const AnswerDetail = () => {
   return (
     <div className="answer-detail container py-4">
       <div className="mb-4">
-        <Link to="/" className="btn btn-outline-secondary btn-sm">
-          ← Back to Home
-        </Link>
+        <button onClick={() => window.history.back()} className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+          <FiArrowLeft /> {t('common.back', 'Back')}
+        </button>
       </div>
-
-      <div className="answer-card card">
-        <div className="card-header">
+      
+      <div className="answer-card card shadow-sm">
+        <div className="card-header bg-white border-bottom">
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              <h4 className="mb-0">Answer Details</h4>
+              <h4 className="mb-0 text-primary">{t('answer_detail.title', 'Answer Details')}</h4>
               <small className="text-muted">ID: #{answer.id}</small>
             </div>
             <div>
@@ -122,63 +100,55 @@ const AnswerDetail = () => {
         </div>
         
         <div className="card-body">
-          {/* Author Information */}
-          <div className="mb-3">
-            <strong>Author:</strong> {answer.author?.username || answer.author?.name || 'Unknown'}
-            {answer.author?.role && (
-              <span className="badge bg-secondary ms-2">{answer.author.role}</span>
+          <div className="d-flex justify-content-between mb-3 border-bottom pb-3">
+            <div>
+              <strong>{t('answer_detail.author', 'Author:')}</strong> {answer.author?.username || answer.author?.name || t('common.unknown_author', 'Unknown')}
+              {answer.author?.role && (
+                <span className="badge bg-secondary ms-2">{answer.author.role}</span>
+              )}
+            </div>
+            {/* FIXED LINK TO DEDICATED QUESTION PAGE */}
+            {answer.question && (
+              <div>
+                <strong>{t('answer_detail.question', 'Question:')}</strong>
+                <Link to={`/questions/${answer.question}`} className="ms-2 btn btn-sm btn-primary">
+                  {t('answer_detail.view_question', 'View Question')}
+                </Link>
+              </div>
             )}
           </div>
 
-          {/* Question Reference */}
-          {answer.question && (
-            <div className="mb-3">
-              <strong>Question:</strong>
-              <Link to={`/questions/${answer.question}/answers`} className="ms-2">
-                View Question
-              </Link>
-            </div>
-          )}
-
-          {/* Answer Content */}
           <div 
-            className="answer-content my-4 p-3 bg-light rounded"
+            className="answer-content my-4 p-4 bg-light rounded"
             dangerouslySetInnerHTML={{ __html: processMarkdown(answer.body || '') }}
-            style={{ lineHeight: '1.6', fontSize: '15px' }}
+            style={{ lineHeight: '1.7', fontSize: '16px' }}
           />
 
-          {/* Vote Information */}
           {answer.user_vote !== undefined && (
             <div className="mb-3">
-              <strong>Your Vote:</strong>{' '}
-              <span className={answer.user_vote === 1 ? 'text-success' : answer.user_vote === -1 ? 'text-danger' : ''}>
-                {answer.user_vote === 1 ? 'Upvoted ↑' : answer.user_vote === -1 ? 'Downvoted ↓' : 'No vote'}
+              <strong>{t('answer_detail.your_vote', 'Your Vote:')}</strong>{' '}
+              <span className={answer.user_vote === 1 ? 'text-success' : answer.user_vote === -1 ? 'text-danger' : 'text-muted'}>
+                {answer.user_vote === 1 ? t('answer_detail.upvoted', 'Upvoted') : answer.user_vote === -1 ? t('answer_detail.downvoted', 'Downvoted') : t('answer_detail.no_vote', 'No vote')}
               </span>
             </div>
           )}
 
-          {/* Timestamps */}
           {answer.created_at_jalali && (
             <div className="text-muted small">
               <p className="mb-1">
-                <strong>Created:</strong> {answer.created_at_jalali}
+                <i className="bi bi-clock me-1"></i>
+                <strong>{t('answer_detail.created', 'Created:')}</strong> {answer.created_at_jalali}
               </p>
-              {answer.updated_at_jalali && answer.updated_at_jalali !== answer.created_at_jalali && (
-                <p className="mb-0">
-                  <strong>Updated:</strong> {answer.updated_at_jalali}
-                </p>
-              )}
             </div>
           )}
 
-          {/* Attachments */}
           {answer.image && (
-            <div className="mt-4">
-              <h6>Attachments:</h6>
+            <div className="mt-4 border-top pt-3">
+              <h6 className="text-muted mb-3">{t('answer_detail.attachments', 'Attachments:')}</h6>
               <img 
                 src={answer.image} 
                 alt="Answer attachment" 
-                className="img-fluid rounded mb-2"
+                className="img-fluid rounded border shadow-sm"
                 style={{ maxHeight: '400px', objectFit: 'contain' }}
               />
             </div>
@@ -190,10 +160,10 @@ const AnswerDetail = () => {
                 href={answer.pdf_file} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="btn btn-outline-primary btn-sm"
+                className="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-2"
               >
-                <i className="bi bi-file-pdf me-2"></i>
-                View/Download PDF
+                <i className="bi bi-file-earmark-pdf-fill"></i>
+                {t('answer_detail.view_pdf', 'View/Download PDF')}
               </a>
             </div>
           )}

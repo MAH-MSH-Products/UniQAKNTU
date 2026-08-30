@@ -94,7 +94,9 @@
     "rejected": "Rejected",
     "unknown_author": "Unknown Author",
     "suggest_edit": "Suggest Edit",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "no_data": "No data available",
+    "back": "Back"
   },
   "pages": {
     "courses": "Courses Page",
@@ -116,7 +118,7 @@
     "faq": "FAQ",
     "documentation": "Documentation",
     "contact_us": "Contact Us",
-    "copyright": "© 2025 AzmoonHub Nasir. All rights reserved."
+    "copyright": "© 2026 AzmoonHub Nasir. All rights reserved."
   },
   "support": {
     "title": "Support Center",
@@ -186,6 +188,22 @@
     "attachment_help": "Attachments are embedded in the markdown text as ![attachment](url)",
     "submit_button": "Submit Answer"
   },
+  "answer_detail": {
+    "title": "Answer Details",
+    "author": "Author:",
+    "question": "Question:",
+    "view_question": "View Question",
+    "your_vote": "Your Vote:",
+    "upvoted": "Upvoted",
+    "downvoted": "Downvoted",
+    "no_vote": "No vote",
+    "created": "Created:",
+    "updated": "Updated:",
+    "attachments": "Attachments:",
+    "view_pdf": "View/Download PDF",
+    "not_found": "Answer not found.",
+    "error_loading": "Error Loading Answer"
+  },
   "source_materials": {
     "title": "Source Materials",
     "search_placeholder": "Search by title...",
@@ -201,5 +219,37 @@
     "of": "of",
     "next": "Next",
     "loading": "Loading source materials..."
+  },
+  "widgets": {
+    "recent_answers": "Recent Answers",
+    "latest_exams": "Latest Exams"
+  },
+  "admin": {
+    "title": "Admin Support Panel",
+    "subtitle": "Manage all system tickets and content reports",
+    "all_tickets": "All Tickets",
+    "content_reports": "Content Reports",
+    "no_items": "No items found.",
+    "th_id": "ID",
+    "th_user": "User",
+    "th_title": "Title",
+    "th_category": "Category/Target",
+    "th_status": "Status",
+    "th_created": "Created At",
+    "th_action": "Action",
+    "btn_view": "View",
+    "details": "Details",
+    "user_id": "User ID:",
+    "target_type": "Target Type:",
+    "target_id": "Target ID:",
+    "current_status": "Current:",
+    "description_reason": "Description / Reason",
+    "intro_role_req": "Introduction (Role Request)",
+    "replies": "Replies",
+    "no_replies": "No replies yet.",
+    "submit_reply": "Submit Reply",
+    "reply_placeholder": "Enter your response...",
+    "cannot_reply_closed": "Cannot reply to closed tickets.",
+    "review_report_notice": "Review the reported content on the public page and take appropriate action. Update the status above once handled."
   }
 }

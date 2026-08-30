@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { FiMessageSquare, FiBookOpen, FiFileText } from 'react-icons/fi';
+import { FiMessageSquare, FiFileText } from 'react-icons/fi';
 import api, { extractResults } from '../../services/api';
 
-/**
- * WidgetsPanel Component - Dynamic Side Panel
- * Displays links wrapping the items, allowing users to click and navigate
- * directly to the respective exams, questions, or answers.
- */
 const WidgetsPanel = () => {
   const { t } = useTranslation();
   const [recentAnswers, setRecentAnswers] = useState([]);
-  const [popularCourses, setPopularCourses] = useState([]);
   const [latestExams, setLatestExams] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,13 +17,10 @@ const WidgetsPanel = () => {
   const fetchWidgetData = async () => {
     setLoading(true);
     try {
-      // Real API calls
       const answersResponse = await api.get('/widgets/recent-answers/');
-      const coursesResponse = await api.get('/widgets/popular-courses/');
       const examsResponse = await api.get('/widgets/latest-exams/');
       
       setRecentAnswers(extractResults(answersResponse));
-      setPopularCourses(extractResults(coursesResponse));
       setLatestExams(extractResults(examsResponse));
     } catch (error) {
       console.error('Error fetching widget data:', error);
@@ -38,7 +29,6 @@ const WidgetsPanel = () => {
     }
   };
 
-  // Helper to format date without time
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return dateString.split('T')[0];
@@ -67,9 +57,9 @@ const WidgetsPanel = () => {
         <div>
           {recentAnswers.length > 0 ? (
             recentAnswers.map(answer => (
-              <Link 
-                to={`/answers/${answer.id}`} 
-                key={answer.id} 
+              <Link
+                to={`/answers/${answer.id}`}
+                key={answer.id}
                 className="text-decoration-none text-dark d-block widget-item border-bottom py-2"
               >
                 <div className="widget-content">
@@ -79,33 +69,7 @@ const WidgetsPanel = () => {
               </Link>
             ))
           ) : (
-            <p className="text-muted small">{t('common.no_data', 'No recent data')}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Popular Courses Widget */}
-      <div className="academic-card widget-panel mb-3">
-        <h6 className="section-title">
-          <FiBookOpen className="widget-icon" />
-          {t('widgets.popular_courses', 'Popular Courses')}
-        </h6>
-        <div>
-          {popularCourses.length > 0 ? (
-            popularCourses.map(course => (
-              <Link 
-                to={`/source-materials/${course.id}/questions`} 
-                key={course.id} 
-                className="text-decoration-none text-dark d-block widget-item border-bottom py-2"
-              >
-                <div className="widget-content">
-                  <p className="widget-title text-primary mb-1 fw-bold">{course.name || course.title}</p>
-                  <p className="widget-subtitle text-muted small">{course.code} • {course.examCount || 0} exams</p>
-                </div>
-              </Link>
-            ))
-          ) : (
-            <p className="text-muted small">{t('common.no_data', 'No recent data')}</p>
+            <p className="text-muted small">{t('common.no_data', 'No data available')}</p>
           )}
         </div>
       </div>
@@ -119,9 +83,9 @@ const WidgetsPanel = () => {
         <div>
           {latestExams.length > 0 ? (
             latestExams.map(exam => (
-              <Link 
-                to={`/source-materials/${exam.id}/questions`} 
-                key={exam.id} 
+              <Link
+                to={`/source-materials/${exam.id}/questions`}
+                key={exam.id}
                 className="text-decoration-none text-dark d-block widget-item border-bottom py-2"
               >
                 <div className="widget-content">
@@ -131,7 +95,7 @@ const WidgetsPanel = () => {
               </Link>
             ))
           ) : (
-            <p className="text-muted small">{t('common.no_data', 'No recent data')}</p>
+            <p className="text-muted small">{t('common.no_data', 'No data available')}</p>
           )}
         </div>
       </div>
