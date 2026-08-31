@@ -2,7 +2,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from users.permissions import IsAdminOrModerator
+from users.permissions import IsAdminUser
 from .models import Ticket, ContentReport, TicketStatus
 from .serializers import (
     TicketListSerializer, TicketDetailSerializer, TicketMessageSerializer,
@@ -45,7 +45,7 @@ class TicketViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.L
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class AdminTicketViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
-    permission_classes = [IsAdminOrModerator]
+    permission_classes = [IsAdminUser]
     queryset = Ticket.objects.all().order_by('-created_at')
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {
@@ -99,7 +99,7 @@ class ContentReportViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
 
 class AdminContentReportViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
-    permission_classes = [IsAdminOrModerator]
+    permission_classes = [IsAdminUser]
     queryset = ContentReport.objects.all().order_by('-created_at')
     filter_backends = [DjangoFilterBackend]
     filterset_fields = {'status': ['exact'], 'reporter': ['exact']}
