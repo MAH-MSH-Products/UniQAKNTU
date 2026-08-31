@@ -2,20 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { FiUser, FiMail, FiLock, FiCheck } from 'react-icons/fi';
+import { FiUser, FiLock } from 'react-icons/fi';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-/**
- * Login Component - Modern Gradient Auth Page
- * 
- * Provides a modern, full-screen gradient-based login interface.
- * Features centered layout with avatar icon, minimalist inputs, and prominent CTA.
- * Uses AuthContext to manage login state and redirection.
- * Uses i18n translations for all text content.
- */
-
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +16,6 @@ const Login = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Redirect if already authenticated
   if (isAuthenticated) {
     navigate('/');
     return null;
@@ -35,13 +25,18 @@ const Login = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-
-    const result = await login(username, password);
+    
+    const result = await login(identifier, password);
     
     if (result.success) {
       navigate('/');
     } else {
-      setError(result.error);
+      // Redirect to verification if email is unverified
+      if (result.error === 'email_not_verified') {
+        navigate('/verify-email', { state: { email: identifier.includes('@') ? identifier : '' } });
+      } else {
+        setError(result.error);
+      }
     }
     
     setIsLoading(false);
@@ -50,15 +45,12 @@ const Login = () => {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        {/* Avatar Icon */}
         <div className="auth-avatar">
           <FiUser />
         </div>
         
-        {/* Title */}
-        <h1 className="auth-title">{t('login.title_short')}</h1>
+        <h1 className="auth-title">{t('login.title_short', 'LOGIN')}</h1>
         
-        {/* Error Message */}
         {error && (
           <div className="auth-error" role="alert">
             {error}
@@ -66,27 +58,25 @@ const Login = () => {
         )}
         
         <form onSubmit={handleSubmit}>
-          {/* Username/Email Input */}
           <div className="auth-input-group">
-            <FiMail className="auth-input-icon" />
+            <FiUser className="auth-input-icon" />
             <input
               type="text"
               className="auth-input"
-              placeholder={t('login.username')}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              placeholder={t('login.username', 'Username or Email')}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
               disabled={isLoading}
             />
           </div>
           
-          {/* Password Input */}
           <div className="auth-input-group">
             <FiLock className="auth-input-icon" />
             <input
               type="password"
               className="auth-input"
-              placeholder={t('login.password')}
+              placeholder={t('login.password', 'Password')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -94,7 +84,6 @@ const Login = () => {
             />
           </div>
           
-          {/* Remember Me & Forgot Password */}
           <div className="auth-options">
             <label className="auth-checkbox">
               <input
@@ -103,14 +92,13 @@ const Login = () => {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 disabled={isLoading}
               />
-              {t('login.remember_me')}
+              {t('login.remember_me', 'Remember me')}
             </label>
             <Link to="/forgot-password" className="auth-link">
-              {t('login.forgot_password')}
+              {t('login.forgot_password', 'Forgot Password?')}
             </Link>
           </div>
           
-          {/* Submit Button */}
           <button
             type="submit"
             className="auth-button"
@@ -119,18 +107,17 @@ const Login = () => {
             {isLoading ? (
               <>
                 <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                {t('login.logging_in')}
+                {t('common.loading', 'Loading...')}
               </>
             ) : (
-              t('login.login_button')
+              t('login.login_button', 'LOGIN')
             )}
           </button>
         </form>
         
-        {/* Footer Link */}
         <div className="auth-footer">
-          {t('nav.dont_have_account')}{' '}
-          <Link to="/register">{t('nav.register_here')}</Link>
+          {t('nav.dont_have_account', "Don't have an account?")}{' '}
+          <Link to="/register">{t('nav.register_here', 'Register here')}</Link>
         </div>
       </div>
     </div>

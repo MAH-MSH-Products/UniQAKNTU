@@ -9,16 +9,20 @@ import RequireInstructor from './components/auth/RequireInstructor';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import SourceMaterialsList from './pages/SourceMaterialsList';
 import SupportCenter from './pages/support/SupportCenter';
 import AdminSupportPanel from './pages/admin/AdminSupportPanel';
 import UserReports from './pages/support/UserReports';
 import QuestionExplorer from './components/wiki/QuestionExplorer';
+import QuestionDetail from './components/wiki/QuestionDetail';
 import AnswerDetail from './components/wiki/AnswerDetail';
+import Profile from './pages/Profile';
+import InstructorDashboard from './pages/instructor/InstructorDashboard';
+import ManageAnswers from './pages/instructor/ManageAnswers';
 import './i18n';
 import i18n from 'i18next';
-import Profile from './pages/Profile';
-
+import ForgotPassword from './pages/ForgotPassword';
 function App() {
   useEffect(() => {
     const handleLanguageChange = (lng) => {
@@ -37,16 +41,19 @@ function App() {
       <AuthProvider>
         <SourceMaterialsProvider>
           <Routes>
-            {/* Public Routes */}
+            {/* Public Routes - Accessible to everyone */}
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/source-materials" element={<SourceMaterialsList />} />
               <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
               <Route path="/profile" element={<Profile />} />
+              
               <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
+              {/* New Route for individual question details */}
+              <Route path="/questions/:id" element={<QuestionDetail />} />
             </Route>
 
-            {/* Protected Routes */}
+            {/* Protected Routes - Require Authentication */}
             <Route element={<RequireAuth />}>
               <Route element={<MainLayout />}>
                 <Route path="/support" element={<SupportCenter />} />
@@ -58,19 +65,20 @@ function App() {
               </Route>
             </Route>
 
-            {/* Instructor Routes */}
+            {/* Instructor Routes - Require Instructor Role */}
             <Route element={<RequireInstructor />}>
               <Route element={<MainLayout />}>
-                <Route path="/instructor/dashboard" element={<div className="p-4"><h2>Instructor Dashboard</h2></div>} />
-                <Route path="/instructor/answers" element={<div className="p-4"><h2>Manage Answers</h2></div>} />
+                <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
+                <Route path="/instructor/answers" element={<ManageAnswers />} />
               </Route>
             </Route>
             
-            {/* Auth Routes */}
+            {/* Auth Routes - Login/Register with AuthLayout */}
             <Route element={<AuthLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<div className="p-4">Forgot Password Component (Work in Progress)</div>} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
             </Route>
           </Routes>
         </SourceMaterialsProvider>

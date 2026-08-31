@@ -20,7 +20,8 @@
     "already_have_account": "Already have an account?",
     "login_here": "Login here",
     "my_tickets": "My Tickets",
-    "reports": "Reports"
+    "reports": "Reports",
+    "toggle_theme": "Toggle Dark/Light Mode"
   },
   "sidebar": {
     "navigation": "Navigation",
@@ -94,7 +95,9 @@
     "rejected": "Rejected",
     "unknown_author": "Unknown Author",
     "suggest_edit": "Suggest Edit",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "no_data": "No data available",
+    "back": "Back"
   },
   "pages": {
     "courses": "Courses Page",
@@ -116,7 +119,7 @@
     "faq": "FAQ",
     "documentation": "Documentation",
     "contact_us": "Contact Us",
-    "copyright": "© 2025 AzmoonHub Nasir. All rights reserved."
+    "copyright": "© 2026 AzmoonHub Nasir. All rights reserved."
   },
   "support": {
     "title": "Support Center",
@@ -186,6 +189,22 @@
     "attachment_help": "Attachments are embedded in the markdown text as ![attachment](url)",
     "submit_button": "Submit Answer"
   },
+  "answer_detail": {
+    "title": "Answer Details",
+    "author": "Author:",
+    "question": "Question:",
+    "view_question": "View Question",
+    "your_vote": "Your Vote:",
+    "upvoted": "Upvoted",
+    "downvoted": "Downvoted",
+    "no_vote": "No vote",
+    "created": "Created:",
+    "updated": "Updated:",
+    "attachments": "Attachments:",
+    "view_pdf": "View/Download PDF",
+    "not_found": "Answer not found.",
+    "error_loading": "Error Loading Answer"
+  },
   "source_materials": {
     "title": "Source Materials",
     "search_placeholder": "Search by title...",
@@ -201,5 +220,94 @@
     "of": "of",
     "next": "Next",
     "loading": "Loading source materials..."
+  },
+  "widgets": {
+    "recent_answers": "Recent Answers",
+    "latest_exams": "Latest Exams"
+  },
+  "admin": {
+    "title": "Admin Support Panel",
+    "subtitle": "Manage all system tickets and content reports",
+    "all_tickets": "All Tickets",
+    "content_reports": "Content Reports",
+    "pending_questions": "Pending Questions",
+    "pending_answers": "Pending Answers",
+    "suggested_edits": "Suggested Edits",
+    "no_items": "No items found.",
+    "th_id": "ID",
+    "th_user": "User",
+    "th_title": "Title",
+    "th_category": "Category/Target",
+    "th_status": "Status",
+    "th_created": "Created At",
+    "th_action": "Action",
+    "th_body": "Body",
+    "th_question_id": "Question ID",
+    "target_item": "Target Item",
+    "proposed_text": "Proposed Text",
+    "btn_view": "View",
+    "btn_approve": "Approve",
+    "btn_reject": "Reject",
+    "details": "Details",
+    "user_id": "User ID:",
+    "target_type": "Target Type:",
+    "target_id": "Target ID:",
+    "current_status": "Current:",
+    "description_reason": "Description / Reason",
+    "intro_role_req": "Introduction (Role Request)",
+    "replies": "Replies",
+    "no_replies": "No replies yet.",
+    "submit_reply": "Submit Reply",
+    "reply_placeholder": "Enter your response...",
+    "cannot_reply_closed": "Cannot reply to closed tickets.",
+    "review_report_notice": "Review the reported content on the public page and take appropriate action. Update the status above once handled.",
+    "msg_approved": "Approved successfully.",
+    "msg_rejected": "Rejected successfully."
+  },
+  "auth": {
+    "verify_email": "Verify Email",
+    "verify_email_desc": "Please enter the 6-digit code sent to your email address.",
+    "invalid_otp_length": "OTP must be exactly 6 digits.",
+    "email_verified_success": "Email verified successfully! Redirecting to login...",
+    "email_required_resend": "Please enter your email to resend the code.",
+    "otp_resent": "A new verification code has been sent to your email.",
+    "otp_placeholder": "6-Digit Code",
+    "verify_button": "Verify Account",
+    "resend_code": "Didn't receive the code? Resend",
+    "forgot_password_desc": "Enter your email to receive a password reset code.",
+    "otp_sent_reset": "OTP code sent to your email.",
+    "send_reset_link": "Send Reset Code",
+    "enter_otp_new_pass": "Enter the OTP sent to your email and your new password.",
+    "new_password": "New Password",
+    "reset_password_btn": "Reset Password",
+    "reset_success": "Password reset successfully! Redirecting..."
+  },
+  "profile": {
+    "title": "My Profile",
+    "public_profile": "Public Profile",
+    "account_security": "Account Security",
+    "username_help": "Must be unique. Allowed characters: letters, digits and @/./+/-/_",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "update_success": "Profile updated successfully!",
+    "update_failed": "Failed to update profile.",
+    "change_password": "Change Password",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_new_password": "Confirm New Password",
+    "update_password_btn": "Update Password",
+    "passwords_mismatch": "New passwords do not match.",
+    "change_email": "Change Email Address",
+    "current_email": "Current Email:",
+    "new_email": "New Email Address",
+    "request_email_change": "Request Email Change",
+    "enter_otp_sent_to": "Enter the 6-digit code sent to",
+    "otp_code": "OTP Code",
+    "verify_and_change": "Verify & Change"
+  },
+  "instructor": {
+    "total_answers": "Total Answers",
+    "total_upvotes": "Total Upvotes",
+    "total_accepted": "Accepted Answers"
   }
 }
