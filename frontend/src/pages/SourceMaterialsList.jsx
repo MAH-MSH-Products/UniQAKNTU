@@ -1,20 +1,9 @@
+// src/pages/SourceMaterialsList.jsx
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api, { extractResults } from '../services/api';
 
-/**
- * SourceMaterialsList Component - Display All Source Materials
- * Fetches and displays source materials from the backend API.
- * Each material is shown as a card with:
- * - Title
- * - Year (if available)
- * - Created date (Jalali)
- * - Download buttons for question_pdf and answer_pdf (if available)
- * - "Explore Questions" button to navigate to questions for that material
- * Uses the academic-card styling for consistency.
- * Implements pagination support via the API response structure.
- */
 const SourceMaterialsList = () => {
   const { t } = useTranslation();
   const [materials, setMaterials] = useState([]);
@@ -27,10 +16,6 @@ const SourceMaterialsList = () => {
     previous: null,
   });
 
-  /**
-   * Fetch source materials from API
-   * GET /api/source-materials/
-   */
   const fetchMaterials = async (url = '/source-materials/') => {
     setLoading(true);
     setError(null);
@@ -56,13 +41,8 @@ const SourceMaterialsList = () => {
     fetchMaterials();
   }, []);
 
-  /**
-   * Handle pagination navigation
-   * @param {string} url - The next or previous page URL from API
-   */
   const handlePageChange = (url) => {
     if (url) {
-      // Extract the relative path from the full URL
       const urlObj = new URL(url);
       const relativePath = urlObj.pathname + urlObj.search;
       fetchMaterials(relativePath);
@@ -89,8 +69,9 @@ const SourceMaterialsList = () => {
   }
 
   return (
-    <div className="source-materials-list p-4">
-      <h2 className="mb-4">{t('source_materials.title', 'Source Materials')}</h2>
+    /* اضافه کردن کلاس container برای ایجاد حاشیه استاندارد از چپ و راست */
+    <div className="container py-4 px-3 px-md-4">
+      <h2 className="mb-4 fw-bold text-primary">{t('source_materials.title', 'Source Materials')}</h2>
       
       {/* Search Input */}
       <div className="mb-4">
@@ -109,7 +90,7 @@ const SourceMaterialsList = () => {
         );
         
         return filteredMaterials.length === 0 ? (
-          <div className="alert alert-info">
+          <div className="alert alert-info shadow-sm">
             {searchTerm 
               ? t('source_materials.no_match', 'No matching source materials found.') 
               : t('source_materials.no_materials', 'No source materials available yet.')}
@@ -119,36 +100,37 @@ const SourceMaterialsList = () => {
             {filteredMaterials.map((material) => (
             <div key={material.id} className="col-md-6 col-lg-4">
               <div className="academic-card h-100">
-                <div className="card-body d-flex flex-column">
+                {/* اضافه کردن p-4 برای فاصله گرفتن متن از لبه‌های خود کارت */}
+                <div className="card-body p-4 d-flex flex-column">
                   {/* Title */}
-                  <h5 className="card-title text-primary mb-3">
+                  <h5 className="card-title text-primary fw-bold mb-3">
                     {material.title || `Source Material #${material.id}`}
                   </h5>
                   
                   {/* Year (if available) */}
                   {material.year && (
-                    <p className="card-text">
-                      <strong>{t('source_materials.year', 'Year:')}</strong> {material.year}
+                    <p className="card-text mb-2">
+                      <strong className="text-muted">{t('source_materials.year', 'Year:')}</strong> {material.year}
                     </p>
                   )}
                   
                   {/* Created Date (Jalali) */}
                   {material.created_at_jalali && (
-                    <p className="card-text text-muted small">
+                    <p className="card-text text-muted small mb-3">
                       <strong>{t('source_materials.created', 'Created:')}</strong> {material.created_at_jalali.split('T')[0]}
                     </p>
                   )}
                   
                   {/* PDF Download Buttons */}
-                  <div className="mt-3 mb-3">
+                  <div className="mt-auto pt-3 border-top">
                     {material.question_pdf && (
                       <a
                         href={material.question_pdf}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn-outline-primary btn-sm w-100 mb-2"
+                        className="btn btn-outline-primary btn-sm w-100 mb-2 d-flex align-items-center justify-content-center gap-2"
                       >
-                        <i className="bi bi-file-earmark-pdf me-2"></i>
+                        <i className="bi bi-file-earmark-pdf"></i>
                         {t('source_materials.download_exam', 'Download Exam PDF')}
                       </a>
                     )}
@@ -158,22 +140,23 @@ const SourceMaterialsList = () => {
                         href={material.answer_pdf}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn-outline-success btn-sm w-100 mb-2"
+                        className="btn btn-outline-secondary btn-sm w-100 mb-3 d-flex align-items-center justify-content-center gap-2"
                       >
-                        <i className="bi bi-file-earmark-check me-2"></i>
+                        <i className="bi bi-file-earmark-check"></i>
                         {t('source_materials.download_answers', 'Download Official Answers PDF')}
                       </a>
                     )}
+                    
+                    {/* Explore Questions Button */}
+                    <Link
+                      to={`/source-materials/${material.id}/questions`}
+                      className="btn btn-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2"
+                    >
+                      <i className="bi bi-search"></i>
+                      {t('source_materials.explore_questions', 'Explore Questions')}
+                    </Link>
                   </div>
-                  
-                  {/* Explore Questions Button */}
-                  <Link
-                    to={`/source-materials/${material.id}/questions`}
-                    className="btn btn-primary mt-auto"
-                  >
-                    <i className="bi bi-search me-2"></i>
-                    {t('source_materials.explore_questions', 'Explore Questions')}
-                  </Link>
+
                 </div>
               </div>
             </div>
@@ -183,11 +166,11 @@ const SourceMaterialsList = () => {
 
       {/* Pagination Controls */}
       {(pagination.next || pagination.previous) && (
-        <nav aria-label="Source materials pagination" className="mt-4">
+        <nav aria-label="Source materials pagination" className="mt-5">
           <ul className="pagination justify-content-center">
             <li className={`page-item ${!pagination.previous ? 'disabled' : ''}`}>
               <button
-                className="page-link"
+                className="page-link shadow-sm"
                 onClick={() => handlePageChange(pagination.previous)}
                 disabled={!pagination.previous}
               >
@@ -195,13 +178,13 @@ const SourceMaterialsList = () => {
               </button>
             </li>
             <li className="page-item disabled">
-              <span className="page-link">
+              <span className="page-link shadow-sm text-muted">
                 {t('source_materials.page', 'Page')} {pagination.count > 0 ? `${t('source_materials.of', 'of')} ${Math.ceil(pagination.count / 10)}` : ''}
               </span>
             </li>
             <li className={`page-item ${!pagination.next ? 'disabled' : ''}`}>
               <button
-                className="page-link"
+                className="page-link shadow-sm"
                 onClick={() => handlePageChange(pagination.next)}
                 disabled={!pagination.next}
               >

@@ -56,7 +56,7 @@
 
   --radius-md: 8px;
   --radius-lg: 12px;
-  --transition: all 0.2s ease-in-out;
+  --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   
   --font-primary: 'IRANYekan', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
@@ -69,7 +69,7 @@
 
 [data-theme="dark"] {
   /* ==========================================
-     DARK MODE (حالت شب - معکوس کامل، تیره و یکدست)
+     DARK MODE (حالت شب)
      ========================================== */
   --bg-body: #121212 !important;         
   --bg-card: #1E1E1E !important;         
@@ -99,7 +99,7 @@ body {
   background-color: var(--bg-body) !important;
   color: var(--text-main) !important;
   font-family: var(--font-primary) !important;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -108,7 +108,7 @@ body {
 }
 
 /* ============================================
-   Dark Mode Universal Overrides (معکوس کردن اجباری المان‌ها)
+   Dark Mode Universal Overrides
    ============================================ */
 [data-theme="dark"] .bg-white,
 [data-theme="dark"] .card,
@@ -137,14 +137,6 @@ body {
   background-color: var(--bg-hover) !important;
 }
 
-[data-theme="dark"] .dropdown-item {
-  color: var(--text-main) !important;
-}
-[data-theme="dark"] .dropdown-item:hover {
-  background-color: var(--bg-hover) !important;
-  color: var(--text-inverse) !important;
-}
-
 [data-theme="dark"] .accordion-button:not(.collapsed) {
   background-color: var(--bg-hover) !important;
   color: var(--text-main) !important;
@@ -155,10 +147,11 @@ body {
   color: var(--text-main) !important;
 }
 
+/* حل مشکل متون تیره در حالت شب (شامل text-dark در Navbar) */
 [data-theme="dark"] .text-dark,
 [data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, 
 [data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
-[data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] label,
+[data-theme="dark"] p, [data-theme="dark"] span:not(.badge), [data-theme="dark"] label,
 [data-theme="dark"] th, [data-theme="dark"] td {
   color: var(--text-main) !important;
 }
@@ -167,61 +160,65 @@ body {
   color: var(--text-muted) !important;
 }
 
-/* رفع مشکل دکمه درخواست نقش استادی (Day & Dark) */
-.home-cta-btn {
-  background-color: #FFFFFF;
-  color: #212529 !important; /* متن مشکی در حالت شب */
-  border: none;
-  font-weight: 600;
+/* ============================================
+   Hover & Transitions (افکت نوار زرد-نارنجی قدرتمند)
+   ============================================ */
+
+a, button, .card, .academic-card, .list-group-item, .accordion-item, .widget-item, .dropdown-item {
   transition: var(--transition);
 }
 
-[data-theme="dark"] .home-cta-btn {
-  background-color: #FFFFFF !important;
-  color: #000000 !important; /* متن کاملاً مشکی در حالت شب */
+/* اعمال نوار بالایی نارنجی و حرکت رو به بالا روی تمامی باکس‌ها و کارت‌ها */
+.card:hover,
+.academic-card:hover,
+.list-group-item:hover,
+.accordion-item:hover,
+.widget-item:hover {
+  border-color: var(--accent-orange) !important;
+  /* سایه داخلی به عنوان نوار بالای ۳ پیکسلی + سایه خارجی برای عمق */
+  box-shadow: inset 0 3px 0 0 var(--accent-orange), var(--shadow-md) !important;
+  transform: translateY(-3px);
+  z-index: 2;
 }
 
-/* در حالت Day mode دکمه کمی طوسی روشن شود */
-html:not([data-theme="dark"]) .home-cta-btn {
-  background-color: #E2E8F0 !important; 
-  color: #1E293B !important;
-}
-
-/* رفع مشکل متن بنر خانه در حالت روز (تضمین خوانایی) */
-.home-cta-banner {
-  background: var(--primary-blue);
-  color: #FFFFFF !important;
-}
-.home-cta-banner h3, .home-cta-banner p {
-  color: #FFFFFF !important;
-}
-
-[data-theme="dark"] .home-cta-banner {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-}
-[data-theme="dark"] .home-cta-banner h3, [data-theme="dark"] .home-cta-banner p {
-  color: var(--text-main) !important;
-}
-
-/* Links & Interactive Text */
+/* تنظیمات هاور برای لینک‌های متنی ساده */
 a {
   color: var(--primary-blue);
   text-decoration: none;
-  transition: var(--transition);
 }
-a:hover {
-  color: var(--primary-hover);
-}
-
-/* Hover & Transitions (حرکت رو به بالا) */
-a, button, .card, .academic-card, .list-group-item, .accordion-item {
-  transition: var(--transition);
+a:not(.btn):not(.nav-link):not(.list-group-item):not(.widget-item):hover {
+  color: var(--accent-orange) !important;
 }
 
-a:hover, .btn:hover:not(:disabled) {
-  transform: translateY(-2px);
+/* ============================================
+   Dropdown Menu Fixes (حل مشکل عکس ارسالی)
+   ============================================ */
+.dropdown-menu {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: var(--shadow-md);
 }
+
+.dropdown-item:not(.text-danger) {
+  color: var(--text-main) !important;
+}
+
+.dropdown-item.text-danger {
+  color: #dc3545 !important;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-hover) !important;
+  color: var(--accent-orange) !important;
+  box-shadow: inset 3px 0 0 0 var(--accent-orange) !important;
+  transform: translateX(-2px);
+}
+
+html[dir="rtl"] .dropdown-item:hover {
+  box-shadow: inset -3px 0 0 0 var(--accent-orange) !important;
+  transform: translateX(2px);
+}
+
 
 .btn {
   border-radius: var(--radius-md) !important;
@@ -237,8 +234,8 @@ a:hover, .btn:hover:not(:disabled) {
 .btn-primary:hover:not(:disabled) {
   background-color: var(--primary-hover) !important;
   border-color: var(--primary-hover) !important;
+  box-shadow: inset 0 3px 0 0 var(--accent-orange), var(--shadow-md) !important;
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .btn-outline-secondary {
@@ -249,9 +246,11 @@ a:hover, .btn:hover:not(:disabled) {
 .btn-outline-secondary:hover:not(:disabled) {
   background-color: var(--bg-hover) !important;
   color: var(--text-main) !important;
+  box-shadow: inset 0 3px 0 0 var(--accent-orange) !important;
+  transform: translateY(-2px);
 }
 
-/* Input Fields & Textareas */
+/* Input Fields */
 .form-control, .form-select, .input-group-text, textarea {
   background-color: var(--bg-input) !important;
   color: var(--text-main) !important;
@@ -266,7 +265,9 @@ a:hover, .btn:hover:not(:disabled) {
   color: var(--text-main) !important;
 }
 
-/* Cards & Layout */
+/* ============================================
+   Cards & Layout
+   ============================================ */
 .card, .academic-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
@@ -275,19 +276,15 @@ a:hover, .btn:hover:not(:disabled) {
   color: var(--text-main);
 }
 
-.academic-card:hover {
-  border-color: var(--accent-orange);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-3px);
-}
-
 .card-header, .academic-card .card-header {
   background-color: transparent !important;
   border-bottom: 1px solid var(--border-color) !important;
   padding: 1rem 1.25rem;
 }
 
-/* Navbar & Sidebar */
+/* ============================================
+   Navbar & Sidebar
+   ============================================ */
 .custom-navbar {
   background-color: var(--nav-bg) !important;
   border-bottom: 1px solid var(--nav-border);
@@ -307,12 +304,15 @@ a:hover, .btn:hover:not(:disabled) {
 }
 
 .nav-link:hover {
-  color: var(--text-main) !important;
+  color: var(--accent-orange) !important;
   background-color: var(--bg-hover);
+  box-shadow: inset 0 3px 0 0 var(--accent-orange) !important;
   transform: translateY(-1px);
 }
 
-/* Tabs */
+/* ============================================
+   Tabs (Coursera/StackOverflow Style)
+   ============================================ */
 .coursera-tabs {
   display: flex;
   gap: 0.25rem;
@@ -328,10 +328,11 @@ a:hover, .btn:hover:not(:disabled) {
   color: var(--text-muted);
   font-weight: 500;
   cursor: pointer;
+  transition: var(--transition);
 }
 
 .coursera-tab:hover {
-  color: var(--text-main);
+  color: var(--accent-orange);
   background-color: var(--bg-hover);
 }
 
@@ -345,7 +346,45 @@ a:hover, .btn:hover:not(:disabled) {
   cursor: pointer;
 }
 
-/* Auth */
+/* ============================================
+   Home Specific Elements
+   ============================================ */
+.home-cta-btn {
+  background-color: #FFFFFF;
+  color: #212529 !important; 
+  border: none;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .home-cta-btn {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+html:not([data-theme="dark"]) .home-cta-btn {
+  background-color: #E2E8F0 !important; 
+  color: #1E293B !important;
+}
+
+.home-cta-banner {
+  background: var(--primary-blue);
+  color: #FFFFFF !important;
+}
+.home-cta-banner h3, .home-cta-banner p {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .home-cta-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+[data-theme="dark"] .home-cta-banner h3, [data-theme="dark"] .home-cta-banner p {
+  color: var(--text-main) !important;
+}
+
+/* ============================================
+   Auth Container
+   ============================================ */
 .auth-container {
   min-height: 100vh;
   width: 100%;
@@ -434,18 +473,14 @@ html[dir="rtl"] .auth-input {
 
 .auth-button:hover:not(:disabled) {
   background-color: var(--primary-hover);
+  box-shadow: inset 0 3px 0 0 var(--accent-orange), var(--shadow-md) !important;
   transform: translateY(-2px);
 }
 
-/* Widgets */
-.widget-panel {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  margin-bottom: 1.25rem;
-}
-.widget-item:hover {
-  background-color: var(--bg-hover);
-  transform: translateY(-1px);
+/* Custom Checkbox */
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--primary-blue);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
