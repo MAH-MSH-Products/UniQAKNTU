@@ -20,7 +20,8 @@
     "already_have_account": "Already have an account?",
     "login_here": "Login here",
     "my_tickets": "My Tickets",
-    "reports": "Reports"
+    "reports": "Reports",
+    "toggle_theme": "Toggle Dark/Light Mode"
   },
   "sidebar": {
     "navigation": "Navigation",

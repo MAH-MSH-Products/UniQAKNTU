@@ -20,7 +20,8 @@
     "already_have_account": "قبلاً ثبت نام کرده‌اید؟",
     "login_here": "از اینجا وارد شوید",
     "my_tickets": "تیکت‌های من",
-    "reports": "گزارش‌ها"
+    "reports": "گزارش‌ها",
+    "toggle_theme": "تغییر حالت شب/روز"
   },
   "sidebar": {
     "navigation": "ناوبری",
