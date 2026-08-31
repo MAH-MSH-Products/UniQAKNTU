@@ -139,7 +139,9 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
     search_fields = ['title', 'body']
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        user = self.request.user
+        status_val = PostStatus.APPROVED if (user.is_moderator() or user.is_admin()) else PostStatus.PENDING
+        serializer.save(author=user, status=status_val)
 
     def get_queryset(self):
         user = self.request.user
@@ -267,7 +269,9 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
     filterset_class = AnswerFilter
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        user = self.request.user
+        status_val = PostStatus.APPROVED if (user.is_moderator() or user.is_admin()) else PostStatus.PENDING
+        serializer.save(author=user, status=status_val)
 
     def get_queryset(self):
         user = self.request.user
