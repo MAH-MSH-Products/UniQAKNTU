@@ -60,7 +60,10 @@ const QuestionExplorer = ({ examId: propExamId }) => {
   const { t } = useTranslation();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  
   const [searchTerm, setSearchTerm] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState(''); // ایجاد حالت جدید برای کنترل سرچ
+  
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const { isAuthenticated } = useAuth();
   
@@ -70,8 +73,8 @@ const QuestionExplorer = ({ examId: propExamId }) => {
     setLoading(true);
     try {
       let url = `/questions/?source_material=${currentExamId}&status=APPROVED`;
-      if (searchTerm) {
-        url += `&search=${encodeURIComponent(searchTerm)}`;
+      if (submittedSearch) {
+        url += `&search=${encodeURIComponent(submittedSearch)}`;
       }
       const response = await api.get(url);
       setQuestions(extractResults(response));
@@ -87,7 +90,12 @@ const QuestionExplorer = ({ examId: propExamId }) => {
     if (currentExamId) {
       fetchQuestions();
     }
-  }, [currentExamId, searchTerm]);
+  }, [currentExamId, submittedSearch]); // فقط هنگام تغییر عبارت ثبت‌شده API فراخوانی می‌شود
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSubmittedSearch(searchTerm);
+  };
 
   if (loading) {
     return (
@@ -123,17 +131,23 @@ const QuestionExplorer = ({ examId: propExamId }) => {
         />
       )}
 
+      {/* فرم جستجو با دکمه */}
       <div className="mb-4">
-        <div className="input-group">
-          <span className="input-group-text bg-white"><i className="bi bi-search"></i></span>
-          <input
-            type="text"
-            className="form-control border-start-0 ps-0"
-            placeholder={t('questions.search_placeholder', 'Search questions...')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <form onSubmit={handleSearchSubmit}>
+          <div className="input-group shadow-sm">
+            <input
+              type="text"
+              className="form-control border-end-0"
+              placeholder={t('questions.search_placeholder', 'Search questions...')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button type="submit" className="btn btn-primary px-4">
+              <i className="bi bi-search me-2"></i>
+              <span className="d-none d-sm-inline">{t('common.search', 'Search')}</span>
+            </button>
+          </div>
+        </form>
       </div>
 
       {!currentExamId ? (
