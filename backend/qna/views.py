@@ -54,7 +54,7 @@ class PostActionMixin:
             return Response(CommentSerializer(comment, context={'request': request}).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
-        summary="Soft delete a comment",
+        summary="Delete a comment (hard delete if no replies, soft delete otherwise)",
         responses={204: None}
     )
     @action(detail=True, methods=['delete'], url_path=r'comments/(?P<comment_id>\d+)', permission_classes=[permissions.IsAuthenticated])
@@ -69,8 +69,12 @@ class PostActionMixin:
         if comment.author != request.user and not (request.user.is_moderator() or request.user.is_admin()):
             raise PermissionDenied("You can only delete your own comments.")
             
-        comment.is_deleted = True
-        comment.save(update_fields=['is_deleted'])
+        if comment.replies.exists():
+            comment.is_deleted = True
+            comment.save(update_fields=['is_deleted'])
+        else:
+            comment.delete()
+            
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
