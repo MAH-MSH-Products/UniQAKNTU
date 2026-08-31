@@ -10,8 +10,8 @@ User = get_user_model()
 class SupportViewsTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.student = User.objects.create_user(username='student1', password='pwd')
-        self.admin = User.objects.create_user(username='admin1', password='pwd', role='ADMIN')
+        self.student = User.objects.create_user(username='student1', email='student1@test.com', password='pwd')
+        self.admin = User.objects.create_user(username='admin1', email='admin1@test.com', password='pwd', role='ADMIN')
 
     def test_create_ticket(self):
         self.client.force_authenticate(user=self.student)
