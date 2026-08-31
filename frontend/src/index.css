@@ -6,7 +6,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 /* IRANYekan Medium */
 @font-face {
   font-family: 'IRANYekan';
@@ -15,7 +14,6 @@
   font-style: normal;
   font-display: swap;
 }
-
 /* IRANYekan Bold */
 @font-face {
   font-family: 'IRANYekan';
@@ -25,58 +23,83 @@
   font-display: swap;
 }
 
-/* Cube Font */
-@font-face {
-  font-family: 'Cube';
-  src: url('./assets/fonts/cube.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+:root {
+  /* ==========================================
+     LIGHT MODE (حالت روز)
+     ========================================== */
+  --bg-body: #F4F5F7;         
+  --bg-card: #FFFFFF;         
+  --bg-input: #FFFFFF;        
+  --bg-hover: #E9ECEF;        
+  
+  --text-main: #212529;       
+  --text-muted: #6C757D;      
+  --text-inverse: #FFFFFF;    
+  
+  --border-color: #DEE2E6;    
+  --border-dark: #CED4DA;     
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04); 
+  --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.08);
+  
+  --primary-blue: #0A95FF;    
+  --primary-hover: #0074CC;   
+  --accent-orange: #F48024;   
+  
+  --nav-bg: #FFFFFF;
+  --sidebar-bg: #F8F9FA;
+  --nav-border: #DEE2E6;
+  
+  --footer-bg: #18191A;       
+  --footer-text: #B0B3B8;     
+  --footer-heading: #FFFFFF;  
+  --footer-border: #3A3B3C;   
+
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --transition: all 0.2s ease-in-out;
+  
+  --font-primary: 'IRANYekan', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  --bs-body-bg: var(--bg-body);
+  --bs-body-color: var(--text-main);
+  --bs-primary: var(--primary-blue);
+  --bs-border-color: var(--border-color);
+  --bs-card-bg: var(--bg-card);
 }
 
-:root {
-  /* Professional Academic Color Palette */
-  --primary-color: #0A2540;      /* Deep Blue - Primary brand color */
-  --secondary-color: #17A2B8;    /* Cyan/Teal - Secondary accent color */
-  --background-color: #F4F5F7;   /* Light Gray - Main background */
-  --card-background: #FFFFFF;    /* White - Card backgrounds */
-  --border-color: #E0E0E0;       /* Light border */
-  --text-primary: #0A2540;       /* Deep Blue for headings */
-  --text-secondary: #5C6B7F;     /* Muted text */
-  --text-light: #8B98A5;         /* Light muted text */
-  --hover-shadow: 0 4px 12px rgba(10, 37, 64, 0.15);
-  --transition: all 0.2s ease-in-out;
-
-  /* Gradient Variables */
-  --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  --gradient-subtle: linear-gradient(135deg, rgba(10, 37, 64, 0.05), rgba(23, 162, 184, 0.05));
+[data-theme="dark"] {
+  /* ==========================================
+     DARK MODE (حالت شب - معکوس کامل، تیره و یکدست)
+     ========================================== */
+  --bg-body: #121212 !important;         
+  --bg-card: #1E1E1E !important;         
+  --bg-input: #2A2B2D !important;        
+  --bg-hover: #2C2D30 !important;        
   
-  /* Advanced Auth & Hero Gradients */
-  --auth-gradient: linear-gradient(135deg, #4A90E2 0%, #003366 100%);
-  --hero-gradient: linear-gradient(135deg, #F9D423 0%, #FF4E50 100%);
-  --hero-gradient-overlay: linear-gradient(135deg, rgba(74, 144, 226, 0.9) 0%, rgba(0, 51, 102, 0.9) 100%);
+  --text-main: #E4E6EB !important;       
+  --text-muted: #B0B3B8 !important;      
+  --text-inverse: #121212 !important;    
   
-  /* Font Variables */
-  --font-primary: 'IRANYekan', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-secondary: 'Cube', sans-serif;
-
-  /* OVERRIDE BOOTSTRAP DEFAULT FONTS */
-  --bs-body-font-family: var(--font-primary);
-  --bs-font-sans-serif: var(--font-primary);
-
-  /* خط پایین (font-family: Inter...) حذف شد تا تداخل ایجاد نکند */
-  letter-spacing: 0.18px;
-  color-scheme: light;
-  background: var(--background-color);
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1.5;
+  --border-color: #3A3B3C !important;    
+  --border-dark: #4E4F50 !important;     
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.6);
+  
+  --primary-blue: #3B82F6;
+  --primary-hover: #60A5FA;
+  --accent-orange: #F97316;
+  
+  --nav-bg: #18191A !important;
+  --sidebar-bg: #18191A !important;
+  --nav-border: #3A3B3C !important;
 }
 
 body {
   margin: 0;
-  background-color: var(--background-color);
-  font-family: var(--font-primary) !important; /* Force override for all elements */
+  background-color: var(--bg-body) !important;
+  color: var(--text-main) !important;
+  font-family: var(--font-primary) !important;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 #root {
@@ -85,327 +108,344 @@ body {
 }
 
 /* ============================================
-   Auth Container - Full Screen Gradient Layout
+   Dark Mode Universal Overrides (معکوس کردن اجباری المان‌ها)
    ============================================ */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .card,
+[data-theme="dark"] .academic-card,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .dropdown-menu,
+[data-theme="dark"] .list-group-item,
+[data-theme="dark"] .accordion-item,
+[data-theme="dark"] .accordion-button,
+[data-theme="dark"] .table,
+[data-theme="dark"] .table-light,
+[data-theme="dark"] .preview-pane,
+[data-theme="dark"] textarea {
+  background-color: var(--bg-card) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] tr, [data-theme="dark"] th, [data-theme="dark"] td {
+  background-color: transparent !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .table-light {
+  background-color: var(--bg-hover) !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: var(--text-main) !important;
+}
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-inverse) !important;
+}
+
+[data-theme="dark"] .accordion-button:not(.collapsed) {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .bg-light {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .text-dark,
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, 
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
+[data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] label,
+[data-theme="dark"] th, [data-theme="dark"] td {
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* رفع مشکل دکمه درخواست نقش استادی (Day & Dark) */
+.home-cta-btn {
+  background-color: #FFFFFF;
+  color: #212529 !important; /* متن مشکی در حالت شب */
+  border: none;
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+[data-theme="dark"] .home-cta-btn {
+  background-color: #FFFFFF !important;
+  color: #000000 !important; /* متن کاملاً مشکی در حالت شب */
+}
+
+/* در حالت Day mode دکمه کمی طوسی روشن شود */
+html:not([data-theme="dark"]) .home-cta-btn {
+  background-color: #E2E8F0 !important; 
+  color: #1E293B !important;
+}
+
+/* رفع مشکل متن بنر خانه در حالت روز (تضمین خوانایی) */
+.home-cta-banner {
+  background: var(--primary-blue);
+  color: #FFFFFF !important;
+}
+.home-cta-banner h3, .home-cta-banner p {
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] .home-cta-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+[data-theme="dark"] .home-cta-banner h3, [data-theme="dark"] .home-cta-banner p {
+  color: var(--text-main) !important;
+}
+
+/* Links & Interactive Text */
+a {
+  color: var(--primary-blue);
+  text-decoration: none;
+  transition: var(--transition);
+}
+a:hover {
+  color: var(--primary-hover);
+}
+
+/* Hover & Transitions (حرکت رو به بالا) */
+a, button, .card, .academic-card, .list-group-item, .accordion-item {
+  transition: var(--transition);
+}
+
+a:hover, .btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.btn {
+  border-radius: var(--radius-md) !important;
+  font-weight: 500 !important;
+}
+
+.btn-primary {
+  background-color: var(--primary-blue) !important;
+  border-color: var(--primary-blue) !important;
+  color: var(--text-inverse) !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-outline-secondary {
+  color: var(--text-main) !important;
+  border-color: var(--border-dark) !important;
+}
+
+.btn-outline-secondary:hover:not(:disabled) {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-main) !important;
+}
+
+/* Input Fields & Textareas */
+.form-control, .form-select, .input-group-text, textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-dark) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.form-control:focus, .form-select:focus, textarea:focus {
+  border-color: var(--primary-blue) !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.25) !important;
+  background-color: var(--bg-input) !important;
+  color: var(--text-main) !important;
+}
+
+/* Cards & Layout */
+.card, .academic-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-main);
+}
+
+.academic-card:hover {
+  border-color: var(--accent-orange);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.card-header, .academic-card .card-header {
+  background-color: transparent !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 1rem 1.25rem;
+}
+
+/* Navbar & Sidebar */
+.custom-navbar {
+  background-color: var(--nav-bg) !important;
+  border-bottom: 1px solid var(--nav-border);
+  padding: 0.35rem 0 !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.sidebar {
+  background-color: var(--sidebar-bg) !important;
+  border-color: var(--nav-border) !important;
+}
+
+.nav-link {
+  color: var(--text-muted) !important;
+  padding: 0.5rem 0.75rem !important;
+  border-radius: var(--radius-md);
+}
+
+.nav-link:hover {
+  color: var(--text-main) !important;
+  background-color: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+/* Tabs */
+.coursera-tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+}
+
+.coursera-tab {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.coursera-tab:hover {
+  color: var(--text-main);
+  background-color: var(--bg-hover);
+}
+
+.coursera-tab-active {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent-orange);
+  color: var(--text-main);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Auth */
 .auth-container {
   min-height: 100vh;
   width: 100%;
-  background: var(--auth-gradient);
+  background-color: var(--bg-body);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  /* Account for absolute positioned navbar */
-  padding-top: 6rem;
+  padding-top: 4rem;
 }
 
 .auth-box {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 3rem;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  /* Additional top margin to prevent navbar overlap */
-  margin-top: 2rem;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
 }
 
 .auth-title {
-  color: white;
-  font-size: 2rem;
+  color: var(--text-main);
+  font-size: 1.5rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 2rem;
-  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
 }
 
 .auth-avatar {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  background-color: var(--bg-hover);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1.5rem;
-  color: white;
-  font-size: 2.5rem;
+  color: var(--primary-blue);
+  font-size: 1.5rem;
+  border: 1px solid var(--border-color);
 }
 
 .auth-input-group {
   position: relative;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .auth-input-icon {
   position: absolute;
-  left: 0;
+  left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 1.2rem;
+  color: var(--text-muted);
 }
 
 .auth-input {
   width: 100%;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-  color: white;
-  font-size: 1rem;
-  transition: var(--transition);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-dark);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.65rem 0.65rem 2.5rem;
+  color: var(--text-main);
+  font-size: 0.95rem;
 }
 
-.auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+html[dir="rtl"] .auth-input-icon {
+  left: auto;
+  right: 1rem;
 }
-
-.auth-input:focus {
-  outline: none;
-  border-bottom-color: white;
-}
-
-.auth-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
-}
-
-.auth-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.auth-checkbox input[type="checkbox"] {
-  accent-color: var(--primary-color);
-}
-
-.auth-link {
-  color: white;
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-.auth-link:hover {
-  text-decoration: underline;
-  color: rgba(255, 255, 255, 0.8);
+html[dir="rtl"] .auth-input {
+  padding: 0.65rem 2.5rem 0.65rem 0.65rem;
 }
 
 .auth-button {
   width: 100%;
-  padding: 0.875rem;
-  background: var(--primary-color);
+  padding: 0.75rem;
+  background-color: var(--primary-blue);
   border: none;
-  border-radius: 8px;
-  color: white;
+  border-radius: var(--radius-md);
+  color: var(--text-inverse);
   font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 1px;
   cursor: pointer;
-  transition: var(--transition);
 }
 
 .auth-button:hover:not(:disabled) {
-  background: #0d3358;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.auth-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.auth-footer {
-  text-align: center;
-  margin-top: 1.5rem;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
-}
-
-.auth-footer a {
-  color: white;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.auth-footer a:hover {
-  text-decoration: underline;
-}
-
-.auth-error {
-  background: rgba(255, 78, 80, 0.2);
-  border: 1px solid rgba(255, 78, 80, 0.5);
-  color: white;
-  padding: 0.75rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-/* ============================================
-   Global Utility Classes - Academic Theme
-   ============================================ */
-
-/**
- * Background Gradient Utilities
- */
-.bg-gradient-primary {
-  background: var(--gradient-primary);
-}
-
-.bg-gradient-subtle {
-  background: var(--gradient-subtle);
-}
-
-/**
- * Academic Card Component
- * Clean white card with subtle border and hover shadow effect
- * Usage: Add className="academic-card" to any container
- */
-.academic-card {
-  background: var(--card-background);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1.25rem;
-  transition: var(--transition);
-}
-
-.academic-card:hover {
-  box-shadow: var(--hover-shadow);
+  background-color: var(--primary-hover);
   transform: translateY(-2px);
 }
 
-/**
- * Coursera-Style Tabs Container
- * Horizontal tab navigation with clean separators
- */
-.coursera-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 2px solid var(--border-color);
-  margin-bottom: 1.5rem;
-}
-
-/**
- * Coursera-Style Tab (Inactive State)
- * Gray text, transparent background, no border
- */
-.coursera-tab {
-  padding: 0.75rem 1.5rem;
-  background: transparent;
-  border: none;
-  border-bottom: 3px solid transparent;
-  color: var(--text-light);
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 0.95rem;
-}
-
-.coursera-tab:hover {
-  color: var(--secondary-color);
-  background: rgba(23, 162, 184, 0.05);
-}
-
-/**
- * Coursera-Style Tab (Active State)
- * Primary color text, bold, thick bottom border
- */
-.coursera-tab-active {
-  padding: 0.75rem 1.5rem;
-  background: transparent;
-  border: none;
-  border-bottom: 3px solid var(--primary-color);
-  color: var(--primary-color);
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 0.95rem;
-}
-
-/**
- * Page Heading - Academic Style
- */
-.page-heading {
-  color: var(--primary-color);
-  font-size: 1.75rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-/**
- * Section Title
- */
-.section-title {
-  color: var(--primary-color);
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/**
- * Widget Panel Styles
- */
+/* Widgets */
 .widget-panel {
-  background: var(--card-background);
+  background-color: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1rem;
-  margin-bottom: 1rem;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
 }
-
-.widget-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.widget-item:last-child {
-  border-bottom: none;
-}
-
-.widget-icon {
-  color: var(--secondary-color);
-  font-size: 1.2rem;
-  flex-shrink: 0;
-}
-
-.widget-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.widget-title {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0 0 0.25rem 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.widget-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-light);
-  margin: 0;
-}
-
-
-.font-cube {
-  font-family: var(--font-secondary);
+.widget-item:hover {
+  background-color: var(--bg-hover);
+  transform: translateY(-1px);
 }
