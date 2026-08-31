@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -11,7 +12,6 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -31,9 +31,9 @@ const Login = () => {
     if (result.success) {
       navigate('/');
     } else {
-      // Redirect to verification if email is unverified
       if (result.error === 'email_not_verified') {
-        navigate('/verify-email', { state: { email: identifier.includes('@') ? identifier : '' } });
+        // Here we send autoSendOtp: true to trigger OTP generation in VerifyEmail
+        navigate('/verify-email', { state: { email: identifier.includes('@') ? identifier : '', autoSendOtp: true } });
       } else {
         setError(result.error);
       }
