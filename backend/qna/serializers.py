@@ -31,11 +31,26 @@ class CommentSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
     updated_at_jalali = JalaliDateTimeField(source='updated_at', read_only=True)
     author_name = serializers.CharField(source='author.username', read_only=True)
+    replies = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
-        fields = ['id', 'author', 'author_name', 'body', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
-        read_only_fields = ['author']
+        fields = ['id', 'author', 'author_name', 'body', 'parent', 'replies', 'is_deleted', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        read_only_fields = ['author', 'is_deleted']
+
+    @extend_schema_field(OpenApiTypes.ANY)
+    def get_replies(self, obj):
+        if obj.replies.exists():
+            return CommentSerializer(obj.replies.all(), many=True, context=self.context).data
+        return []
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_deleted:
+            data['body'] = "[Deleted]"
+            data['author'] = None
+            data['author_name'] = None
+        return data
 
 class QuestionSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)

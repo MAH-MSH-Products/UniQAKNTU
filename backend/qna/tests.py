@@ -8,8 +8,8 @@ from django.contrib.contenttypes.models import ContentType
 class QnAAPITests(APITestCase):
     def setUp(self):
         # Create users
-        self.student = User.objects.create_user(username='student', password='password', role=UserRole.STUDENT)
-        self.admin = User.objects.create_user(username='admin', password='password', role=UserRole.ADMIN)
+        self.student = User.objects.create_user(username='student', email='student@test.com', password='password', role=UserRole.STUDENT)
+        self.admin = User.objects.create_user(username='admin', email='admin@test.com', password='password', role=UserRole.ADMIN)
 
         # Create initial data
         self.question = Question.objects.create(
@@ -108,7 +108,7 @@ class QnAAPITests(APITestCase):
         # Student creates a pending post
         pending_question_own = Question.objects.create(author=self.student, title='P', body='P', status=PostStatus.PENDING)
         # Another student creates a pending post
-        other_student = User.objects.create_user(username='other', password='password', role=UserRole.STUDENT)
+        other_student = User.objects.create_user(username='other', email='other@test.com', password='password', role=UserRole.STUDENT)
         pending_question_other = Question.objects.create(author=other_student, title='O', body='O', status=PostStatus.PENDING)
         
         # Unauthenticated user should only see approved
@@ -208,3 +208,52 @@ class QnAAPITests(APITestCase):
         self.assertFalse(FileAttachment.objects.filter(id=a1_id).exists())
         self.assertTrue(FileAttachment.objects.filter(id=a2_id).exists())
 
+    def test_is_official_flag(self):
+        # Admin creates official question
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post('/api/questions/', {'title': 'Official Q', 'body': '...', 'is_official': True})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data['is_official'])
+        
+        # Student creates question with is_official=True, but it is ignored
+        self.client.force_authenticate(user=self.student)
+        response = self.client.post('/api/questions/', {'title': 'Sneaky Q', 'body': '...', 'is_official': True})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertFalse(response.data['is_official'])
+
+        # Test filtering
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get('/api/questions/?is_official=true')
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['title'], 'Official Q')
+
+    def test_comment_replies_and_soft_delete(self):
+        self.client.force_authenticate(user=self.student)
+        # Create top-level comment
+        url = f'/api/questions/{self.question.id}/comments/'
+        response = self.client.post(url, {'body': 'First comment'})
+        comment_id = response.data['id']
+        
+        # Create a reply
+        response = self.client.post(url, {'body': 'A reply', 'parent_id': comment_id})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        reply_id = response.data['id']
+        self.assertEqual(response.data['parent'], comment_id)
+        
+        # Test 1-level nesting (replying to a reply attaches to top-level)
+        response = self.client.post(url, {'body': 'Deep reply', 'parent_id': reply_id})
+        self.assertEqual(response.data['parent'], comment_id)  # Should point to top-level
+        
+        # Soft-delete the top-level comment
+        delete_url = f'/api/questions/{self.question.id}/comments/{comment_id}/'
+        response = self.client.delete(delete_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        
+        # Verify GET returns [Deleted] and hides author, but keeps replies
+        response = self.client.get(url)
+        comments = response.data
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0]['id'], comment_id)
+        self.assertEqual(comments[0]['body'], '[Deleted]')
+        self.assertIsNone(comments[0]['author'])
+        self.assertEqual(len(comments[0]['replies']), 2)

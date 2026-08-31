@@ -23,7 +23,7 @@ class PostActionMixin:
     @extend_schema(
         summary="Get or create comments for this post",
         methods=['GET', 'POST'],
-        request=inline_serializer("CommentCreate", fields={"body": serializers.CharField()}),
+        request=inline_serializer("CommentCreate", fields={"body": serializers.CharField(), "parent_id": serializers.IntegerField(required=False)}),
         responses={200: CommentSerializer(many=True), 201: CommentSerializer}
     )
     @action(detail=True, methods=['get', 'post'], permission_classes=[permissions.IsAuthenticatedOrReadOnly])
@@ -32,15 +32,46 @@ class PostActionMixin:
         ctype = ContentType.objects.get_for_model(instance)
         
         if request.method == 'GET':
-            comments = Comment.objects.filter(content_type=ctype, object_id=instance.id).order_by('created_at')
-            return Response(CommentSerializer(comments, many=True).data)
+            comments = Comment.objects.filter(content_type=ctype, object_id=instance.id, parent__isnull=True).order_by('created_at')
+            return Response(CommentSerializer(comments, many=True, context={'request': request}).data)
             
         elif request.method == 'POST':
             body = request.data.get('body')
+            parent_id = request.data.get('parent_id')
             if not body:
                 return Response({"error": "body is required"}, status=status.HTTP_400_BAD_REQUEST)
-            comment = Comment.objects.create(author=request.user, body=body, content_type=ctype, object_id=instance.id)
-            return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+                
+            parent_comment = None
+            if parent_id:
+                try:
+                    parent_comment = Comment.objects.get(id=parent_id, content_type=ctype, object_id=instance.id)
+                    if parent_comment.parent_id:
+                        parent_comment = parent_comment.parent
+                except Comment.DoesNotExist:
+                    return Response({"error": "Invalid parent_id for this post"}, status=status.HTTP_400_BAD_REQUEST)
+                    
+            comment = Comment.objects.create(author=request.user, body=body, content_type=ctype, object_id=instance.id, parent=parent_comment)
+            return Response(CommentSerializer(comment, context={'request': request}).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="Soft delete a comment",
+        responses={204: None}
+    )
+    @action(detail=True, methods=['delete'], url_path=r'comments/(?P<comment_id>\d+)', permission_classes=[permissions.IsAuthenticated])
+    def delete_comment(self, request, pk=None, comment_id=None):
+        instance = self.get_object()
+        ctype = ContentType.objects.get_for_model(instance)
+        try:
+            comment = Comment.objects.get(id=comment_id, content_type=ctype, object_id=instance.id)
+        except Comment.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+            
+        if comment.author != request.user and not (request.user.is_moderator() or request.user.is_admin()):
+            raise PermissionDenied("You can only delete your own comments.")
+            
+        comment.is_deleted = True
+        comment.save(update_fields=['is_deleted'])
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         summary="Vote on this post",
