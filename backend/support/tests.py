@@ -8,7 +8,7 @@ User = get_user_model()
 
 class SupportModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='pwd')
+        self.user = User.objects.create_user(username='testuser', email='testuser@test.com', password='pwd')
         self.ticket = Ticket.objects.create(
             author=self.user,
             title='Need help with login',

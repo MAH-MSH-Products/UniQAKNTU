@@ -30,8 +30,8 @@ User = get_user_model()
 
 class TagAPITests(APITestCase):
     def setUp(self):
-        self.admin = User.objects.create_user(username='admin', password='password', role=UserRole.ADMIN)
-        self.student = User.objects.create_user(username='student', password='password', role=UserRole.STUDENT)
+        self.admin = User.objects.create_user(username='admin', email='admin@test.com', password='password', role=UserRole.ADMIN)
+        self.student = User.objects.create_user(username='student', email='student@test.com', password='password', role=UserRole.STUDENT)
         self.cat = TagCategory.objects.create(name='Subject')
 
     def test_tag_creation_permissions(self):
