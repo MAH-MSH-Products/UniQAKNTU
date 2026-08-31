@@ -98,7 +98,9 @@
     "suggest_edit": "Suggest Edit",
     "submitting": "Submitting...",
     "no_data": "No data available",
-    "back": "Back"
+    "back": "Back",
+    "reply": "Reply",
+    "deleted_comment": "[Deleted]"
   },
   "pages": {
     "courses": "Courses Page",
@@ -171,7 +173,8 @@
     "no_exam_id": "No exam ID provided. Please navigate from a source material.",
     "no_questions": "No questions available for this exam yet.",
     "vote_error": "Failed to vote. Please try again.",
-    "loading": "Loading questions..."
+    "loading": "Loading questions...",
+    "official": "Official"
   },
   "answers": {
     "vote_error": "Failed to vote. Please try again.",
@@ -182,7 +185,7 @@
     "accepted": "Accepted Answer",
     "download_pdf": "View/Download PDF",
     "accept": "Accept",
-    "submit_success": "Answer submitted successfully! Pending approval.",
+    "submit_success": "Answer submitted successfully!",
     "submit_failed": "Failed to submit answer:",
     "submit_instructor_answer": "Submit Your Answer",
     "attached_files": "Attached Files:",
@@ -234,6 +237,7 @@
     "pending_questions": "Pending Questions",
     "pending_answers": "Pending Answers",
     "suggested_edits": "Suggested Edits",
+    "users_management": "Users",
     "no_items": "No items found.",
     "th_id": "ID",
     "th_user": "User",
@@ -244,6 +248,7 @@
     "th_action": "Action",
     "th_body": "Body",
     "th_question_id": "Question ID",
+    "th_role": "Role",
     "target_item": "Target Item",
     "proposed_text": "Proposed Text",
     "btn_view": "View",

@@ -98,7 +98,9 @@
     "suggest_edit": "پیشنهاد ویرایش",
     "submitting": "در حال ثبت...",
     "no_data": "داده‌ای یافت نشد",
-    "back": "بازگشت"
+    "back": "بازگشت",
+    "reply": "پاسخ",
+    "deleted_comment": "[حذف شده]"
   },
   "pages": {
     "courses": "صفحه درس‌ها",
@@ -171,7 +173,8 @@
     "no_exam_id": "شناسه امتحانی وارد نشده است. لطفاً از طریق منابع درسی اقدام کنید.",
     "no_questions": "هنوز سوالی برای این امتحان ثبت نشده است.",
     "vote_error": "ثبت رای با خطا مواجه شد.",
-    "loading": "در حال بارگذاری سوالات..."
+    "loading": "در حال بارگذاری سوالات...",
+    "official": "رسمی"
   },
   "answers": {
     "vote_error": "ثبت رای با خطا مواجه شد.",
@@ -182,7 +185,7 @@
     "accepted": "جواب تایید شده (توسط طراح)",
     "download_pdf": "مشاهده/دانلود PDF",
     "accept": "پذیرش این جواب",
-    "submit_success": "جواب با موفقیت ثبت شد! در انتظار بررسی.",
+    "submit_success": "جواب با موفقیت ثبت شد!",
     "submit_failed": "خطا در ثبت جواب:",
     "submit_instructor_answer": "جواب خود را بنویسید",
     "attached_files": "فایل‌های پیوست:",
@@ -234,6 +237,7 @@
     "pending_questions": "سوالات در انتظار",
     "pending_answers": "جواب‌های در انتظار",
     "suggested_edits": "پیشنهادات ویرایش",
+    "users_management": "کاربران",
     "no_items": "موردی یافت نشد.",
     "th_id": "شناسه (ID)",
     "th_user": "کاربر",
@@ -244,6 +248,7 @@
     "th_action": "عملیات",
     "th_body": "متن / محتوا",
     "th_question_id": "شناسه سوال",
+    "th_role": "نقش",
     "target_item": "پست مورد نظر",
     "proposed_text": "متن پیشنهادی",
     "btn_view": "مشاهده",

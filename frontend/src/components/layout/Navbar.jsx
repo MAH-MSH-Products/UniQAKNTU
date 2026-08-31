@@ -5,16 +5,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTag, FiFileText, FiShield, FiSun, FiMoon } from 'react-icons/fi';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import logo from '../../assets/azHubNasir.png';
 
 const Navbar = () => {
-  const { user, isAuthenticated, logout, canModerate, userRole } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin, userRole } = useAuth(); // Changed canModerate to isAdmin
   const navigate = useNavigate();
-  const location = useLocation();
   const { t } = useTranslation();
   
-  // Theme State
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
@@ -47,13 +44,11 @@ const Navbar = () => {
   return (
     <nav className="navbar navbar-expand-lg custom-navbar py-1 position-sticky top-0" style={{ zIndex: 1030 }}>
       <div className="container-fluid">
-        {/* Branding with Logo */}
         <Link className="navbar-brand d-flex align-items-center" to="/">
           <img src={logo} alt="AzmoonHub Nasir" height="40" className="me-2" />
           <span className="fw-bold fs-5 text-dark d-none d-sm-inline">AzmoonHub</span>
         </Link>
         
-        {/* Toggle button for mobile */}
         <button className="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
           <span className="navbar-toggler-icon"></span>
         </button>
@@ -61,7 +56,6 @@ const Navbar = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto align-items-center">
             
-            {/* Theme Toggle Button */}
             <li className="nav-item me-2">
               <button 
                 onClick={toggleTheme} 
@@ -72,7 +66,6 @@ const Navbar = () => {
               </button>
             </li>
 
-            {/* Language Switcher */}
             <li className="nav-item me-3">
               <div className="btn-group btn-group-sm" role="group">
                 <button
@@ -112,7 +105,8 @@ const Navbar = () => {
                   </li>
                   <li><hr className="dropdown-divider" /></li>
                   
-                  {canModerate && (
+                  {/* Changed condition to isAdmin */}
+                  {isAdmin && (
                     <>
                       <li>
                         <Link className="dropdown-item d-flex align-items-center gap-2" to="/admin/support">

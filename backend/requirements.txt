@@ -31,3 +31,7 @@ django-cleanup>=8.1.0
 # Authentication Security
 django-axes>=6.5.0       # Brute-force / login lockout protection
 django-redis>=5.4.0      # Redis cache backend for OTP storage
+
+# Email Integration (Resend & Background Tasks)
+celery>=5.3.6
+django-anymail[resend]>=11.1
