@@ -9,7 +9,7 @@ User = get_user_model()
 class WidgetViewsTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username='testuser', password='pwd')
+        self.user = User.objects.create_user(username='testuser', email='testuser@test.com', password='pwd')
 
         # Create courses
         self.course1 = SourceMaterial.objects.create(title='Course 1')

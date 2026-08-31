@@ -3,6 +3,22 @@ from django.db import models
 import uuid
 
 
+from django.contrib.auth.models import UserManager as DefaultUserManager
+
+class UserManager(DefaultUserManager):
+    def create_superuser(self, username, email=None, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('role', UserRole.ADMIN)
+        extra_fields.setdefault('is_email_verified', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        return self._create_user(username, email, password, **extra_fields)
+
 class UserRole(models.TextChoices):
     STUDENT = 'STUDENT', 'Student'
     MODERATOR = 'MODERATOR', 'Moderator'
@@ -10,6 +26,8 @@ class UserRole(models.TextChoices):
 
 
 class User(AbstractUser):
+    objects = UserManager()
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     # Override email to enforce uniqueness at the database level
     email = models.EmailField(unique=True)

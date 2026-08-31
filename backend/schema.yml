@@ -28,6 +28,10 @@ paths:
         schema:
           type: string
           format: date-time
+      - in: query
+        name: is_official
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -259,6 +263,10 @@ paths:
           type: integer
         description: A unique integer value identifying this answer.
         required: true
+      - in: query
+        name: is_official
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -320,6 +328,10 @@ paths:
           type: integer
         description: A unique integer value identifying this answer.
         required: true
+      - in: query
+        name: is_official
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -363,6 +375,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Comment'
           description: ''
+  /api/answers/{id}/comments/{comment_id}/:
+    delete:
+      operationId: answers_comments_destroy
+      summary: Delete a comment (hard delete if no replies, soft delete otherwise)
+      parameters:
+      - in: path
+        name: comment_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this answer.
+        required: true
+      tags:
+      - answers
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/answers/{id}/reject/:
     post:
       operationId: answers_reject_create
@@ -897,6 +933,10 @@ paths:
         schema:
           type: string
           format: date-time
+      - in: query
+        name: is_official
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -1119,6 +1159,10 @@ paths:
           type: integer
         description: A unique integer value identifying this question.
         required: true
+      - in: query
+        name: is_official
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -1195,6 +1239,10 @@ paths:
           type: integer
         description: A unique integer value identifying this question.
         required: true
+      - in: query
+        name: is_official
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -1253,6 +1301,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Comment'
           description: ''
+  /api/questions/{id}/comments/{comment_id}/:
+    delete:
+      operationId: questions_comments_destroy
+      summary: Delete a comment (hard delete if no replies, soft delete otherwise)
+      parameters:
+      - in: path
+        name: comment_id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this question.
+        required: true
+      tags:
+      - questions
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/questions/{id}/reject/:
     post:
       operationId: questions_reject_create
@@ -2471,6 +2543,11 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        author_name:
+          type: string
+          readOnly: true
+        is_official:
+          type: boolean
         is_accepted:
           type: boolean
           readOnly: true
@@ -2503,6 +2580,7 @@ components:
       required:
       - attachments
       - author
+      - author_name
       - created_at
       - created_at_jalali
       - id
@@ -2630,6 +2708,14 @@ components:
           readOnly: true
         body:
           type: string
+        parent:
+          type: integer
+          nullable: true
+        replies:
+          readOnly: true
+        is_deleted:
+          type: boolean
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -2653,6 +2739,8 @@ components:
       - created_at
       - created_at_jalali
       - id
+      - is_deleted
+      - replies
       - updated_at
       - updated_at_jalali
     CommentCreate:
@@ -2660,6 +2748,8 @@ components:
       properties:
         body:
           type: string
+        parent_id:
+          type: integer
       required:
       - body
     ContentReport:
@@ -2801,13 +2891,13 @@ components:
     OtpTypeEnum:
       enum:
       - change_email
-      - verify_email
       - password_reset
+      - verify_email
       type: string
       description: |-
         * `change_email` - change_email
-        * `verify_email` - verify_email
         * `password_reset` - password_reset
+        * `verify_email` - verify_email
     PaginatedAdminContentReportList:
       type: object
       required:
@@ -3064,6 +3154,11 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        author_name:
+          type: string
+          readOnly: true
+        is_official:
+          type: boolean
         is_accepted:
           type: boolean
           readOnly: true
@@ -3149,6 +3244,11 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        author_name:
+          type: string
+          readOnly: true
+        is_official:
+          type: boolean
         tags:
           type: array
           items:
@@ -3279,6 +3379,11 @@ components:
           format: uuid
           readOnly: true
           nullable: true
+        author_name:
+          type: string
+          readOnly: true
+        is_official:
+          type: boolean
         tags:
           type: array
           items:
@@ -3318,6 +3423,7 @@ components:
       required:
       - attachments
       - author
+      - author_name
       - created_at
       - created_at_jalali
       - id
@@ -3435,8 +3541,8 @@ components:
             Type of OTP to send: "verify_email" or "password_reset".
 
             * `change_email` - change_email
-            * `verify_email` - verify_email
             * `password_reset` - password_reset
+            * `verify_email` - verify_email
       required:
       - email
       - otp_type
@@ -3534,6 +3640,9 @@ components:
           type: string
           format: uuid
           readOnly: true
+        author_name:
+          type: string
+          readOnly: true
         attachments:
           type: array
           items:
@@ -3550,6 +3659,7 @@ components:
       required:
       - attachments
       - author
+      - author_name
       - created_at
       - created_at_jalali
       - id

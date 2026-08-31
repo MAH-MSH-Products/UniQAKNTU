@@ -31,6 +31,8 @@ class FileAttachment(models.Model):
 class Comment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     body = models.TextField()
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='replies')
+    is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -68,6 +70,7 @@ class Question(models.Model):
     score = models.IntegerField(default=0)
     status = models.CharField(max_length=15, choices=PostStatus.choices, default=PostStatus.PENDING)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='questions')
+    is_official = models.BooleanField(default=False)
     tags = models.ManyToManyField(Tag, blank=True, related_name='questions')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -88,6 +91,7 @@ class Answer(models.Model):
     score = models.IntegerField(default=0)
     status = models.CharField(max_length=15, choices=PostStatus.choices, default=PostStatus.PENDING)
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='answers')
+    is_official = models.BooleanField(default=False)
     is_accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
