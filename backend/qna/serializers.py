@@ -48,8 +48,15 @@ class QuestionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Question
-        fields = ['id', 'source_material', 'title', 'body', 'score', 'user_vote', 'status', 'author', 'tags', 'tag_ids', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        fields = ['id', 'source_material', 'title', 'body', 'score', 'user_vote', 'status', 'author', 'is_official', 'tags', 'tag_ids', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
         read_only_fields = ['score', 'status', 'author']
+
+    def validate(self, attrs):
+        if 'is_official' in attrs:
+            request = self.context.get('request')
+            if not request or request.user.role not in ['ADMIN', 'MODERATOR']:
+                attrs.pop('is_official')
+        return attrs
 
     @extend_schema_field(OpenApiTypes.INT)
     def get_user_vote(self, obj):
@@ -117,8 +124,15 @@ class AnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Answer
-        fields = ['id', 'question', 'body', 'score', 'user_vote', 'status', 'author', 'is_accepted', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        fields = ['id', 'question', 'body', 'score', 'user_vote', 'status', 'author', 'is_official', 'is_accepted', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
         read_only_fields = ['score', 'status', 'author', 'is_accepted']
+
+    def validate(self, attrs):
+        if 'is_official' in attrs:
+            request = self.context.get('request')
+            if not request or request.user.role not in ['ADMIN', 'MODERATOR']:
+                attrs.pop('is_official')
+        return attrs
 
     def create(self, validated_data):
         attachment_ids = validated_data.pop('attachment_ids', [])
