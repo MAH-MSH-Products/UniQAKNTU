@@ -55,6 +55,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class QuestionSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
     updated_at_jalali = JalaliDateTimeField(source='updated_at', read_only=True)
+    author_name = serializers.CharField(source='author.username', read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     attachments = FileAttachmentSerializer(many=True, read_only=True)
     user_vote = serializers.SerializerMethodField()
@@ -63,7 +64,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Question
-        fields = ['id', 'source_material', 'title', 'body', 'score', 'user_vote', 'status', 'author', 'is_official', 'tags', 'tag_ids', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        fields = ['id', 'source_material', 'title', 'body', 'score', 'user_vote', 'status', 'author', 'author_name', 'is_official', 'tags', 'tag_ids', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
         read_only_fields = ['score', 'status', 'author']
 
     def validate(self, attrs):
@@ -133,13 +134,14 @@ class QuestionSerializer(serializers.ModelSerializer):
 class AnswerSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
     updated_at_jalali = JalaliDateTimeField(source='updated_at', read_only=True)
+    author_name = serializers.CharField(source='author.username', read_only=True)
     attachments = FileAttachmentSerializer(many=True, read_only=True)
     user_vote = serializers.SerializerMethodField()
     attachment_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True, required=False)
 
     class Meta:
         model = Answer
-        fields = ['id', 'question', 'body', 'score', 'user_vote', 'status', 'author', 'is_official', 'is_accepted', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
+        fields = ['id', 'question', 'body', 'score', 'user_vote', 'status', 'author', 'author_name', 'is_official', 'is_accepted', 'attachments', 'attachment_ids', 'created_at', 'created_at_jalali', 'updated_at', 'updated_at_jalali']
         read_only_fields = ['score', 'status', 'author', 'is_accepted']
 
     def validate(self, attrs):
@@ -190,13 +192,14 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class SuggestedEditSerializer(serializers.ModelSerializer):
     created_at_jalali = JalaliDateTimeField(source='created_at', read_only=True)
+    author_name = serializers.CharField(source='author.username', read_only=True)
     attachments = FileAttachmentSerializer(many=True, read_only=True)
     target_type = serializers.SerializerMethodField()
     target_id = serializers.IntegerField(source='object_id', read_only=True)
     
     class Meta:
         model = SuggestedEdit
-        fields = ['id', 'target_type', 'target_id', 'proposed_text', 'removed_attachment_ids', 'status', 'author', 'attachments', 'created_at', 'created_at_jalali']
+        fields = ['id', 'target_type', 'target_id', 'proposed_text', 'removed_attachment_ids', 'status', 'author', 'author_name', 'attachments', 'created_at', 'created_at_jalali']
         read_only_fields = ['status', 'author']
 
     @extend_schema_field(serializers.ChoiceField(choices=['question', 'answer']))
