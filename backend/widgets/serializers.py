@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from qna.models import Answer, SourceMaterial
-import jdatetime
+from core.utils import format_localized_date
 
 class WidgetAnswerSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source='question.title', read_only=True)
@@ -13,10 +13,7 @@ class WidgetAnswerSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'course', 'author', 'date']
 
     def get_date(self, obj):
-        if obj.created_at:
-            jdate = jdatetime.datetime.fromgregorian(datetime=obj.created_at)
-            return jdate.strftime('%Y/%m/%d')
-        return None
+        return format_localized_date(obj.created_at)
 
 class WidgetCourseSerializer(serializers.ModelSerializer):
     date = serializers.SerializerMethodField()
@@ -27,8 +24,6 @@ class WidgetCourseSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'date', 'questions_count']
 
     def get_date(self, obj):
-        if obj.created_at:
-            jdate = jdatetime.datetime.fromgregorian(datetime=obj.created_at)
-            return jdate.strftime('%Y/%m/%d')
-        return None
+        return format_localized_date(obj.created_at)
+
 
