@@ -2,6 +2,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.utils.translation import gettext as _
 from users.permissions import IsAdminUser
 from .models import Ticket, ContentReport, TicketStatus
 from .serializers import (
@@ -27,7 +28,7 @@ class TicketViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.L
     def reply(self, request, pk=None):
         ticket = self.get_object()
         if ticket.status == TicketStatus.CLOSED:
-            return Response({'detail': 'Cannot reply to a closed ticket.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('Cannot reply to a closed ticket.')}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -75,7 +76,7 @@ class AdminTicketViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, views
     def reply(self, request, pk=None):
         ticket = self.get_object()
         if ticket.status == TicketStatus.CLOSED:
-            return Response({'detail': 'Cannot reply to a closed ticket.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': _('Cannot reply to a closed ticket.')}, status=status.HTTP_400_BAD_REQUEST)
             
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

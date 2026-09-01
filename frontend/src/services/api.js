@@ -16,6 +16,8 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const currentLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+    config.headers['Accept-Language'] = currentLang;
     return config;
   },
   (error) => {

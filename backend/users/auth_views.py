@@ -19,6 +19,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from .models import User
@@ -83,7 +84,7 @@ class RegisterView(APIView):
         send_otp_email(user, OTPType.VERIFY_EMAIL, otp)
 
         return Response(
-            {'detail': 'Registration successful. A verification code has been sent to your email.'},
+            {'detail': _('Registration successful. A verification code has been sent to your email.')},
             status=status.HTTP_201_CREATED,
         )
 
@@ -114,7 +115,7 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
 
-        # Run validation â€” catch the unverified-email case specifically so we can
+        # Run validation — catch the unverified-email case specifically so we can
         # return a structured 403 that the frontend can act on (redirect to verify flow).
         try:
             serializer.is_valid(raise_exception=True)
@@ -176,7 +177,7 @@ class LogoutView(APIView):
             token.blacklist()
         except TokenError:
             return Response(
-                {'detail': 'Invalid or expired token.'},
+                {'detail': _('Invalid or expired token.')},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -202,7 +203,7 @@ class VerifyEmailView(APIView):
             400: OpenApiResponse(description='Invalid OTP.'),
             404: OpenApiResponse(description='No account with this email.'),
             410: OpenApiResponse(description='OTP expired or already used.'),
-            429: OpenApiResponse(description='Too many wrong attempts â€” code invalidated.'),
+            429: OpenApiResponse(description='Too many wrong attempts — code invalidated.'),
         },
     )
     def post(self, request):
@@ -216,13 +217,13 @@ class VerifyEmailView(APIView):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(
-                {'detail': 'No account found with this email address.'},
+                {'detail': _('No account found with this email address.')},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         if user.is_email_verified:
             return Response(
-                {'detail': 'This email address is already verified.'},
+                {'detail': _('This email address is already verified.')},
                 status=status.HTTP_200_OK,
             )
 
@@ -232,14 +233,14 @@ class VerifyEmailView(APIView):
             user.is_email_verified = True
             user.save(update_fields=['is_email_verified'])
             return Response(
-                {'detail': 'Email verified successfully. You can now log in.'},
+                {'detail': _('Email verified successfully. You can now log in.')},
                 status=status.HTTP_200_OK,
             )
 
         if result == OTPVerifyResult.LOCKED:
             return Response(
                 {
-                    'detail': (
+                    'detail': _(
                         'Too many incorrect attempts. Your verification code has been '
                         'invalidated. Please request a new one.'
                     )
@@ -249,13 +250,13 @@ class VerifyEmailView(APIView):
 
         if result == OTPVerifyResult.EXPIRED:
             return Response(
-                {'detail': 'Verification code has expired or was already used. Please request a new one.'},
+                {'detail': _('Verification code has expired or was already used. Please request a new one.')},
                 status=status.HTTP_410_GONE,
             )
 
         # OTPVerifyResult.INVALID
         return Response(
-            {'detail': 'Invalid verification code. Please check and try again.'},
+            {'detail': _('Invalid verification code. Please check and try again.')},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -295,20 +296,20 @@ class SendOTPView(APIView):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(
-                {'detail': 'No account found with this email address.'},
+                {'detail': _('No account found with this email address.')},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         # Guard: block sending verification OTP to an already-verified account
         if otp_type == OTPType.VERIFY_EMAIL and user.is_email_verified:
             return Response(
-                {'detail': 'This email is already verified.'},
+                {'detail': _('This email is already verified.')},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not can_resend(user.id, otp_type):
             return Response(
-                {'detail': 'You have requested too many codes. Please try again in an hour.'},
+                {'detail': _('You have requested too many codes. Please try again in an hour.')},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
@@ -318,9 +319,10 @@ class SendOTPView(APIView):
         send_otp_email(user, otp_type, otp)
 
         return Response(
-            {'detail': 'A new code has been sent to your email address.'},
+            {'detail': _('A new code has been sent to your email address.')},
             status=status.HTTP_200_OK,
         )
+
 
 
 
@@ -359,7 +361,7 @@ class ResetPasswordView(APIView):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response(
-                {'detail': 'No account found with this email address.'},
+                {'detail': _('No account found with this email address.')},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -369,14 +371,14 @@ class ResetPasswordView(APIView):
             user.set_password(new_password)
             user.save(update_fields=['password'])
             return Response(
-                {'detail': 'Password reset successfully. You can now log in with your new password.'},
+                {'detail': _('Password reset successfully. You can now log in with your new password.')},
                 status=status.HTTP_200_OK,
             )
 
         if result == OTPVerifyResult.LOCKED:
             return Response(
                 {
-                    'detail': (
+                    'detail': _(
                         'Too many incorrect attempts. Your reset code has been '
                         'invalidated. Please request a new one.'
                     )
@@ -386,13 +388,13 @@ class ResetPasswordView(APIView):
 
         if result == OTPVerifyResult.EXPIRED:
             return Response(
-                {'detail': 'Reset code has expired or was already used. Please request a new one.'},
+                {'detail': _('Reset code has expired or was already used. Please request a new one.')},
                 status=status.HTTP_410_GONE,
             )
 
         # OTPVerifyResult.INVALID
         return Response(
-            {'detail': 'Invalid reset code. Please check and try again.'},
+            {'detail': _('Invalid reset code. Please check and try again.')},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -454,7 +456,7 @@ class ChangePasswordView(APIView):
 
         if not check_sensitive_password(user, current_password):
             return Response(
-                {'detail': 'Current password is incorrect.'},
+                {'detail': _('Current password is incorrect.')},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -462,7 +464,7 @@ class ChangePasswordView(APIView):
         user.save(update_fields=['password'])
 
         return Response(
-            {'detail': 'Password changed successfully.'},
+            {'detail': _('Password changed successfully.')},
             status=status.HTTP_200_OK,
         )
 
@@ -498,19 +500,19 @@ class ChangeEmailRequestView(APIView):
 
         if not check_sensitive_password(user, current_password):
             return Response(
-                {'detail': 'Current password is incorrect.'},
+                {'detail': _('Current password is incorrect.')},
                 status=status.HTTP_400_BAD_REQUEST,
             )
             
         if new_email == user.email:
             return Response(
-                {'detail': 'The new email is the same as the current email.'},
+                {'detail': _('The new email is the same as the current email.')},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not can_resend(user.id, OTPType.CHANGE_EMAIL):
             return Response(
-                {'detail': 'You have requested too many codes. Please try again in an hour.'},
+                {'detail': _('You have requested too many codes. Please try again in an hour.')},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
@@ -525,7 +527,7 @@ class ChangeEmailRequestView(APIView):
         send_otp_email(user, OTPType.CHANGE_EMAIL, otp, to_email=new_email)
 
         return Response(
-            {'detail': 'A verification code has been sent to your new email address.'},
+            {'detail': _('A verification code has been sent to your new email address.')},
             status=status.HTTP_200_OK,
         )
 
@@ -558,7 +560,7 @@ class ChangeEmailVerifyView(APIView):
         new_email = get_pending_email(user.id)
         if not new_email:
             return Response(
-                {'detail': 'No pending email change request found or it has expired.'},
+                {'detail': _('No pending email change request found or it has expired.')},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -579,14 +581,14 @@ class ChangeEmailVerifyView(APIView):
             send_security_alert_email(user, old_email, new_email)
             
             return Response(
-                {'detail': 'Your email address has been successfully changed.'},
+                {'detail': _('Your email address has been successfully changed.')},
                 status=status.HTTP_200_OK,
             )
 
         if result == OTPVerifyResult.LOCKED:
             return Response(
                 {
-                    'detail': (
+                    'detail': _(
                         'Too many incorrect attempts. Your verification code has been '
                         'invalidated. Please request a new one.'
                     )
@@ -596,12 +598,12 @@ class ChangeEmailVerifyView(APIView):
 
         if result == OTPVerifyResult.EXPIRED:
             return Response(
-                {'detail': 'Verification code has expired or was already used. Please request a new one.'},
+                {'detail': _('Verification code has expired or was already used. Please request a new one.')},
                 status=status.HTTP_410_GONE,
             )
 
         # OTPVerifyResult.INVALID
         return Response(
-            {'detail': 'Invalid verification code. Please check and try again.'},
+            {'detail': _('Invalid verification code. Please check and try again.')},
             status=status.HTTP_400_BAD_REQUEST,
         )

@@ -1,0 +1,166 @@
+# Persian translation file for UniQAKNTU backend
+# Copyright (C) 2026 UniQAKNTU Team
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-01 21:00+0330\n"
+"PO-Revision-Date: 2026-09-01 21:00+0330\n"
+"Last-Translator: UniQAKNTU Team <support@uniqakntu.ir>\n"
+"Language-Team: Persian <fa@li.org>\n"
+"Language: fa\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "body is required"
+msgstr "متن پیام الزامی است"
+
+msgid "Invalid parent_id for this post"
+msgstr "شناسه والد برای این پست نامعتبر است"
+
+msgid "You can only delete your own comments."
+msgstr "شما فقط می‌توانید دیدگاه‌های خود را حذف کنید."
+
+msgid "value must be 1 or -1"
+msgstr "مقدار رای باید ۱ یا -۱ باشد"
+
+msgid "Vote recorded."
+msgstr "رای شما ثبت شد."
+
+msgid "Students cannot edit directly. Use the suggest-edit endpoint."
+msgstr "دانشجویان امکان ویرایش مستقیم ندارند. لطفاً از پیشنهاد ویرایش استفاده نمایید."
+
+msgid "Only admins and moderators can delete posts."
+msgstr "فقط مدیران و ناظران مجاز به حذف پست‌ها هستند."
+
+msgid "Question approved."
+msgstr "پرسش تایید شد."
+
+msgid "Question rejected."
+msgstr "پرسش رد شد."
+
+msgid "proposed_text is required"
+msgstr "متن پیشنهادی الزامی است"
+
+msgid "Edit submitted for admin approval."
+msgstr "پیشنهاد ویرایش جهت تایید مدیریت ارسال گردید."
+
+msgid "Answer approved."
+msgstr "پاسخ تایید شد."
+
+msgid "Answer rejected."
+msgstr "پاسخ رد شد."
+
+msgid "Only the author of the question can accept an answer."
+msgstr "تنها نویسنده پرسش می‌تواند پاسخی را به عنوان پاسخ منتخب تایید کند."
+
+msgid "Answer accepted."
+msgstr "پاسخ به عنوان پاسخ منتخب پذیرفته شد."
+
+msgid "Edit approved and applied."
+msgstr "پیشنهاد ویرایش تایید و اعمال شد."
+
+msgid "Edit rejected."
+msgstr "پیشنهاد ویرایش رد شد."
+
+msgid "Cannot reply to a closed ticket."
+msgstr "امکان ارسال پاسخ در تیکت بسته‌شده وجود ندارد."
+
+msgid "A user with this username already exists."
+msgstr "کاربری با این نام کاربری از قبل وجود دارد."
+
+msgid "A user with this email already exists."
+msgstr "کاربری با این ایمیل از قبل وجود دارد."
+
+msgid "Passwords do not match."
+msgstr "رمزهای عبور با یکدیگر مطابقت ندارند."
+
+msgid "Confirm password"
+msgstr "تکرار رمز عبور"
+
+msgid "Confirm new password"
+msgstr "تکرار رمز عبور جدید"
+
+msgid "Username or Email"
+msgstr "نام کاربری یا ایمیل"
+
+msgid "Enter your username or email address."
+msgstr "نام کاربری یا آدرس ایمیل خود را وارد کنید."
+
+msgid "Invalid credentials. Please check your username/email and password."
+msgstr "اطلاعات ورود نامعتبر است. لطفاً نام کاربری/ایمیل و رمز عبور خود را بررسی کنید."
+
+msgid "Email address is not verified. Please verify your email before logging in."
+msgstr "آدرس ایمیل تایید نشده است. لطفاً پیش از ورود، ایمیل خود را تایید کنید."
+
+msgid "This account has been disabled."
+msgstr "این حساب کاربری غیرفعال شده است."
+
+msgid "Registration successful. A verification code has been sent to your email."
+msgstr "ثبت‌نام با موفقیت انجام شد. کد تایید به ایمیل شما ارسال گردید."
+
+msgid "Invalid or expired token."
+msgstr "توکن نامعتبر یا منقضی شده است."
+
+msgid "No account found with this email address."
+msgstr "حسابی با این آدرس ایمیل یافت نشد."
+
+msgid "This email address is already verified."
+msgstr "این آدرس ایمیل از قبل تایید شده است."
+
+msgid "This email is already verified."
+msgstr "این ایمیل از قبل تایید شده است."
+
+msgid "Email verified successfully. You can now log in."
+msgstr "ایمیل با موفقیت تایید شد. اکنون می‌توانید وارد حساب خود شوید."
+
+msgid "Too many incorrect attempts. Your verification code has been invalidated. Please request a new one."
+msgstr "تعداد تلاش‌های ناموفق بیش از حد مجاز بود. کد تایید شما باطل شد، لطفاً کد جدیدی درخواست کنید."
+
+msgid "Too many incorrect attempts. Your reset code has been invalidated. Please request a new one."
+msgstr "تعداد تلاش‌های ناموفق بیش از حد مجاز بود. کد بازنشانی شما باطل شد، لطفاً کد جدیدی درخواست کنید."
+
+msgid "Verification code has expired or was already used. Please request a new one."
+msgstr "کد تایید منقضی شده یا قبلاً استفاده شده است. لطفاً کد جدیدی درخواست کنید."
+
+msgid "Reset code has expired or was already used. Please request a new one."
+msgstr "کد بازنشانی منقضی شده یا قبلاً استفاده شده است. لطفاً کد جدیدی درخواست کنید."
+
+msgid "Invalid verification code. Please check and try again."
+msgstr "کد تایید نامعتبر است. لطفاً بررسی و مجدداً تلاش نمایید."
+
+msgid "Invalid reset code. Please check and try again."
+msgstr "کد بازنشانی نامعتبر است. لطفاً بررسی و مجدداً تلاش نمایید."
+
+msgid "You have requested too many codes. Please try again in an hour."
+msgstr "شما بیش از حد مجاز کد درخواست کرده‌اید. لطفاً یک ساعت دیگر مجدداً تلاش کنید."
+
+msgid "A new code has been sent to your email address."
+msgstr "کد جدیدی به آدرس ایمیل شما ارسال گردید."
+
+msgid "Password reset successfully. You can now log in with your new password."
+msgstr "رمز عبور با موفقیت بازنشانی شد. اکنون می‌توانید با رمز عبور جدید وارد شوید."
+
+msgid "Current password is incorrect."
+msgstr "رمز عبور فعلی اشتباه است."
+
+msgid "Password changed successfully."
+msgstr "رمز عبور با موفقیت تغییر کرد."
+
+msgid "The new email is the same as the current email."
+msgstr "ایمیل جدید با ایمیل فعلی یکسان است."
+
+msgid "A verification code has been sent to your new email address."
+msgstr "کد تایید به آدرس ایمیل جدید شما ارسال شد."
+
+msgid "No pending email change request found or it has expired."
+msgstr "هیچ درخواست تغییر ایمیل فعالی یافت نشد یا منقضی شده است."
+
+msgid "Your email address has been successfully changed."
+msgstr "آدرس ایمیل شما با موفقیت تغییر یافت."
+
+msgid "The refresh token to blacklist."
+msgstr "توکن رفرش جهت قرار گرفتن در لیست سیاه."

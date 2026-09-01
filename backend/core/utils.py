@@ -44,3 +44,22 @@ class JalaliDateTimeField(serializers.DateTimeField):
             return timezone.make_aware(g_datetime, timezone.utc)
         except ValueError:
             self.fail('invalid')
+
+
+def format_localized_date(dt, lang=None):
+    """
+    Formats a date or datetime object according to the active language:
+    - If language starts with 'fa': Jalali format ('YYYY/MM/DD')
+    - Otherwise (e.g., 'en'): Gregorian format ('YYYY/MM/DD')
+    """
+    if not dt:
+        return None
+    from django.utils.translation import get_language
+    current_lang = lang or get_language() or 'en'
+    
+    if current_lang.startswith('fa'):
+        jdate = jdatetime.datetime.fromgregorian(datetime=dt) if hasattr(dt, 'hour') else jdatetime.date.fromgregorian(date=dt)
+        return jdate.strftime('%Y/%m/%d')
+    else:
+        return dt.strftime('%Y/%m/%d')
+
