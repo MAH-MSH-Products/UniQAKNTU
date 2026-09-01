@@ -2801,6 +2801,11 @@ components:
         file:
           type: string
           format: uri
+        relative_path:
+          type: string
+          readOnly: true
+          description: Use this relative path when inserting into Markdown to avoid
+            hardcoding domains.
         object_id:
           type: integer
           readOnly: true
@@ -2822,6 +2827,7 @@ components:
       - file
       - id
       - object_id
+      - relative_path
       - uploaded_at
       - uploaded_at_jalali
     Login:
@@ -2890,14 +2896,14 @@ components:
       - username
     OtpTypeEnum:
       enum:
-      - change_email
       - password_reset
       - verify_email
+      - change_email
       type: string
       description: |-
-        * `change_email` - change_email
         * `password_reset` - password_reset
         * `verify_email` - verify_email
+        * `change_email` - change_email
     PaginatedAdminContentReportList:
       type: object
       required:
@@ -3540,9 +3546,9 @@ components:
           description: |-
             Type of OTP to send: "verify_email" or "password_reset".
 
-            * `change_email` - change_email
             * `password_reset` - password_reset
             * `verify_email` - verify_email
+            * `change_email` - change_email
       required:
       - email
       - otp_type
