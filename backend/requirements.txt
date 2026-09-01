@@ -35,3 +35,6 @@ django-redis>=5.4.0      # Redis cache backend for OTP storage
 # Email Integration (Resend & Background Tasks)
 celery>=5.3.6
 django-anymail[resend]>=11.1
+
+# File Storage (S3 Integration)
+django-storages[boto3]>=1.14.2
