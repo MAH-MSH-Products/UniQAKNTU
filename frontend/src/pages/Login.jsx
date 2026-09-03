@@ -12,6 +12,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -31,9 +32,14 @@ const Login = () => {
     if (result.success) {
       navigate('/');
     } else {
+      // اگر حساب تایید نشده بود، به صفحه Verify می‌رویم و دستور ارسال خودکار کد را صادر می‌کنیم
       if (result.error === 'email_not_verified') {
-        // Here we send autoSendOtp: true to trigger OTP generation in VerifyEmail
-        navigate('/verify-email', { state: { email: identifier.includes('@') ? identifier : '', autoSendOtp: true } });
+        navigate('/verify-email', { 
+          state: { 
+            email: identifier.includes('@') ? identifier : '', 
+            autoSendOtp: true 
+          } 
+        });
       } else {
         setError(result.error);
       }
@@ -92,7 +98,7 @@ const Login = () => {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 disabled={isLoading}
               />
-              {t('login.remember_me', 'Remember me')}
+              <span className="ms-2">{t('login.remember_me', 'Remember me')}</span>
             </label>
             <Link to="/forgot-password" className="auth-link">
               {t('login.forgot_password', 'Forgot Password?')}

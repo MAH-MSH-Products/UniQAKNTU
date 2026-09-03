@@ -20,7 +20,7 @@ const VerifyEmail = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
-  // Automatically request OTP only if coming from Login with autoSendOtp flag
+  // ارسال خودکار کد فقط اگر از صفحه لاگین آمده باشد و ایمیل موجود باشد
   useEffect(() => {
     if (initialEmail && autoSendOtp) {
       handleResendInit(initialEmail);
@@ -34,7 +34,6 @@ const VerifyEmail = () => {
       setSuccessMsg(t('auth.otp_resent', 'A new verification code has been sent to your email.'));
     } catch (err) {
       console.error('Auto resend error:', err);
-      // It's okay if this fails silently on init, but we can show an error
       setError(err.response?.data?.detail || err.response?.data?.message || t('common.error', 'Failed to resend code.'));
     } finally {
       setIsResending(false);
@@ -96,7 +95,6 @@ const VerifyEmail = () => {
         
         <h2 className="auth-title mb-2 fs-3">{t('auth.verify_email', 'Verify Email')}</h2>
         
-        {/* Removed text-white-50 causing visibility issues */}
         <p className="text-center mb-4 text-muted small">
           {t('auth.verify_email_desc', 'Please enter the 6-digit code sent to your email address.')}
         </p>
@@ -149,10 +147,10 @@ const VerifyEmail = () => {
         </form>
 
         <div className="text-center mt-4 mb-2">
-          {/* Changed color from text-white-50 to text-muted to support dark/light modes */}
           <button 
             type="button" 
-            className="btn btn-link text-muted p-0 text-decoration-none small fw-bold"
+            className="btn btn-link p-0 text-decoration-none small fw-bold"
+            style={{ color: 'var(--text-main)' }}
             onClick={handleResend}
             disabled={isResending || isLoading || successMsg.includes('Redirecting')}
           >
