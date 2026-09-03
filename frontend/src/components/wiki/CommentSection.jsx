@@ -8,10 +8,11 @@ import { getAuthorDisplayName } from '../../services/utils';
 const CommentSection = ({ targetType, targetId }) => {
   const { user, isAuthenticated } = useAuth();
   const { t } = useTranslation();
+  
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
-  const [replyingTo, setReplyingTo] = useState(null); // ID of parent comment
+  const [replyingTo, setReplyingTo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -27,7 +28,7 @@ const CommentSection = ({ targetType, targetId }) => {
         setHasFetched(true);
       } catch (err) {
         console.error('Failed to fetch comments:', err);
-        setError('Failed to load comments');
+        setError(t('common.error'));
       } finally {
         setLoading(false);
       }
@@ -46,14 +47,13 @@ const CommentSection = ({ targetType, targetId }) => {
 
       await api.post(`/${targetType}/${targetId}/comments/`, payload);
       
-      // Full refresh to get the nested structure properly
       const response = await api.get(`/${targetType}/${targetId}/comments/`);
       setComments(response.data?.results || response.data || []);
       
       setNewComment('');
       setReplyingTo(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to post comment.');
+      setError(err.response?.data?.message || t('common.error'));
     } finally {
       setSubmitting(false);
     }
@@ -63,21 +63,23 @@ const CommentSection = ({ targetType, targetId }) => {
     if (!window.confirm(t('common.delete') + "?")) return;
     try {
       await api.delete(`/${targetType}/${targetId}/comments/${commentId}/`);
-      // Refresh tree
+      
+      // فراخوانی مجدد برای بروزرسانی درخت (حذف فیزیکی یا تبدیل به [Deleted])
       const response = await api.get(`/${targetType}/${targetId}/comments/`);
       setComments(response.data?.results || response.data || []);
     } catch (err) {
-      alert("Failed to delete comment.");
+      alert(t('common.error'));
     }
   };
 
   const renderComment = (comment, isReply = false) => {
     const isDeleted = comment.body === '[Deleted]' && !comment.author;
     const authorName = getAuthorDisplayName(comment.author, comment.author_name, user);
+    
     const isOwner = user?.id && (comment.author === user.id || comment.author?.id === user.id);
 
     return (
-      <div key={comment.id} className={`comment-item py-2 ${isReply ? 'ps-4 border-start border-2 ms-2 mt-1' : 'border-bottom'}`}>
+      <div key={comment.id} className={`comment-item py-2 ${isReply ? 'ps-4 border-start border-2 border-primary border-opacity-25 ms-2 mt-1' : 'border-bottom'}`}>
         <div className="d-flex justify-content-between align-items-center mb-1">
           <div>
             <strong className="text-primary" style={{ fontSize: '13px' }}>
@@ -102,16 +104,17 @@ const CommentSection = ({ targetType, targetId }) => {
                 className="btn btn-sm btn-link text-danger p-0" 
                 onClick={() => handleDeleteComment(comment.id)}
               >
-                <FiTrash2 size={12} />
+                <FiTrash2 size={13} />
               </button>
             )}
           </div>
         </div>
-        <div className={isDeleted ? "text-muted fst-italic" : "text-dark"} style={{ fontSize: '13px', lineHeight: '1.5' }}>
+        
+        <div className={isDeleted ? "text-muted fst-italic" : "text-dark"} style={{ fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
           {isDeleted ? t('common.deleted_comment') : comment.body}
         </div>
         
-        {/* Render Replies */}
+        {/* رندر کردن فرزندان (Replies) */}
         {!isReply && comment.replies && comment.replies.length > 0 && (
           <div className="replies-container mt-2">
             {comment.replies.map(reply => renderComment(reply, true))}
@@ -152,11 +155,11 @@ const CommentSection = ({ targetType, targetId }) => {
               )}
 
               {isAuthenticated ? (
-                <form onSubmit={handleSubmitComment} className="comment-form mt-2 p-2 bg-light rounded border">
+                <form onSubmit={handleSubmitComment} className="comment-form mt-2 p-2 bg-light rounded border border-dark border-opacity-10">
                   {replyingTo && (
-                    <div className="d-flex justify-content-between align-items-center mb-2 px-2 border-start border-primary border-3">
-                      <small className="text-muted">Replying to comment #{replyingTo}</small>
-                      <button type="button" className="btn-close" style={{width: '0.5em', height:'0.5em'}} onClick={() => setReplyingTo(null)}></button>
+                    <div className="d-flex justify-content-between align-items-center mb-2 px-2 border-start border-primary border-3 bg-white py-1">
+                      <small className="text-muted fw-bold">Replying to comment #{replyingTo}</small>
+                      <button type="button" className="btn-close" style={{width: '0.4em', height:'0.4em'}} onClick={() => setReplyingTo(null)}></button>
                     </div>
                   )}
                   <textarea
@@ -174,7 +177,10 @@ const CommentSection = ({ targetType, targetId }) => {
                   </div>
                 </form>
               ) : (
-                <div className="alert alert-warning py-2 mb-0 small">Please <a href="/login">login</a> to comment.</div>
+                <div className="alert alert-warning py-2 mb-0 small text-dark border-0">
+                  <i className="bi bi-lock me-1"></i>
+                  Please <a href="/login">login</a> to comment.
+                </div>
               )}
             </>
           )}
