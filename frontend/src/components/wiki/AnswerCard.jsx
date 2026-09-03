@@ -147,6 +147,7 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
             />
 
             <div className="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
+              {/* Accept Answer Button */}
               {isQuestionAuthor && !is_accepted && status === 'APPROVED' && (
                 <button className="btn btn-sm btn-outline-success d-flex align-items-center gap-1" onClick={handleAcceptAnswer} disabled={accepting}>
                   {accepting ? <span className="spinner-border spinner-border-sm"></span> : <FiCheckCircle />}
@@ -156,11 +157,11 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
 
               {(isAnswerAuthor || canModerate) && (
                 <button className="btn btn-sm btn-outline-secondary border-0 d-flex align-items-center gap-1" onClick={() => setShowEditModal(true)}>
-                  <FiEdit /> {canModerate || isAnswerAuthor ? t('common.edit') : t('common.suggest_edit')}
+                  <FiEdit /> {canModerate ? t('common.direct_edit') : t('common.suggest_edit')}
                 </button>
               )}
               
-              {isAnswerAuthor && (
+              {(isAnswerAuthor || canModerate) && (
                 <button className="btn btn-sm text-danger border-0 d-flex align-items-center gap-1" onClick={handleDelete}>
                   <FiTrash2 /> {t('common.delete')}
                 </button>
@@ -181,6 +182,7 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
         itemType="answer"
         currentText={body}
         currentAttachments={attachments}
+        isDirectEdit={canModerate}
         onSuccess={() => {
           setShowEditModal(false);
           if (onAcceptSuccess) onAcceptSuccess(); 

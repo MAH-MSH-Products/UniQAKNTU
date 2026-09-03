@@ -96,6 +96,7 @@
     "rejected": "Rejected",
     "unknown_author": "Unknown Author",
     "suggest_edit": "Suggest Edit",
+    "direct_edit": "Direct Edit",
     "submitting": "Submitting...",
     "no_data": "No data available",
     "back": "Back",
@@ -224,7 +225,13 @@
     "page": "Page",
     "of": "of",
     "next": "Next",
-    "loading": "Loading source materials..."
+    "loading": "Loading source materials...",
+    "add_material": "Add Material",
+    "edit_material": "Edit Material",
+    "delete_confirm": "Are you sure you want to delete this material?",
+    "title_label": "Title",
+    "q_pdf_label": "Question PDF",
+    "a_pdf_label": "Answer PDF"
   },
   "widgets": {
     "recent_answers": "Recent Answers",

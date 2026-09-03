@@ -184,10 +184,10 @@ const QuestionDetail = () => {
                 <div className="d-flex gap-2">
                   {(isQuestionAuthor || canModerate) && (
                     <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 border-0" onClick={() => setShowEditModal(true)}>
-                      <FiEdit /> {canModerate || isQuestionAuthor ? t('common.edit') : t('common.suggest_edit')}
+                      <FiEdit /> {canModerate ? t('common.direct_edit') : t('common.suggest_edit')}
                     </button>
                   )}
-                  {isQuestionAuthor && (
+                  {(isQuestionAuthor || canModerate) && (
                     <button className="btn btn-sm text-danger d-flex align-items-center gap-1 border-0" onClick={handleDelete}>
                       <FiTrash2 /> {t('common.delete')}
                     </button>
@@ -237,6 +237,7 @@ const QuestionDetail = () => {
         itemType="question"
         currentText={question.text || question.body || ''}
         currentAttachments={question.attachments || []}
+        isDirectEdit={canModerate}
         onSuccess={() => {
           setShowEditModal(false);
           fetchQuestionDetails();

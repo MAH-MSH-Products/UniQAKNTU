@@ -1,12 +1,15 @@
+// src/components/wiki/SuggestEditModal.jsx
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import MarkdownEditor from '../editor/MarkdownEditor';
+import { useTranslation } from 'react-i18next';
 
-const SuggestEditModal = ({ show, onClose, itemId, itemType, currentText, currentAttachments = [], onSuccess }) => {
+const SuggestEditModal = ({ show, onClose, itemId, itemType, currentText, currentAttachments = [], onSuccess, isDirectEdit = false }) => {
   const [proposedText, setProposedText] = useState(currentText);
   const [newAttachments, setNewAttachments] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (show) {
@@ -23,16 +26,12 @@ const SuggestEditModal = ({ show, onClose, itemId, itemType, currentText, curren
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!proposedText.trim()) return setError('Proposed text cannot be empty');
+    if (!proposedText.trim()) return setError('Text cannot be empty');
     
     setSubmitting(true);
     try {
-      const endpoint = itemType === 'question' 
-        ? `/questions/${itemId}/suggest_edit/`
-        : `/answers/${itemId}/suggest_edit/`;
-        
       const keptCurrentIds = currentAttachments
-        .filter(att => proposedText.includes(att.file))
+        .filter(att => proposedText.includes(att.file || att.relative_path))
         .map(att => att.id);
 
       const keptNewIds = newAttachments
@@ -41,15 +40,32 @@ const SuggestEditModal = ({ show, onClose, itemId, itemType, currentText, curren
 
       const finalAttachmentIds = [...keptCurrentIds, ...keptNewIds];
 
-      await api.post(endpoint, {
-        proposed_text: proposedText,
-        attachment_ids: finalAttachmentIds
-      });
+      if (isDirectEdit) {
+        // مدیران: ویرایش مستقیم و لحظه‌ای
+        const endpoint = itemType === 'question' 
+          ? `/questions/${itemId}/`
+          : `/answers/${itemId}/`;
+        
+        await api.patch(endpoint, {
+          body: proposedText,
+          attachment_ids: finalAttachmentIds
+        });
+      } else {
+        // کاربران عادی: پیشنهاد ویرایش
+        const endpoint = itemType === 'question' 
+          ? `/questions/${itemId}/suggest_edit/`
+          : `/answers/${itemId}/suggest_edit/`;
+          
+        await api.post(endpoint, {
+          proposed_text: proposedText,
+          attachment_ids: finalAttachmentIds
+        });
+      }
       
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit edit suggestion.');
+      setError(err.response?.data?.message || 'Failed to submit edit.');
     } finally {
       setSubmitting(false);
     }
@@ -62,7 +78,9 @@ const SuggestEditModal = ({ show, onClose, itemId, itemType, currentText, curren
       <div className="modal-dialog modal-xl">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Suggest Edit</h5>
+            <h5 className="modal-title">
+              {isDirectEdit ? t('common.direct_edit') : t('common.suggest_edit')}
+            </h5>
             <button type="button" className="btn-close" onClick={onClose} disabled={submitting}></button>
           </div>
           <form onSubmit={handleSubmit}>
@@ -73,13 +91,14 @@ const SuggestEditModal = ({ show, onClose, itemId, itemType, currentText, curren
                  value={proposedText} 
                  onChange={setProposedText} 
                  onAttachmentUpload={handleAttachmentUpload} 
+                 existingAttachments={currentAttachments}
               />
               
             </div>
             <div className="modal-footer mt-2">
-              <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>Cancel</button>
+              <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>{t('common.cancel')}</button>
               <button type="submit" className="btn btn-primary px-4" disabled={submitting || !proposedText.trim()}>
-                {submitting ? 'Submitting...' : 'Submit Suggestion'}
+                {submitting ? t('common.submitting') : t('common.save')}
               </button>
             </div>
           </form>
