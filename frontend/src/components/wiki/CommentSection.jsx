@@ -1,203 +1,185 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { FiCornerDownRight, FiTrash2 } from 'react-icons/fi';
+import { getAuthorDisplayName } from '../../services/utils';
 
-/**
- * CommentSection Component
- * A reusable component that displays and manages comments for questions or answers.
- * Supports:
- * - Lazy-loading comments only when expanded (Accordion style)
- * - Displaying comment list with author, body, and Jalali timestamp
- * - Posting new comments for authenticated users
- * - Pagination support using extractResults utility
- * @param {string} targetType - Either 'questions' or 'answers'
- * @param {number} targetId - The ID of the question or answer
- */
 const CommentSection = ({ targetType, targetId }) => {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
+  
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  
-  // State for collapsible UI and lazy loading
   const [isOpen, setIsOpen] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
 
-  // Validate targetType
-  if (!['questions', 'answers'].includes(targetType)) {
-    console.error('Invalid targetType. Must be "questions" or "answers"');
-    return null;
-  }
-
-  /**
-   * Fetch comments from API when expanded for the first time
-   * Uses GET /api/{targetType}/{targetId}/comments/
-   */
   useEffect(() => {
     const fetchComments = async () => {
       setLoading(true);
       setError(null);
       try {
         const response = await api.get(`/${targetType}/${targetId}/comments/`);
-        // Handle paginated or flat array response
-        const results = response.data?.results || response.data || [];
-        setComments(results);
+        setComments(response.data?.results || response.data || []);
         setHasFetched(true);
       } catch (err) {
         console.error('Failed to fetch comments:', err);
-        setError('Failed to load comments');
-        setComments([]);
+        setError(t('common.error'));
       } finally {
         setLoading(false);
       }
     };
-
-    if (isOpen && !hasFetched && targetId) {
-      fetchComments();
-    }
+    if (isOpen && !hasFetched && targetId) fetchComments();
   }, [isOpen, hasFetched, targetType, targetId]);
 
-  /**
-   * Handle posting a new comment
-   * Uses POST /api/{targetType}/{targetId}/comments/
-   * Payload: { "body": "comment text" }
-   */
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    
-    if (!newComment.trim()) return;
-
-    if (!isAuthenticated) {
-      alert('Please login to post comments');
-      return;
-    }
-
+    if (!newComment.trim() || !isAuthenticated) return;
     setSubmitting(true);
     setError(null);
-
     try {
-      const response = await api.post(`/${targetType}/${targetId}/comments/`, {
-        body: newComment.trim()
-      });
+      const payload = { body: newComment.trim() };
+      if (replyingTo) payload.parent_id = replyingTo;
 
-      // Append the new comment to the list
-      setComments(prev => [...prev, response.data]);
+      await api.post(`/${targetType}/${targetId}/comments/`, payload);
+      
+      const response = await api.get(`/${targetType}/${targetId}/comments/`);
+      setComments(response.data?.results || response.data || []);
+      
       setNewComment('');
+      setReplyingTo(null);
     } catch (err) {
-      console.error('Failed to post comment:', err);
-      setError(
-        err.response?.data?.message || 
-        err.response?.data?.body?.[0] ||
-        'Failed to post comment. Please try again.'
-      );
+      setError(err.response?.data?.message || t('common.error'));
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm(t('common.delete') + "?")) return;
+    try {
+      await api.delete(`/${targetType}/${targetId}/comments/${commentId}/`);
+      
+      // فراخوانی مجدد برای بروزرسانی درخت (حذف فیزیکی یا تبدیل به [Deleted])
+      const response = await api.get(`/${targetType}/${targetId}/comments/`);
+      setComments(response.data?.results || response.data || []);
+    } catch (err) {
+      alert(t('common.error'));
+    }
+  };
+
+  const renderComment = (comment, isReply = false) => {
+    const isDeleted = comment.body === '[Deleted]' && !comment.author;
+    const authorName = getAuthorDisplayName(comment.author, comment.author_name, user);
+    
+    const isOwner = user?.id && (comment.author === user.id || comment.author?.id === user.id);
+
+    return (
+      <div key={comment.id} className={`comment-item py-2 ${isReply ? 'ps-4 border-start border-2 border-primary border-opacity-25 ms-2 mt-1' : 'border-bottom'}`}>
+        <div className="d-flex justify-content-between align-items-center mb-1">
+          <div>
+            <strong className="text-primary" style={{ fontSize: '13px' }}>
+              {isDeleted ? t('common.unknown_author') : authorName}
+            </strong>
+            <span className="text-muted ms-2" style={{ fontSize: '11px' }}>
+              {comment.created_at_jalali ? comment.created_at_jalali.split('T')[0] : ''}
+            </span>
+          </div>
+          <div className="d-flex gap-2">
+            {!isDeleted && isAuthenticated && !isReply && (
+              <button 
+                className="btn btn-sm btn-link text-muted p-0 text-decoration-none" 
+                style={{ fontSize: '11px' }}
+                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+              >
+                <FiCornerDownRight /> {t('common.reply')}
+              </button>
+            )}
+            {!isDeleted && isOwner && (
+              <button 
+                className="btn btn-sm btn-link text-danger p-0" 
+                onClick={() => handleDeleteComment(comment.id)}
+              >
+                <FiTrash2 size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className={isDeleted ? "text-muted fst-italic" : "text-dark"} style={{ fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+          {isDeleted ? t('common.deleted_comment') : comment.body}
+        </div>
+        
+        {/* رندر کردن فرزندان (Replies) */}
+        {!isReply && comment.replies && comment.replies.length > 0 && (
+          <div className="replies-container mt-2">
+            {comment.replies.map(reply => renderComment(reply, true))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="comment-section mt-3 pt-3 border-top">
-      {/* Toggle Button / Header */}
       <button 
-        className="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center gap-2 mb-2"
+        className="btn btn-sm btn-link text-decoration-none p-0 d-flex align-items-center gap-2 mb-2 text-muted fw-bold"
         onClick={() => setIsOpen(!isOpen)}
-        style={{ color: 'var(--text-secondary)' }}
       >
         <i className={`bi bi-chat-left-text${isOpen ? '-fill' : ''}`}></i>
-        <span className="fw-medium">
+        <span>
           {isOpen ? 'Hide Comments' : 'Show Comments'} 
           {hasFetched && ` (${comments.length})`}
         </span>
         <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'} small`}></i>
       </button>
 
-      {/* Collapsible Content Area */}
       {isOpen && (
-        <div className="mt-3 ps-3 border-start border-2 border-primary border-opacity-25">
-          {/* Error Message */}
-          {error && (
-            <div className="alert alert-danger py-2 mb-3 small">
-              {error}
-            </div>
-          )}
-
-          {/* Loading State */}
+        <div className="mt-3">
+          {error && <div className="alert alert-danger py-2 mb-3 small">{error}</div>}
+          
           {loading ? (
-            <div className="text-center py-3">
-              <div className="spinner-border spinner-border-sm text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <small className="d-block mt-1 text-muted">Loading comments...</small>
-            </div>
+            <div className="text-center py-3"><span className="spinner-border spinner-border-sm text-primary"></span></div>
           ) : (
             <>
-              {/* Comments List */}
               {comments.length > 0 ? (
                 <div className="comments-list mb-3">
-                  {comments.map((comment) => (
-                    <div 
-                      key={comment.id} 
-                      className="comment-item border-bottom py-2"
-                    >
-                      <div className="comment-header d-flex justify-content-between align-items-center mb-1">
-                        <strong className="comment-author text-primary" style={{ fontSize: '13px' }}>
-                          {comment.author_name || comment.author?.username || 'Anonymous'}
-                        </strong>
-                        {comment.created_at_jalali && (
-                          <small className="text-muted" style={{ fontSize: '11px' }}>
-                            {comment.created_at_jalali}
-                          </small>
-                        )}
-                      </div>
-                      <div className="comment-body text-dark" style={{ fontSize: '13px', lineHeight: '1.5' }}>
-                        {comment.body}
-                      </div>
-                    </div>
-                  ))}
+                  {comments.map(c => renderComment(c))}
                 </div>
               ) : (
-                <div className="alert alert-light border py-2 mb-3 text-center text-muted" style={{ fontSize: '13px' }}>
-                  No comments yet. Be the first to comment!
-                </div>
+                <div className="text-muted small mb-3">No comments yet.</div>
               )}
 
-              {/* Comment Form - Only for authenticated users */}
               {isAuthenticated ? (
-                <form onSubmit={handleSubmitComment} className="comment-form mt-2">
-                  <div className="mb-2">
-                    <textarea
-                      className="form-control form-control-sm bg-light"
-                      rows="2"
-                      placeholder="Write a comment..."
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      disabled={submitting}
-                      style={{ fontSize: '13px', resize: 'vertical' }}
-                    />
-                  </div>
-                  <div className="d-flex justify-content-end">
-                    <button
-                      type="submit"
-                      className="btn btn-primary btn-sm px-3"
-                      disabled={submitting || !newComment.trim()}
-                    >
-                      {submitting ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-1"></span>
-                          Posting...
-                        </>
-                      ) : (
-                        'Post Comment'
-                      )}
+                <form onSubmit={handleSubmitComment} className="comment-form mt-2 p-2 bg-light rounded border border-dark border-opacity-10">
+                  {replyingTo && (
+                    <div className="d-flex justify-content-between align-items-center mb-2 px-2 border-start border-primary border-3 bg-white py-1">
+                      <small className="text-muted fw-bold">Replying to comment #{replyingTo}</small>
+                      <button type="button" className="btn-close" style={{width: '0.4em', height:'0.4em'}} onClick={() => setReplyingTo(null)}></button>
+                    </div>
+                  )}
+                  <textarea
+                    className="form-control form-control-sm mb-2"
+                    rows="2"
+                    placeholder="Write a comment..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    disabled={submitting}
+                  />
+                  <div className="text-end">
+                    <button type="submit" className="btn btn-primary btn-sm px-3" disabled={submitting || !newComment.trim()}>
+                      {submitting ? <span className="spinner-border spinner-border-sm"></span> : t('common.submit')}
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="alert alert-warning py-2 mb-0" style={{ fontSize: '13px' }}>
+                <div className="alert alert-warning py-2 mb-0 small text-dark border-0">
                   <i className="bi bi-lock me-1"></i>
-                  Please <a href="/login" className="alert-link">login</a> to post comments.
+                  Please <a href="/login">login</a> to comment.
                 </div>
               )}
             </>

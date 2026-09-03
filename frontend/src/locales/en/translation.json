@@ -96,6 +96,7 @@
     "rejected": "Rejected",
     "unknown_author": "Unknown Author",
     "suggest_edit": "Suggest Edit",
+    "direct_edit": "Direct Edit",
     "submitting": "Submitting...",
     "no_data": "No data available",
     "back": "Back",
@@ -174,7 +175,8 @@
     "no_questions": "No questions available for this exam yet.",
     "vote_error": "Failed to vote. Please try again.",
     "loading": "Loading questions...",
-    "official": "Official"
+    "official": "Official",
+    "mark_official": "Mark as Official Content"
   },
   "answers": {
     "vote_error": "Failed to vote. Please try again.",
@@ -223,7 +225,13 @@
     "page": "Page",
     "of": "of",
     "next": "Next",
-    "loading": "Loading source materials..."
+    "loading": "Loading source materials...",
+    "add_material": "Add Material",
+    "edit_material": "Edit Material",
+    "delete_confirm": "Are you sure you want to delete this material?",
+    "title_label": "Title",
+    "q_pdf_label": "Question PDF",
+    "a_pdf_label": "Answer PDF"
   },
   "widgets": {
     "recent_answers": "Recent Answers",
@@ -242,13 +250,16 @@
     "th_id": "ID",
     "th_user": "User",
     "th_title": "Title",
+    "th_email": "Email",
+    "th_name": "Name",
+    "th_role": "Role",
     "th_category": "Category/Target",
     "th_status": "Status",
     "th_created": "Created At",
+    "th_date_joined": "Date Joined",
     "th_action": "Action",
     "th_body": "Body",
     "th_question_id": "Question ID",
-    "th_role": "Role",
     "target_item": "Target Item",
     "proposed_text": "Proposed Text",
     "btn_view": "View",
@@ -266,9 +277,10 @@
     "submit_reply": "Submit Reply",
     "reply_placeholder": "Enter your response...",
     "cannot_reply_closed": "Cannot reply to closed tickets.",
-    "review_report_notice": "Review the reported content on the public page and take appropriate action. Update the status above once handled.",
+    "review_report_notice": "Review the reported content on the public page and take appropriate action.",
     "msg_approved": "Approved successfully.",
-    "msg_rejected": "Rejected successfully."
+    "msg_rejected": "Rejected successfully.",
+    "role_updated": "Role updated successfully."
   },
   "auth": {
     "verify_email": "Verify Email",
@@ -315,35 +327,5 @@
     "total_answers": "Total Answers",
     "total_upvotes": "Total Upvotes",
     "total_accepted": "Accepted Answers"
-  },
-  "errors": {
-    "default": "An unexpected error occurred. Please try again.",
-    "network": "Unable to connect to the server. Please check your network connection.",
-    "unauthorized": "Your session has expired. Please log in again.",
-    "forbidden": "You do not have permission to perform this action.",
-    "notFound": "The requested resource was not found.",
-    "serverError": "Server error. Please try again later.",
-    "email_not_verified": "Your email is not verified. Please verify your email.",
-    "invalid_credentials": "Invalid username or password.",
-    "passwords_dont_match": "Passwords do not match.",
-    "required_field": "This field is required."
-  },
-  "enums": {
-    "roles": {
-      "STUDENT": "Student",
-      "MODERATOR": "Moderator",
-      "ADMIN": "Admin"
-    },
-    "ticket_status": {
-      "Open": "Open",
-      "In-progress": "In Progress",
-      "Closed": "Closed",
-      "Resolved": "Resolved"
-    },
-    "report_status": {
-      "Pending": "Pending",
-      "Resolved": "Resolved",
-      "Dismissed": "Dismissed"
-    }
   }
 }

@@ -4,65 +4,80 @@
   <img src="documentations/imgs/djangoReact.png" alt="Django and React Integration" width="700"/>
 </div>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" alt="Django" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white" alt="JWT" />
+</p>
+
 ## Overview
 
 **UniQAKNTU** (also known as *AzmoonHub Nasir*) is a modern, crowdsourced open exam wiki and collaborative learning platform engineered specifically for university examinations at K. N. Toosi University of Technology. The platform bridges the gap between students and educators by providing a centralized repository for verified exam solutions, past papers, and structured academic discussions.
 
-Designed with a strict **Role-Based Access Control (RBAC)** architecture, the system safely isolates student contribution workflows from instructor and administrative approvals, maintaining uncompromised academic integrity. The project features a fully decoupled monorepo architecture uniting a high-performance Django REST Framework backend with a responsive, internationalized React Single Page Application (SPA) frontend supporting both English (LTR) and Persian/Farsi (RTL) localization.
+The system features a fully decoupled monorepo architecture uniting a high-performance Django REST Framework backend with a responsive, internationalized React Single Page Application (SPA). The foundational architecture, core API bridging, and the initial scalable decouple strategy were conceptualized and designed by Mohammad Amin Haji Alirezaei, establishing the strict operational guidelines for the application's lifecycle.
 
 ---
 
-## System Architecture
+## System Architecture & Security
 
 <div align="center">
   <img src="documentations/imgs/architecture.jpg" alt="System Architecture Diagram" width="850"/>
 </div>
 
-The system operates on a robust, decoupled client-server model:
-* **Backend (Django REST Framework):** Manages relational data models (PostgreSQL), high-speed caching/session workflows (Redis), strict RBAC permission classes, secure JWT authentication with token rotation, file handling for image/PDF attachments, and comprehensive audit trails.
-* **Frontend (React & Vite):** Delivers a fluid user experience featuring a real-time Markdown/MathJax editor, dual Dark/Light mode styling inspired by modern enterprise design patterns, and state-managed API consumption.
+The platform operates on a robust client-server model heavily fortified by strict **Role-Based Access Control (RBAC)**:
+
+* **Backend (Django REST Framework):** Manages relational data models, high-speed caching/session workflows (Redis), and strict permission classes. It utilizes JWT authentication with refresh token rotation.
+* **Frontend (React & Vite):** Delivers a fluid user experience with state-managed API consumption, dual Dark/Light mode styling, and seamless i18n support for both English (LTR) and Persian/Farsi (RTL).
+* **Advanced Rate Limiting:** Registration, login, and email change workflows are protected by brute-force countermeasures, enforcing temporary 15-minute IP/Username lockouts after 5 consecutive failed attempts.
 
 ---
 
-## Key Features & Visual Walkthrough
+## Core Platform Capabilities
 
-### 1. Onboarding, Authentication & Profile Management
-The platform features secure user registration enforced by automatic 6-digit OTP email verification. It includes brute-force protection (temporary 15-minute IP/Username lockouts after consecutive failed attempts), secure password resets, email change verification flows, and customizable user profiles.
+### 1. Unified Authentication & Identity Management
+Registration strictly requires automatic 6-digit OTP email verification before account activation. Users can manage security settings, reset passwords, and securely change authenticated email addresses through a secondary OTP verification flow.
 
 <div align="center">
   <img src="documentations/imgs/1.png" alt="Authentication and Onboarding Flow" width="750"/>
 </div>
 
-### 2. Course & Source Material Explorer
-Exams and study materials are organized cleanly into source materials, complete with downloadable official exam papers and solution PDFs, year indexing, and quick navigation into question explorers.
+### 2. Source Material & Exam Explorer
+Course resources are hierarchically organized into `SourceMaterials`. Students and instructors can easily browse by year, access official downloadable exam and solution PDFs, and navigate directly into isolated question explorers for specific past papers.
 
 <div align="center">
   <img src="documentations/imgs/2.png" alt="Source Materials & Course Explorer" width="750"/>
 </div>
 
-### 3. Advanced Q&A Wiki with MathJax & Attachments
-Questions and answers support rich-text Markdown formatting integrated with **MathJax** rendering (enabling inline `$E = mc^2$` and block equations). Users can drag and drop images or PDFs directly into the editor utilizing an advanced *Orphan Claiming* pattern (uploading assets first, then binding them upon submission). 
+### 3. Advanced Wiki Collaboration & MathJax
+Questions and answers support rich-text Markdown formatting natively integrated with **MathJax** for precise scientific notation (supporting both inline `$E=mc^2$` and block equations). 
+* **Infrastructure-Agnostic Attachments:** The platform utilizes an *Orphan Claiming* pattern. Media files are uploaded asynchronously and embedded using relative database paths (`attachments/filename.png`), ensuring full portability between local development and cloud S3 buckets without breaking historical markdown data.
 
 <div align="center">
   <img src="documentations/imgs/3.png" alt="Question and Answer Detail View with MathJax" width="750"/>
 </div>
 
-### 4. Integrated Support Center & Ticketing
-A robust built-in support module lets users raise tickets across categories (General Support, Technical Issues, Content Errors, and Instructor Role Requests with resume/qualification inputs). Users can track ticket statuses, view chronological responses, and communicate directly with administrators.
+### 4. Support Center & Helpdesk Ticketing
+A comprehensive built-in support module enables users to raise tracking tickets across distinct categories (General Support, Technical Issues, Content Errors, and Instructor Role Requests). The ticketing system includes a chronological live chat interface for direct communication with the admin team.
 
 <div align="center">
   <img src="documentations/imgs/4.png" alt="Support Center and Ticketing System" width="750"/>
 </div>
 
-### 5. Admin Support Panel & Content Moderation
-Moderators and administrators have a dedicated management interface to review pending questions, pending answers, suggested wiki edits, and user content reports. Admins can instantly approve or reject submissions, modify user roles, and update ticket statuses.
+### 5. Multi-Tier Moderation & Admin Operations
+The system safely isolates student read-only/suggestion workflows from instructor write privileges.
+* **Direct Operations:** Moderators and Admins bypass the standard pending queue and can directly create, update, or hard-delete content. 
+* **Official Content:** Instructors can flag solutions with `is_official`. The backend automatically prioritizes these verified responses at the top of the UI rendering tree.
+* **User Management:** An exclusive Admin-only dashboard provides full oversight of registered users, including live role modification capabilities.
 
 <div align="center">
   <img src="documentations/imgs/5.png" alt="Admin Support and Moderation Panel" width="750"/>
 </div>
 
-### 6. Dynamic Dark/Light Mode & Instructor Dashboards
-UniQAKNTU features an adaptive theme toggle (Dark/Light mode) with fully inverted high-contrast greyscale palettes for reduced eye strain. Instructors and moderators also gain access to custom dashboards tracking total answers, upvotes, and accepted solutions.
+### 6. Threaded Discussions & Instructor Dashboards
+UniQAKNTU supports rich community interaction through upvoting and threaded comments.
+* **Smart Discussions:** Comments support 1-level deep threading. 
+* **Soft Deletion:** If a user deletes a parent comment, the system performs a soft-delete—preserving the child replies while masking the original author and replacing the text with a `[Deleted]` placeholder.
 
 <div align="center">
   <img src="documentations/imgs/6.png" alt="Instructor Dashboard and Dark Mode" width="750"/>
@@ -105,7 +120,7 @@ UniQAKNTU/
 
 ---
 
-## Setup & Installation
+## Local Development & Setup
 
 ### Prerequisites
 
@@ -113,7 +128,7 @@ UniQAKNTU/
 * Node.js & npm
 * PostgreSQL & Redis
 
-### 1. Backend Setup (Django)
+### 1. Backend Initialization (Django)
 
 ```bash
 cd backend
@@ -126,7 +141,8 @@ python manage.py runserver 0.0.0.0:8000
 
 ```
 
-### 2. Frontend Setup (React)
+
+### 2. Frontend Initialization (React)
 
 ```bash
 cd frontend
@@ -140,9 +156,8 @@ npm run dev
 ## Development Team & Acknowledgments
 
 * **Supervising Professor:** Dr. Hamed Khanmirza
-* **Frontend Developer:** Mohammad Amin Haji Alirezaei
+* **Core Architecture & Frontend Developer:** Mohammad Amin Haji Alirezaei
 * **Backend Developer:** Mohammad Sajjad Hamidifard
 * **Institution:** K. N. Toosi University of Technology
 
----
-
+```
