@@ -69,10 +69,11 @@ export const processMarkdown = (text, attachments = []) => {
 };
 
 /**
- * Derives a clean display name using the new author_name field from the API.
+ * Derives a clean display name prioritizing the author_name field from the API.
  */
 export const getAuthorDisplayName = (author, authorName, currentUser) => {
   if (authorName) return authorName; 
+  
   if (!author) return 'Unknown Author';
   
   if (typeof author === 'object') {

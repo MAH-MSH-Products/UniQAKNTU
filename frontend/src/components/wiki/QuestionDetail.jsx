@@ -1,3 +1,4 @@
+// src/components/wiki/QuestionDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ const QuestionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isAuthenticated, canModerate } = useAuth(); // canModerate replaces userRole specific checks
+  const { user, isAuthenticated, canModerate } = useAuth(); 
   
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
@@ -25,6 +26,7 @@ const QuestionDetail = () => {
 
   const authorId = typeof question?.author === 'object' ? question?.author?.id : question?.author;
   const isQuestionAuthor = Boolean(user?.id && authorId && String(authorId).toLowerCase() === String(user.id).toLowerCase());
+  
   const displayAuthorName = getAuthorDisplayName(question?.author, question?.author_name, user);
 
   const fetchQuestionDetails = async () => {
@@ -105,13 +107,15 @@ const QuestionDetail = () => {
     );
   }
 
+  const sortedAnswers = [...answers].sort((a, b) => Number(b.is_official || false) - Number(a.is_official || false));
+
   return (
     <div className="question-detail-page py-4">
       <button className="btn btn-sm btn-outline-secondary mb-3 d-flex align-items-center gap-2 border-0" onClick={() => navigate(-1)}>
         <FiArrowLeft /> {t('common.back')}
       </button>
 
-      <div className="card mb-4 border-0 shadow-sm" style={{ borderTop: '3px solid var(--primary-blue)' }}>
+      <div className={`card mb-4 border-0 shadow-sm ${question.is_official ? 'border-top border-primary border-4' : ''}`} style={{ borderTop: !question.is_official ? '3px solid var(--primary-blue)' : '' }}>
         <div className="card-body">
           <div className="d-flex gap-3">
             
@@ -184,7 +188,7 @@ const QuestionDetail = () => {
                 <div className="d-flex gap-2">
                   {(isQuestionAuthor || canModerate) && (
                     <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 border-0" onClick={() => setShowEditModal(true)}>
-                      <FiEdit /> {canModerate ? t('common.direct_edit') : t('common.suggest_edit')}
+                      <FiEdit /> {canModerate || isQuestionAuthor ? t('common.edit') : t('common.suggest_edit')}
                     </button>
                   )}
                   {(isQuestionAuthor || canModerate) && (
@@ -206,9 +210,8 @@ const QuestionDetail = () => {
           {answers.length} {t('questions.answers')}
         </h4>
 
-        {answers.length > 0 ? (
-          // Sort official answers to the top automatically based on boolean
-          [...answers].sort((a, b) => (b.is_official === a.is_official) ? 0 : b.is_official ? 1 : -1).map((answer) => (
+        {sortedAnswers.length > 0 ? (
+          sortedAnswers.map((answer) => (
             <AnswerCard
               key={answer.id}
               answer={answer}

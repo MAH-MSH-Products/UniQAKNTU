@@ -1,3 +1,4 @@
+// src/components/wiki/AnswerCard.jsx
 import React, { useEffect, useState } from 'react';
 import { FiThumbsUp, FiThumbsDown, FiTrash2, FiEdit, FiCheckCircle, FiAward } from 'react-icons/fi';
 import { useTranslation } from 'react-i18next';
@@ -89,7 +90,7 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
   };
 
   return (
-    <div className={`answer-card card mb-3 border-0 shadow-sm ${is_accepted ? 'border-success' : ''}`} style={{ borderLeft: is_accepted ? '4px solid #198754' : '4px solid transparent' }} id={`answer-${id}`}>
+    <div className={`answer-card card mb-3 border-0 shadow-sm ${is_accepted ? 'border-success border-2' : ''} ${is_official ? 'border-primary border-2' : ''}`} style={{ borderLeft: is_accepted ? '4px solid #198754' : (is_official ? '4px solid var(--primary-blue)' : '4px solid transparent') }} id={`answer-${id}`}>
       <div className="card-header bg-transparent border-bottom-0 pb-0 pt-3">
         <div className="d-flex justify-content-between align-items-start">
           <div>
@@ -147,7 +148,6 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
             />
 
             <div className="d-flex justify-content-end gap-2 mt-3 pt-2 border-top">
-              {/* Accept Answer Button */}
               {isQuestionAuthor && !is_accepted && status === 'APPROVED' && (
                 <button className="btn btn-sm btn-outline-success d-flex align-items-center gap-1" onClick={handleAcceptAnswer} disabled={accepting}>
                   {accepting ? <span className="spinner-border spinner-border-sm"></span> : <FiCheckCircle />}
@@ -157,7 +157,7 @@ const AnswerCard = ({ answer, question, onAcceptSuccess, onDeleteSuccess }) => {
 
               {(isAnswerAuthor || canModerate) && (
                 <button className="btn btn-sm btn-outline-secondary border-0 d-flex align-items-center gap-1" onClick={() => setShowEditModal(true)}>
-                  <FiEdit /> {canModerate ? t('common.direct_edit') : t('common.suggest_edit')}
+                  <FiEdit /> {canModerate || isAnswerAuthor ? t('common.edit') : t('common.suggest_edit')}
                 </button>
               )}
               

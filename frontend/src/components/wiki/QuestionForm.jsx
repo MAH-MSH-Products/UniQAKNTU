@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 const QuestionForm = ({ onSuccess, onClose, examId }) => {
   const { materials, loading: materialsLoading } = useSourceMaterials();
   const { t } = useTranslation();
-  const { canModerate } = useAuth(); // for Official toggle
+  const { canModerate } = useAuth(); // برای نمایش تیک محتوای رسمی
 
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
@@ -48,7 +48,7 @@ const QuestionForm = ({ onSuccess, onClose, examId }) => {
         source_material: parseInt(sourceMaterial, 10),
         tag_ids: selectedTagIds,
         attachment_ids: attachmentIds,
-        is_official: isOfficial // Passed down; backend handles security
+        is_official: isOfficial // ارسال فلگ رسمی بودن به بک‌اند
       };
       const response = await api.post('/questions/', payload);
       if (onSuccess) onSuccess(response.data);
@@ -61,9 +61,9 @@ const QuestionForm = ({ onSuccess, onClose, examId }) => {
   };
 
   return (
-    <div className="question-form card mb-4 border-primary">
-      <div className="card-header bg-transparent d-flex justify-content-between align-items-center">
-        <h5 className="mb-0 fw-bold text-primary">{t('questions.ask_question', 'Ask a New Question')}</h5>
+    <div className="question-form card mb-4 border-primary shadow-sm">
+      <div className="card-header bg-transparent d-flex justify-content-between align-items-center pb-0 pt-3 border-bottom-0">
+        <h5 className="mb-0 fw-bold text-primary">{t('questions.ask_question')}</h5>
         {onClose && (
           <button className="btn btn-sm btn-outline-secondary border-0" onClick={onClose}>
             <FiX size={20} />
@@ -126,7 +126,7 @@ const QuestionForm = ({ onSuccess, onClose, examId }) => {
           {canModerate && (
             <div className="mb-3 form-check">
               <input type="checkbox" className="form-check-input" id="isOfficialQ" checked={isOfficial} onChange={(e) => setIsOfficial(e.target.checked)} />
-              <label className="form-check-label fw-bold text-primary" htmlFor="isOfficialQ">{t('questions.mark_official', 'Mark as Official Content')}</label>
+              <label className="form-check-label fw-bold text-primary" htmlFor="isOfficialQ">{t('questions.mark_official')}</label>
             </div>
           )}
 
