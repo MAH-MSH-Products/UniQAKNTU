@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { FiSave, FiX, FiMove } from 'react-icons/fi';
+import { FiSave, FiX } from 'react-icons/fi';
 import { useCustomExam } from '../../context/CustomExamContext';
 import { createCustomExam } from '../../services/api';
 import { getErrorMessage } from '../../utils/errorHandler';
@@ -51,12 +51,12 @@ const CustomExamBuilder = () => {
   };
 
   return (
-    <div className="custom-exam-builder-page py-4">
-      <h2 className="mb-4">{t('custom_exams.build_exam', 'Build Custom Exam')}</h2>
+    <div className="custom-exam-builder-page" style={{ padding: 'var(--space-lg)' }}>
+      <h2 style={{ marginBlockEnd: 'var(--space-lg)' }}>{t('custom_exams.build_exam', 'Build Custom Exam')}</h2>
 
-      <div className="card shadow-sm border-0 mb-4">
-        <div className="card-body">
-          <div className="mb-3">
+      <div className="card shadow-sm border-0" style={{ marginBlockEnd: 'var(--space-lg)' }}>
+        <div className="card-body" style={{ padding: 'var(--space-lg)' }}>
+          <div style={{ marginBlockEnd: 'var(--space-md)' }}>
             <label className="form-label fw-bold">{t('custom_exams.exam_title', 'Exam Title')}</label>
             <input
               type="text"
@@ -69,15 +69,15 @@ const CustomExamBuilder = () => {
 
           <div className="d-flex gap-2">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary d-flex align-items-center gap-2"
               onClick={handleSave}
               disabled={saving || examCart.length === 0}
             >
-              <FiSave className="me-1" />
-              {saving ? t('common.saving') : t('custom_exams.save_exam', 'Save Exam')}
+              <FiSave />
+              <span>{saving ? t('common.saving') : t('custom_exams.save_exam', 'Save Exam')}</span>
             </button>
             <button
-              className="btn btn-outline-danger"
+              className="btn btn-outline-danger d-flex align-items-center gap-2"
               onClick={() => {
                 if (window.confirm(t('custom_exams.clear_confirm', 'Clear all questions from cart?'))) {
                   clearExam();
@@ -85,41 +85,47 @@ const CustomExamBuilder = () => {
               }}
               disabled={examCart.length === 0}
             >
-              <FiX className="me-1" />
-              {t('custom_exams.clear_cart', 'Clear Cart')}
+              <FiX />
+              <span>{t('custom_exams.clear_cart', 'Clear Cart')}</span>
             </button>
           </div>
         </div>
       </div>
 
       <div className="card shadow-sm border-0">
-        <div className="card-header bg-white">
+        <div className="card-header bg-white" style={{ padding: 'var(--space-md)' }}>
           <h5 className="mb-0">
             {t('custom_exams.selected_questions', 'Selected Questions')} ({examCart.length})
           </h5>
         </div>
-        <div className="card-body">
+        <div className="card-body" style={{ padding: 'var(--space-lg)' }}>
           {examCart.length === 0 ? (
             <div className="alert alert-info mb-0">
               {t('custom_exams.no_questions_in_cart', 'No questions added yet. Browse questions and click "Add to Exam" to build your custom exam.')}
             </div>
           ) : (
-            <div className="list-group">
+            <div className="d-flex flex-column" style={{ gap: 'var(--space-sm)' }}>
               {examCart.map((question, index) => (
-                <div key={question.id} className="list-group-item d-flex justify-content-between align-items-center">
+                <div
+                  key={question.id}
+                  className="d-flex justify-content-between align-items-center p-3 border rounded"
+                  style={{ gap: 'var(--space-md)' }}
+                >
                   <div className="flex-grow-1">
-                    <strong className="text-primary">Q{index + 1}:</strong> {question.title || `Question #${question.id}`}
+                    <div>
+                      <strong className="text-primary">Q{index + 1}:</strong> {question.title || `Question #${question.id}`}
+                    </div>
                     {question.tags && question.tags.length > 0 && (
-                      <div className="mt-1">
+                      <div className="d-flex flex-wrap" style={{ gap: 'var(--space-xs)', marginBlockStart: 'var(--space-xs)' }}>
                         {question.tags.slice(0, 3).map(tag => (
-                          <span key={tag.id || tag} className="badge bg-light text-secondary border me-1" style={{ fontSize: '10px' }}>
+                          <span key={tag.id || tag} className="badge bg-light text-secondary border" style={{ fontSize: '10px' }}>
                             {tag.value || tag}
                           </span>
                         ))}
                       </div>
                     )}
                   </div>
-                  <div className="d-flex gap-2 align-items-center">
+                  <div className="d-flex align-items-center" style={{ gap: 'var(--space-sm)' }}>
                     <div className="btn-group btn-group-sm">
                       <button
                         className="btn btn-outline-secondary"
@@ -139,7 +145,7 @@ const CustomExamBuilder = () => {
                       </button>
                     </div>
                     <button
-                      className="btn btn-sm btn-outline-danger"
+                      className="btn btn-sm btn-outline-danger d-flex align-items-center"
                       onClick={() => removeFromExam(question.id)}
                     >
                       <FiX />

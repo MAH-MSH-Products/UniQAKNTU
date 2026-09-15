@@ -49,7 +49,7 @@ const PackagesList = () => {
     try {
       await purchasePackage(pkg.id);
       alert(t('packages.purchase_success', 'Package purchased successfully!'));
-      window.location.reload(); // Refresh to update token balance
+      window.location.reload();
     } catch (error) {
       alert(getErrorMessage(error, 'packages.purchase_failed'));
     } finally {
@@ -59,19 +59,22 @@ const PackagesList = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-5">
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
         <div className="spinner-border text-primary" role="status"></div>
-        <p className="mt-2">{t('common.loading')}</p>
+        <p className="ms-3 mb-0">{t('common.loading')}</p>
       </div>
     );
   }
 
   return (
-    <div className="packages-list-page py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>{t('packages.marketplace', 'Marketplace')}</h2>
+    <div className="packages-list-page" style={{ padding: 'var(--space-lg)' }}>
+      <div className="d-flex justify-content-between align-items-center" style={{ marginBlockEnd: 'var(--space-lg)' }}>
+        <h2 className="mb-0">{t('packages.marketplace', 'Marketplace')}</h2>
         {isAuthenticated && (
-          <span className="badge bg-warning text-dark px-3 py-2" style={{ fontSize: '16px' }}>
+          <span className="badge bg-warning text-dark d-flex align-items-center gap-2" style={{
+            padding: 'var(--space-sm) var(--space-md)',
+            fontSize: '1rem'
+          }}>
             🪙 {user?.tokens || 0} {t('packages.tokens', 'Tokens')}
           </span>
         )}
@@ -84,41 +87,40 @@ const PackagesList = () => {
       ) : (
         <div className="row g-4">
           {packages.map((pkg) => (
-            <div key={pkg.id} className="col-md-6 col-lg-4">
+            <div key={pkg.id} className="col-12 col-md-6 col-lg-4">
               <div className="card h-100 shadow-sm border-0">
-                <div className="card-body d-flex flex-column">
-                  <h5 className="card-title fw-bold text-primary">{pkg.title}</h5>
-                  <p className="card-text text-muted flex-grow-1">{pkg.description}</p>
+                <div className="card-body d-flex flex-column" style={{ padding: 'var(--space-lg)', gap: 'var(--space-md)' }}>
+                  <h5 className="card-title fw-bold text-primary mb-0">{pkg.title}</h5>
+                  <p className="card-text text-muted flex-grow-1 mb-0">{pkg.description}</p>
 
-                  <div className="mb-3">
-                    <small className="text-muted">
-                      <i className="bi bi-person me-1"></i>
-                      {pkg.instructor_name || 'Instructor'}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                    <small className="text-muted d-flex align-items-center gap-2">
+                      <i className="bi bi-person"></i>
+                      <span>{pkg.instructor_name || 'Instructor'}</span>
                     </small>
-                    <div className="mt-2">
-                      <small className="text-muted">
-                        <i className="bi bi-book me-1"></i>
-                        {pkg.source_materials?.length || 0} {t('packages.materials', 'Materials')}
-                      </small>
-                    </div>
+                    <small className="text-muted d-flex align-items-center gap-2">
+                      <i className="bi bi-book"></i>
+                      <span>{pkg.source_materials?.length || 0} {t('packages.materials', 'Materials')}</span>
+                    </small>
                   </div>
 
-                  <div className="d-flex justify-content-between align-items-center">
+                  <div className="d-flex justify-content-between align-items-center" style={{ marginBlockStart: 'var(--space-sm)' }}>
                     <span className="h4 mb-0 text-warning">
                       🪙 {pkg.price}
                     </span>
                     {pkg.is_purchased ? (
-                      <button className="btn btn-success" disabled>
-                        <FiCheck className="me-1" /> {t('packages.owned', 'Owned')}
+                      <button className="btn btn-success d-flex align-items-center gap-2" disabled>
+                        <FiCheck />
+                        <span>{t('packages.owned', 'Owned')}</span>
                       </button>
                     ) : (
                       <button
-                        className="btn btn-primary"
+                        className="btn btn-primary d-flex align-items-center gap-2"
                         onClick={() => handlePurchase(pkg)}
                         disabled={purchasing === pkg.id || !isAuthenticated}
                       >
-                        <FiShoppingCart className="me-1" />
-                        {purchasing === pkg.id ? t('common.loading') : t('packages.buy', 'Buy')}
+                        <FiShoppingCart />
+                        <span>{purchasing === pkg.id ? t('common.loading') : t('packages.buy', 'Buy')}</span>
                       </button>
                     )}
                   </div>

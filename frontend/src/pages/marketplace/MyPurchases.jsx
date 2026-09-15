@@ -27,54 +27,55 @@ const MyPurchases = () => {
 
   if (loading) {
     return (
-      <div className="text-center py-5">
+      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
         <div className="spinner-border text-primary" role="status"></div>
-        <p className="mt-2">{t('common.loading')}</p>
+        <p className="ms-3 mb-0">{t('common.loading')}</p>
       </div>
     );
   }
 
   return (
-    <div className="my-purchases-page py-4">
-      <h2 className="mb-4">
-        <FiPackage className="me-2" />
-        {t('packages.my_purchases', 'My Purchases')}
-      </h2>
+    <div className="my-purchases-page" style={{ padding: 'var(--space-lg)' }}>
+      <div className="d-flex align-items-center" style={{ marginBlockEnd: 'var(--space-lg)', gap: 'var(--space-sm)' }}>
+        <FiPackage size={28} />
+        <h2 className="mb-0">{t('packages.my_purchases', 'My Purchases')}</h2>
+      </div>
 
       {purchases.length === 0 ? (
-        <div className="alert alert-info">
-          {t('packages.no_purchases', 'You haven\'t purchased any packages yet.')}
-          <br />
-          <Link to="/packages" className="btn btn-primary mt-3">
+        <div className="alert alert-info d-flex flex-column align-items-start" style={{ gap: 'var(--space-md)' }}>
+          <p className="mb-0">{t('packages.no_purchases', 'You haven\'t purchased any packages yet.')}</p>
+          <Link to="/packages" className="btn btn-primary">
             {t('packages.browse_marketplace', 'Browse Marketplace')}
           </Link>
         </div>
       ) : (
         <div className="row g-4">
           {purchases.map((purchase) => (
-            <div key={purchase.id} className="col-md-6 col-lg-4">
+            <div key={purchase.id} className="col-12 col-md-6 col-lg-4">
               <div className="card h-100 shadow-sm border-0">
-                <div className="card-body">
-                  <h5 className="card-title fw-bold text-primary">{purchase.package_title || purchase.title}</h5>
-                  <p className="card-text text-muted">{purchase.package_description || purchase.description}</p>
+                <div className="card-body d-flex flex-column" style={{ padding: 'var(--space-lg)', gap: 'var(--space-md)' }}>
+                  <h5 className="card-title fw-bold text-primary mb-0">{purchase.package_title || purchase.title}</h5>
+                  <p className="card-text text-muted mb-0">{purchase.package_description || purchase.description}</p>
 
-                  <div className="mb-3">
-                    <small className="text-muted d-block">
-                      <i className="bi bi-calendar me-1"></i>
-                      {t('packages.purchased_on', 'Purchased on')}: {new Date(purchase.purchased_at).toLocaleDateString()}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+                    <small className="text-muted d-flex align-items-center gap-2">
+                      <i className="bi bi-calendar"></i>
+                      <span>{t('packages.purchased_on', 'Purchased on')}: {new Date(purchase.purchased_at).toLocaleDateString()}</span>
                     </small>
-                    <small className="text-muted d-block mt-1">
-                      <i className="bi bi-book me-1"></i>
-                      {purchase.source_materials?.length || 0} {t('packages.materials', 'Materials')}
+                    <small className="text-muted d-flex align-items-center gap-2">
+                      <i className="bi bi-book"></i>
+                      <span>{purchase.source_materials?.length || 0} {t('packages.materials', 'Materials')}</span>
                     </small>
                   </div>
 
                   {purchase.source_materials && purchase.source_materials.length > 0 && (
                     <div>
-                      <h6 className="fw-bold mb-2">{t('packages.included_materials', 'Included Materials')}:</h6>
-                      <ul className="list-unstyled">
+                      <h6 className="fw-bold" style={{ marginBlockEnd: 'var(--space-sm)' }}>
+                        {t('packages.included_materials', 'Included Materials')}:
+                      </h6>
+                      <ul className="list-unstyled d-flex flex-column" style={{ gap: 'var(--space-sm)' }}>
                         {purchase.source_materials.map((material) => (
-                          <li key={material.id} className="mb-2">
+                          <li key={material.id}>
                             <Link
                               to={`/source-materials/${material.id}/questions`}
                               className="text-decoration-none d-flex align-items-center gap-2"

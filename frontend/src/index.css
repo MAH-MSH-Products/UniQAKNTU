@@ -25,26 +25,37 @@
 
 :root {
   /* ==========================================
+     SPACING SYSTEM - 8px Baseline Grid
+     ========================================== */
+  --space-xs: 0.25rem;   /* 4px */
+  --space-sm: 0.5rem;    /* 8px */
+  --space-md: 1rem;      /* 16px */
+  --space-lg: 1.5rem;    /* 24px */
+  --space-xl: 2rem;      /* 32px */
+  --space-2xl: 3rem;     /* 48px */
+  --space-3xl: 4rem;     /* 64px */
+
+  /* ==========================================
      LIGHT MODE (حالت روز)
      ========================================== */
-  --bg-body: #F4F5F7;         
-  --bg-card: #FFFFFF;         
-  --bg-input: #FFFFFF;        
-  --bg-hover: #E9ECEF;        
-  
-  --text-main: #212529;       
-  --text-muted: #6C757D;      
-  --text-inverse: #FFFFFF;    
-  
-  --border-color: #DEE2E6;    
-  --border-dark: #CED4DA;     
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04); 
+  --bg-body: #F4F5F7;
+  --bg-card: #FFFFFF;
+  --bg-input: #FFFFFF;
+  --bg-hover: #E9ECEF;
+
+  --text-main: #212529;
+  --text-muted: #6C757D;
+  --text-inverse: #FFFFFF;
+
+  --border-color: #DEE2E6;
+  --border-dark: #CED4DA;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.08);
-  
-  --primary-blue: #0A95FF;    
-  --primary-hover: #0074CC;   
-  --accent-orange: #F48024;   
-  
+
+  --primary-blue: #0A95FF;
+  --primary-hover: #0074CC;
+  --accent-orange: #F48024;
+
   --nav-bg: #FFFFFF;
   --sidebar-bg: #F8F9FA;
   --nav-border: #DEE2E6;
@@ -96,15 +107,22 @@
 
 body {
   margin: 0;
+  padding: 0;
   background-color: var(--bg-body) !important;
   color: var(--text-main) !important;
   font-family: var(--font-primary) !important;
   transition: background-color 0.3s ease, color 0.3s ease;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* ============================================
@@ -488,55 +506,10 @@ input[type="checkbox"], input[type="radio"] {
 /* ============================================
    Sprint 2: Floating Exam Cart
    ============================================ */
-.floating-exam-cart {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  z-index: 1000;
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-hover));
-  color: white;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  text-decoration: none;
-}
-
 .floating-exam-cart:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   color: white;
-}
-
-.floating-exam-cart .cart-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background-color: #dc3545;
-  color: white;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: bold;
-  border: 2px solid var(--bg-body);
-}
-
-html[dir="rtl"] .floating-exam-cart {
-  right: auto;
-  left: 2rem;
-}
-
-html[dir="rtl"] .floating-exam-cart .cart-badge {
-  right: auto;
-  left: -5px;
 }
 
 /* ============================================
