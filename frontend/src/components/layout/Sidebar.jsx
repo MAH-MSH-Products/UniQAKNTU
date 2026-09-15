@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit, FiShield } from 'react-icons/fi';
+import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit, FiShield, FiShoppingBag, FiPackage } from 'react-icons/fi';
 
 const Sidebar = () => {
   const { t } = useTranslation();
@@ -27,9 +27,20 @@ const Sidebar = () => {
               <FiBook /> <span>{t('sidebar.all_courses')}</span>
             </Link>
           </li>
-          
+
+          <li className="nav-item">
+            <Link className="nav-link d-flex align-items-center gap-2" to="/packages" style={navLinkStyle}>
+              <FiShoppingBag /> <span>{t('sidebar.marketplace')}</span>
+            </Link>
+          </li>
+
           {isAuthenticated && (
             <>
+              <li className="nav-item">
+                <Link className="nav-link d-flex align-items-center gap-2" to="/my-purchases" style={navLinkStyle}>
+                  <FiPackage /> <span>{t('sidebar.my_purchases')}</span>
+                </Link>
+              </li>
               <li className="nav-item">
                 <Link className="nav-link d-flex align-items-center gap-2" to="/tickets" style={navLinkStyle}>
                   <FiTag /> <span>{t('sidebar.my_tickets')}</span>

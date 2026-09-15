@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { FiUser, FiMail, FiLock, FiSave, FiShield } from 'react-icons/fi';
+import { FiUser, FiMail, FiLock, FiSave, FiShield, FiDollarSign } from 'react-icons/fi';
 import api from '../services/api';
 
 const Profile = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'security'
+  const [activeTab, setActiveTab] = useState('profile'); // 'profile', 'security', or 'wallet'
   const [loading, setLoading] = useState(true);
+  const [tokenHistory, setTokenHistory] = useState([]);
+  const [loadingTokens, setLoadingTokens] = useState(false);
 
   // Profile State
   const [profileData, setProfileData] = useState({
@@ -42,6 +44,12 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'wallet') {
+      fetchTokenHistory();
+    }
+  }, [activeTab]);
 
   const fetchProfile = async () => {
     try {
@@ -159,6 +167,18 @@ const Profile = () => {
     }
   };
 
+  const fetchTokenHistory = async () => {
+    setLoadingTokens(true);
+    try {
+      const response = await api.get('/users/me/token-history/');
+      setTokenHistory(response.data.results || response.data || []);
+    } catch (error) {
+      console.error('Error fetching token history:', error);
+    } finally {
+      setLoadingTokens(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -184,6 +204,12 @@ const Profile = () => {
               onClick={() => setActiveTab('profile')}
             >
               {t('profile.public_profile', 'Public Profile')}
+            </button>
+            <button
+              className={activeTab === 'wallet' ? 'coursera-tab-active' : 'coursera-tab'}
+              onClick={() => setActiveTab('wallet')}
+            >
+              {t('profile.wallet', 'Wallet & Rewards')}
             </button>
             <button
               className={activeTab === 'security' ? 'coursera-tab-active' : 'coursera-tab'}
@@ -251,6 +277,60 @@ const Profile = () => {
                     {t('common.save', 'Save Changes')}
                   </button>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'wallet' && (
+            <div className="academic-card border-0 shadow-sm">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h5 className="fw-bold text-primary mb-0 d-flex align-items-center gap-2">
+                    <FiDollarSign /> {t('profile.token_balance', 'Token Balance')}
+                  </h5>
+                  <span className="badge bg-warning text-dark px-3 py-2" style={{ fontSize: '18px' }}>
+                    🪙 {user?.tokens || 0}
+                  </span>
+                </div>
+
+                <h6 className="fw-bold mb-3">{t('profile.transaction_history', 'Transaction History')}</h6>
+
+                {loadingTokens ? (
+                  <div className="text-center py-3">
+                    <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  </div>
+                ) : tokenHistory.length === 0 ? (
+                  <div className="alert alert-info">
+                    {t('profile.no_transactions', 'No token transactions yet.')}
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-hover">
+                      <thead>
+                        <tr>
+                          <th>{t('profile.date', 'Date')}</th>
+                          <th>{t('profile.reason', 'Reason')}</th>
+                          <th className="text-end">{t('profile.amount', 'Amount')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tokenHistory.map((transaction, index) => (
+                          <tr key={transaction.id || index}>
+                            <td>
+                              <small>{new Date(transaction.created_at || transaction.date).toLocaleDateString()}</small>
+                            </td>
+                            <td>{transaction.reason || transaction.description}</td>
+                            <td className="text-end">
+                              <span className={`badge ${transaction.amount > 0 ? 'bg-success' : 'bg-danger'}`}>
+                                {transaction.amount > 0 ? '+' : ''}{transaction.amount} 🪙
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
