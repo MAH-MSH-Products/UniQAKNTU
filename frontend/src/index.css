@@ -484,3 +484,130 @@ input[type="checkbox"], input[type="radio"] {
   height: 16px;
   cursor: pointer;
 }
+
+/* ============================================
+   Sprint 2: Floating Exam Cart
+   ============================================ */
+.floating-exam-cart {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-hover));
+  color: white;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-decoration: none;
+}
+
+.floating-exam-cart:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+.floating-exam-cart .cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  border: 2px solid var(--bg-body);
+}
+
+html[dir="rtl"] .floating-exam-cart {
+  right: auto;
+  left: 2rem;
+}
+
+html[dir="rtl"] .floating-exam-cart .cart-badge {
+  right: auto;
+  left: -5px;
+}
+
+/* ============================================
+   Sprint 2: AI Features Dark Mode
+   ============================================ */
+[data-theme="dark"] .border-warning {
+  border-color: var(--accent-orange) !important;
+}
+
+[data-theme="dark"] .bg-warning {
+  background-color: #f59e0b !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .text-warning {
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .badge.bg-warning {
+  background-color: #f59e0b !important;
+  color: #1a1a1a !important;
+}
+
+/* AI Answer Styling */
+.ai-answer-text {
+  padding: 1rem;
+  background-color: rgba(255, 193, 7, 0.05);
+  border-left: 3px solid var(--accent-orange);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .ai-answer-text {
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+/* Token Badge Improvements */
+.badge.bg-warning.text-dark {
+  font-weight: 600;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .badge.bg-warning.text-dark {
+  background-color: #f59e0b !important;
+  color: #1a1a1a !important;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Package Cards */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Custom Exam Builder */
+.list-group-item {
+  transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: var(--bg-hover);
+}
+
+[data-theme="dark"] .list-group-item {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .list-group-item:hover {
+  background-color: var(--bg-hover);
+}

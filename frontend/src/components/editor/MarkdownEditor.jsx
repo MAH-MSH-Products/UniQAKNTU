@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../../services/api';
+import api, { improveTextWithAI } from '../../services/api';
 import { processMarkdown, typesetMathJax } from '../../services/utils';
+import { FiZap } from 'react-icons/fi';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 const MarkdownEditor = ({ value = '', onChange, onAttachmentUpload }) => {
   const [preview, setPreview] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [aiImproving, setAiImproving] = useState(false);
   const textareaRef = useRef(null);
 
   const handleChange = (e) => {
@@ -85,6 +88,28 @@ const MarkdownEditor = ({ value = '', onChange, onAttachmentUpload }) => {
     }
   };
 
+  const handleImproveWithAI = async () => {
+    if (!value.trim()) {
+      alert('Please enter some text first');
+      return;
+    }
+
+    if (!window.confirm('Improve this text with AI? This may cost tokens.')) {
+      return;
+    }
+
+    setAiImproving(true);
+    try {
+      const response = await improveTextWithAI(value);
+      if (onChange) onChange(response.data.improved_text);
+      alert('Text improved successfully!');
+    } catch (error) {
+      alert(getErrorMessage(error, 'Failed to improve text'));
+    } finally {
+      setAiImproving(false);
+    }
+  };
+
   useEffect(() => {
     setPreview(processMarkdown(value));
     setTimeout(() => { typesetMathJax(); }, 100);
@@ -93,7 +118,19 @@ const MarkdownEditor = ({ value = '', onChange, onAttachmentUpload }) => {
   return (
     <div className="markdown-editor-container" style={{ display: 'flex', gap: '1rem', height: '400px' }}>
       <div className="editor-pane" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <label className="form-label fw-bold">Markdown Editor</label>
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <label className="form-label fw-bold mb-0">Markdown Editor</label>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-warning d-flex align-items-center gap-1"
+            onClick={handleImproveWithAI}
+            disabled={aiImproving || !value.trim()}
+            title="Improve with AI"
+          >
+            <FiZap />
+            {aiImproving ? 'Improving...' : 'Improve with AI'}
+          </button>
+        </div>
         <textarea
           ref={textareaRef}
           className="form-control font-monospace"

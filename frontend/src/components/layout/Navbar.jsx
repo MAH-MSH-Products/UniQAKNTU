@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTag, FiFileText, FiShield, FiSun, FiMoon } from 'react-icons/fi';
+import { FiLogOut, FiLogIn, FiUser, FiUserPlus, FiTag, FiFileText, FiShield, FiSun, FiMoon, FiDollarSign } from 'react-icons/fi';
 import logo from '../../assets/azHubNasir.png';
 
 const Navbar = () => {
@@ -86,55 +86,64 @@ const Navbar = () => {
             </li>
             
             {isAuthenticated ? (
-              <li className="nav-item dropdown">
-                <a className="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
-                  <FiUser size={20} />
-                  <span className="fw-medium text-dark">{user?.username}</span>
-                </a>
-                <ul className="dropdown-menu dropdown-menu-end shadow-sm">
-                  <li>
-                    <h6 className="dropdown-header d-flex align-items-center">
-                      <span className="text-dark">{user?.username}</span>
-                      {renderRoleBadge()}
-                    </h6>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item d-flex align-items-center gap-2" to="/profile">
-                      <FiUser /> {t('profile.title', 'My Profile')}
-                    </Link>
-                  </li>
-                  <li><hr className="dropdown-divider" /></li>
-                  
-                  {/* Changed condition to isAdmin */}
-                  {isAdmin && (
-                    <>
-                      <li>
-                        <Link className="dropdown-item d-flex align-items-center gap-2" to="/admin/support">
-                          <FiShield /> {t('pages.admin_panel', 'Admin Support Panel')}
-                        </Link>
-                      </li>
-                      <li><hr className="dropdown-divider" /></li>
-                    </>
-                  )}
-                  
-                  <li>
-                    <Link className="dropdown-item d-flex align-items-center gap-2" to="/tickets">
-                      <FiTag /> {t('nav.my_tickets', 'My Tickets')}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item d-flex align-items-center gap-2" to="/reports">
-                      <FiFileText /> {t('nav.reports', 'Reports')}
-                    </Link>
-                  </li>
-                  <li><hr className="dropdown-divider" /></li>
-                  <li>
-                    <button className="dropdown-item text-danger d-flex align-items-center gap-2" onClick={handleLogout}>
-                      <FiLogOut /> {t('nav.logout', 'Logout')}
-                    </button>
-                  </li>
-                </ul>
-              </li>
+              <>
+                {/* Token Balance Display */}
+                <li className="nav-item me-3">
+                  <span className="badge bg-warning text-dark d-flex align-items-center gap-1 px-3 py-2" style={{ fontSize: '14px' }}>
+                    🪙 {user?.tokens || 0}
+                  </span>
+                </li>
+
+                <li className="nav-item dropdown">
+                  <a className="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown">
+                    <FiUser size={20} />
+                    <span className="fw-medium text-dark">{user?.username}</span>
+                  </a>
+                  <ul className="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li>
+                      <h6 className="dropdown-header d-flex align-items-center">
+                        <span className="text-dark">{user?.username}</span>
+                        {renderRoleBadge()}
+                      </h6>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2" to="/profile">
+                        <FiUser /> {t('profile.title', 'My Profile')}
+                      </Link>
+                    </li>
+                    <li><hr className="dropdown-divider" /></li>
+
+                    {/* Changed condition to isAdmin */}
+                    {isAdmin && (
+                      <>
+                        <li>
+                          <Link className="dropdown-item d-flex align-items-center gap-2" to="/admin/support">
+                            <FiShield /> {t('pages.admin_panel', 'Admin Support Panel')}
+                          </Link>
+                        </li>
+                        <li><hr className="dropdown-divider" /></li>
+                      </>
+                    )}
+
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2" to="/tickets">
+                        <FiTag /> {t('nav.my_tickets', 'My Tickets')}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item d-flex align-items-center gap-2" to="/reports">
+                        <FiFileText /> {t('nav.reports', 'Reports')}
+                      </Link>
+                    </li>
+                    <li><hr className="dropdown-divider" /></li>
+                    <li>
+                      <button className="dropdown-item text-danger d-flex align-items-center gap-2" onClick={handleLogout}>
+                        <FiLogOut /> {t('nav.logout', 'Logout')}
+                      </button>
+                    </li>
+                  </ul>
+                </li>
+              </>
             ) : (
               <>
                 <li className="nav-item me-2">

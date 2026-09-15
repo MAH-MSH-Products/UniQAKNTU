@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import WidgetsPanel from './WidgetsPanel';
 import Footer from './Footer';
+import FloatingExamCart from '../custom-exams/FloatingExamCart';
 
 /**
  * MainLayout Component - Application Shell
@@ -42,9 +43,12 @@ const MainLayout = () => {
           <WidgetsPanel />
         </div>
       </div>
-      
+
       {/* Footer */}
       <Footer />
+
+      {/* Floating Exam Cart */}
+      <FloatingExamCart />
     </div>
   );
 };

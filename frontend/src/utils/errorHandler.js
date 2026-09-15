@@ -56,6 +56,9 @@ export const getErrorMessage = (error, fallbackKey = 'errors.default') => {
   if (error.response?.status === 401) {
     return i18n.t('errors.unauthorized', 'Session expired. Please log in again.');
   }
+  if (error.response?.status === 402) {
+    return i18n.t('errors.insufficient_tokens', 'Insufficient tokens to complete this action.');
+  }
   if (error.response?.status === 403) {
     return i18n.t('errors.forbidden', 'You do not have permission to perform this action.');
   }

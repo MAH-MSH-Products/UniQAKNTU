@@ -2,32 +2,38 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiThumbsUp, FiThumbsDown, FiTrash2, FiEdit, FiArrowLeft, FiAward } from 'react-icons/fi';
-import api, { extractResults } from '../../services/api';
+import { FiThumbsUp, FiThumbsDown, FiTrash2, FiEdit, FiArrowLeft, FiAward, FiPlusSquare, FiCheckSquare, FiZap } from 'react-icons/fi';
+import api, { extractResults, generateAIAnswer } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
 import CommentSection from './CommentSection';
 import SuggestEditModal from './SuggestEditModal';
 import { useAuth } from '../../context/AuthContext';
+import { useCustomExam } from '../../context/CustomExamContext';
 import { processMarkdown, getAuthorDisplayName, typesetMathJax } from '../../services/utils';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 const QuestionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isAuthenticated, canModerate } = useAuth(); 
-  
+  const { user, isAuthenticated, canModerate } = useAuth();
+  const { addToExam, isInExam } = useCustomExam();
+
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [voting, setVoting] = useState(false);
   const [error, setError] = useState(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiAnswer, setAiAnswer] = useState(null);
 
   const authorId = typeof question?.author === 'object' ? question?.author?.id : question?.author;
   const isQuestionAuthor = Boolean(user?.id && authorId && String(authorId).toLowerCase() === String(user.id).toLowerCase());
-  
+
   const displayAuthorName = getAuthorDisplayName(question?.author, question?.author_name, user);
+  const inExam = question ? isInExam(question.id) : false;
 
   const fetchQuestionDetails = async () => {
     setLoading(true);
@@ -85,6 +91,27 @@ const QuestionDetail = () => {
       } catch (err) {
         console.error('Failed to delete question:', err);
         alert(t('questions.delete_failed'));
+      }
+    }
+  };
+
+  const handleGenerateAIAnswer = async () => {
+    if (!isAuthenticated) {
+      alert(t('ai.login_required', 'Please login to use AI features'));
+      return;
+    }
+
+    if (window.confirm(t('ai.generate_confirm', 'Generate an AI answer? This will cost tokens.'))) {
+      setAiGenerating(true);
+      try {
+        const response = await generateAIAnswer(id);
+        setAiAnswer(response.data);
+        alert(t('ai.generate_success', 'AI answer generated! Cost: {cost} tokens').replace('{cost}', response.data.cost_in_tokens || 0));
+        setTimeout(() => typesetMathJax(), 100);
+      } catch (err) {
+        alert(getErrorMessage(err, 'ai.generate_failed'));
+      } finally {
+        setAiGenerating(false);
       }
     }
   };
@@ -177,15 +204,25 @@ const QuestionDetail = () => {
                     <i className="bi bi-calendar me-1"></i>
                     {t('questions.asked')}: {question.created_at_jalali ? question.created_at_jalali.split('T')[0] : ''}
                   </span>
-                  
+
                   {question.status !== 'APPROVED' && (
                     <span className={`badge ${question.status === 'PENDING' ? 'bg-warning text-dark' : 'bg-danger'}`}>
                       {question.status}
                     </span>
                   )}
                 </div>
-                
+
                 <div className="d-flex gap-2">
+                  <button
+                    className={`btn btn-sm ${inExam ? 'btn-success' : 'btn-outline-primary'} d-flex align-items-center gap-1`}
+                    onClick={() => addToExam(question)}
+                    disabled={inExam}
+                    title={inExam ? t('custom_exams.already_added') : t('custom_exams.add_to_exam')}
+                  >
+                    {inExam ? <FiCheckSquare /> : <FiPlusSquare />}
+                    {inExam ? t('custom_exams.added') : t('custom_exams.add_to_exam')}
+                  </button>
+
                   {(isQuestionAuthor || canModerate) && (
                     <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 border-0" onClick={() => setShowEditModal(true)}>
                       <FiEdit /> {canModerate || isQuestionAuthor ? t('common.edit') : t('common.suggest_edit')}
@@ -206,9 +243,43 @@ const QuestionDetail = () => {
       </div>
 
       <div className="answers-section mt-5">
-        <h4 className="mb-4 pb-2 border-bottom fw-bold text-dark">
-          {answers.length} {t('questions.answers')}
-        </h4>
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+          <h4 className="mb-0 fw-bold text-dark">
+            {answers.length} {t('questions.answers')}
+          </h4>
+          {isAuthenticated && sortedAnswers.length === 0 && (
+            <button
+              className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+              onClick={handleGenerateAIAnswer}
+              disabled={aiGenerating}
+            >
+              <FiZap />
+              {aiGenerating ? t('ai.generating') : t('ai.ask_ai', 'Ask AI')}
+            </button>
+          )}
+        </div>
+
+        {aiAnswer && (
+          <div className="card mb-4 border-warning">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <h6 className="fw-bold text-warning">
+                  <FiZap className="me-1" />
+                  {t('ai.generated_answer', 'AI Generated Answer')}
+                </h6>
+                <span className="badge bg-warning text-dark">{t('ai.ai_badge', 'AI')}</span>
+              </div>
+              <div
+                className="ai-answer-text"
+                dangerouslySetInnerHTML={{ __html: processMarkdown(aiAnswer.text || '') }}
+              />
+              <small className="text-muted">
+                <i className="bi bi-info-circle me-1"></i>
+                {t('ai.disclaimer', 'AI-generated content may contain errors. Please verify with official sources.')}
+              </small>
+            </div>
+          </div>
+        )}
 
         {sortedAnswers.length > 0 ? (
           sortedAnswers.map((answer) => (

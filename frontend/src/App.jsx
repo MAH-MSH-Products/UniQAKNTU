@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SourceMaterialsProvider } from './context/SourceMaterialsContext';
+import { CustomExamProvider } from './context/CustomExamContext';
 import MainLayout from './components/layout/MainLayout';
 import AuthLayout from './components/layout/AuthLayout';
 import RequireAuth from './components/auth/RequireAuth';
@@ -20,6 +21,12 @@ import AnswerDetail from './components/wiki/AnswerDetail';
 import Profile from './pages/Profile';
 import InstructorDashboard from './pages/instructor/InstructorDashboard';
 import ManageAnswers from './pages/instructor/ManageAnswers';
+import PackagesList from './pages/marketplace/PackagesList';
+import MyPurchases from './pages/marketplace/MyPurchases';
+import PackageForm from './pages/marketplace/PackageForm';
+import CustomExamsList from './pages/custom-exams/CustomExamsList';
+import CustomExamBuilder from './pages/custom-exams/CustomExamBuilder';
+import CustomExamDetail from './pages/custom-exams/CustomExamDetail';
 import './i18n';
 import i18n from 'i18next';
 import ForgotPassword from './pages/ForgotPassword';
@@ -40,47 +47,59 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <SourceMaterialsProvider>
-          <Routes>
-            {/* Public Routes - Accessible to everyone */}
-            <Route element={<MainLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/source-materials" element={<SourceMaterialsList />} />
-              <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
-              <Route path="/profile" element={<Profile />} />
-              
-              <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
-              {/* New Route for individual question details */}
-              <Route path="/questions/:id" element={<QuestionDetail />} />
-            </Route>
-
-            {/* Protected Routes - Require Authentication */}
-            <Route element={<RequireAuth />}>
+          <CustomExamProvider>
+            <Routes>
+              {/* Public Routes - Accessible to everyone */}
               <Route element={<MainLayout />}>
-                <Route path="/support" element={<SupportCenter />} />
-                <Route path="/tickets" element={<SupportCenter />} />
-                <Route path="/reports" element={<UserReports />} />
-                <Route path="/admin" element={<Navigate to="/admin/support" replace />} />
-                <Route path="/admin/support" element={<AdminSupportPanel />} />
-                <Route path="/answers/:answerId" element={<AnswerDetail />} />
-              </Route>
-            </Route>
+                <Route path="/" element={<Home />} />
+                <Route path="/source-materials" element={<SourceMaterialsList />} />
+                <Route path="/source-materials/:id" element={<div className="p-4"><h2>Source Material Detail</h2></div>} />
+                <Route path="/profile" element={<Profile />} />
 
-            {/* Instructor Routes - Require Instructor Role */}
-            <Route element={<RequireInstructor />}>
-              <Route element={<MainLayout />}>
-                <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
-                <Route path="/instructor/answers" element={<ManageAnswers />} />
+                <Route path="/source-materials/:examId/questions" element={<QuestionExplorer />} />
+                {/* New Route for individual question details */}
+                <Route path="/questions/:id" element={<QuestionDetail />} />
+
+                {/* Sprint 2: Marketplace Routes */}
+                <Route path="/packages" element={<PackagesList />} />
+                <Route path="/my-purchases" element={<MyPurchases />} />
+
+                {/* Sprint 2: Custom Exams Routes */}
+                <Route path="/custom-exams" element={<CustomExamsList />} />
+                <Route path="/custom-exams/build" element={<CustomExamBuilder />} />
+                <Route path="/custom-exams/:id" element={<CustomExamDetail />} />
               </Route>
-            </Route>
-            
-            {/* Auth Routes - Login/Register with AuthLayout */}
-            <Route element={<AuthLayout />}>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-            </Route>
-          </Routes>
+
+              {/* Protected Routes - Require Authentication */}
+              <Route element={<RequireAuth />}>
+                <Route element={<MainLayout />}>
+                  <Route path="/support" element={<SupportCenter />} />
+                  <Route path="/tickets" element={<SupportCenter />} />
+                  <Route path="/reports" element={<UserReports />} />
+                  <Route path="/admin" element={<Navigate to="/admin/support" replace />} />
+                  <Route path="/admin/support" element={<AdminSupportPanel />} />
+                  <Route path="/answers/:answerId" element={<AnswerDetail />} />
+                </Route>
+              </Route>
+
+              {/* Instructor Routes - Require Instructor Role */}
+              <Route element={<RequireInstructor />}>
+                <Route element={<MainLayout />}>
+                  <Route path="/instructor/dashboard" element={<InstructorDashboard />} />
+                  <Route path="/instructor/answers" element={<ManageAnswers />} />
+                  <Route path="/instructor/packages/create" element={<PackageForm />} />
+                </Route>
+              </Route>
+
+              {/* Auth Routes - Login/Register with AuthLayout */}
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+              </Route>
+            </Routes>
+          </CustomExamProvider>
         </SourceMaterialsProvider>
       </AuthProvider>
     </BrowserRouter>
