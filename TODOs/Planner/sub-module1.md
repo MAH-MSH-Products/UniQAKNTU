@@ -4,49 +4,31 @@
 
 **Module ID:** `performed-weekly-plan`
 **App Name (Django):** `planner`
-**Domain Boundary:** Responsible for tracking, aggregating, and displaying a student's actual executed study plan. It tracks reading time, review time, test time, and test counts across various source materials (subjects) on a weekly basis. It does *not* handle the generation of the future study plan, only the reporting of the *performed* plan.
+**Domain Boundary:** This module is now strictly a **Read-Only Reporting View**. It is responsible for dynamically aggregating and displaying a student's actual executed study plan. To resolve previous data redundancy issues, it **does not own any database tables** for tracking time or tests. Instead, it acts as a consumer, pulling study durations from Sub-module 5 (`weekly-study-hours`) and test counts/performance from Sub-module 2 (`conclusion-plan`).
 
 **Layers:**
-
-* **Domain:** `WeeklyPerformance`, `SubjectPerformanceRecord`
-* **Application:** Aggregation services to calculate total weekly hours and test counts.
-* **Infrastructure:** PostgreSQL relational mapping via Django ORM.
+* **Domain:** `WeeklyPerformanceSummary` (Virtual Entity)
+* **Application:** `PerformedPlanAggregationService` (Combines data from `StudyActivity` and `TestRecord`).
+* **Infrastructure:** PostgreSQL via Django ORM (Read-only `.annotate()` and `.aggregate()` queries).
 * **Interface:** DRF Views/Serializers (`/api/planner/weekly-performance/`), React SPA (`PerformedWeeklyPlan.jsx`).
 
 **Data Model (Django `planner` app):**
-
-1. `WeeklyPerformance`:
-* `id`: UUID / PK
-* `student`: ForeignKey to `User` (Role: STUDENT)
-* `week_number`: Integer (e.g., 1 for Week 1)
-* `start_date`: DateField
-* `end_date`: DateField
-* *Constraint*: `unique_together = ['student', 'week_number']`
-
-
-2. `SubjectPerformanceRecord`:
-* `id`: UUID / PK
-* `weekly_performance`: ForeignKey to `WeeklyPerformance`, related_name=`subject_records`
-* `source_material`: ForeignKey to `SourceMaterial` (e.g., Discrete Math, OS)
-* `read_time_minutes`: Integer (Default: 0)
-* `review_time_minutes`: Integer (Default: 0)
-* `test_time_minutes`: Integer (Default: 0)
-* `test_count`: Integer (Default: 0)
-
-
+*No persistent tables.* 
+Relies purely on:
+1. `StudyActivity` (from Module 5) for `duration` and `activity_type` (READING, REVIEW).
+2. `TestRecord` (from Module 2) for `total_tests` and `correct_tests`.
+*Note: Granularity is standardized to the `Chapter` level across all modules.*
 
 **Folder Placement:**
-
-* Backend: `backend/apps/planner/`
-* Frontend: `frontend/src/pages/planner/PerformedWeeklyPlan/`
+* Backend: `backend/apps/planner/services/performed_plan_service.py`
+* Frontend: `frontend/src/pages/student/planner/PerformedWeeklyPlan/`
 
 **Naming Conventions Table:**
 
 | Concept | Backend (Django) | Frontend (React) | Database (PostgreSQL) | API Contract |
 | --- | --- | --- | --- | --- |
-| Weekly Plan | `WeeklyPerformance` | `WeeklyPerformance` | `planner_weeklyperformance` | `weekly-performance` |
-| Subject Record | `SubjectPerformanceRecord` | `SubjectRecord` | `planner_subjectperformancerecord` | `subject_records` |
-| Read Time | `read_time_minutes` | `readTimeMinutes` | `read_time_minutes` | `read_time_minutes` |
+| Weekly Plan | `PerformedPlanAggregator` | `WeeklyPerformance` | N/A (Virtual) | `weekly-performance` |
+| Chapter Record | `ChapterPerformanceDTO`| `ChapterRecord` | N/A (Virtual) | `chapter_records` |
 
 ---
 
@@ -57,98 +39,63 @@
 **Module ID:** `performed-weekly-plan`
 **Version:** `v1`
 **Base Path:** `/api/planner/weekly-performance/`
-**Owner:** Backend Team (Mohammad Sajjad)
+**Owner:** Backend Team 
 
 ## Conventions
-- Naming: snake_case for JSON payloads (DRF default), mapped to camelCase in Frontend Axios transforms.
+- Naming: snake_case for JSON payloads.
 - Auth: Bearer JWT (Authenticated users only)
-- Roles: `STUDENT` (can read/write own), `ADMIN`/`MODERATOR` (can read all).
-
-## Envelope
-```json
-{
-  "count": 1,
-  "next": null,
-  "previous": null,
-  "results": [ ... ]
-}
-
-```
+- Roles: `STUDENT` (can read own), `ADMIN`/`MODERATOR` (can read all).
+- Note: This is a read-only endpoint. Modifications must be done via Module 5 (time) and Module 2 (tests).
 
 ## Endpoints
 
 ### `GET /api/planner/weekly-performance/`
 
-**Summary:** List all weekly performances for the logged-in student.
+**Summary:** Retrieves the aggregated weekly performance for the logged-in student.
 **Auth:** Required (`IsAuthenticated`)
-**Query Params:** `?week_number=1` (optional)
+**Query Params:** `?week_start=YYYY-MM-DD` (optional, defaults to current week)
 **Response 200:**
 
 ```json
 {
-  "count": 1,
-  "next": null,
-  "previous": null,
-  "results": [
+  "week_start": "2026-09-20",
+  "week_end": "2026-09-26",
+  "total_read_time_minutes": 120, 
+  "total_review_time_minutes": 45,
+  "total_test_count": 50,
+  "chapter_records": [
     {
-      "id": "uuid",
-      "week_number": 1,
-      "start_date_jalali": "1403/07/01",
-      "end_date_jalali": "1403/07/07",
-      "total_read_time": 120, 
-      "total_test_count": 50,
-      "subject_records": [
-        {
-          "id": "uuid",
-          "source_material": { "id": 12, "title": "گسسته" },
-          "read_time_minutes": 60,
-          "review_time_minutes": 30,
-          "test_time_minutes": 30,
-          "test_count": 50
-        }
-      ]
+      "chapter_id": "uuid",
+      "chapter_title": "گراف",
+      "source_material_title": "گسسته",
+      "read_time_minutes": 60,
+      "review_time_minutes": 30,
+      "test_count": 50
     }
   ]
 }
 
 ```
 
-### `PATCH /api/planner/weekly-performance/{id}/records/{record_id}/`
-
-**Summary:** Update a specific subject record (e.g., updating test count or read time).
-**Auth:** Required (Must be author/student)
-**Body Schema:**
-
-```json
-{
-  "read_time_minutes": 90,
-  "test_count": 60
-}
-
-```
-
-**Response 200:** Returns the updated `SubjectPerformanceRecord` object.
-
 ## TypeScript Types (Frontend Integration)
 
 ```typescript
-export interface SubjectRecordDTO {
-  id: string;
-  source_material: { id: number; title: string };
+export interface ChapterRecordDTO {
+  chapter_id: string;
+  chapter_title: string;
+  source_material_title: string;
   read_time_minutes: number;
   review_time_minutes: number;
-  test_time_minutes: number;
   test_count: number;
 }
 
 export interface WeeklyPerformanceDTO {
-  id: string;
-  week_number: number;
-  start_date_jalali: string;
-  end_date_jalali: string;
-  total_read_time: number;
+  week_start: string;
+  week_end: string;
+  total_read_time_minutes: number;
+  total_review_time_minutes: number;
   total_test_count: number;
-  subject_records: SubjectRecordDTO[];
+  chapter_records: ChapterRecordDTO[];
 }
 
 ```
@@ -159,45 +106,24 @@ export interface WeeklyPerformanceDTO {
 
 ## 4. Integration Plan (Delegation TODOs)
 
-### Backend TODOs (Assignee: Mohammad Sajjad)
-- [ ] **App Creation:** Run `python manage.py startapp planner` inside `backend/apps/`. Add it to `INSTALLED_APPS`.
-- [ ] **Models:** Implement `WeeklyPerformance` and `SubjectPerformanceRecord` models in `apps/planner/models.py`. Ensure FK to `accounts.User` and `curriculum.SourceMaterial`.
-- [ ] **Signals/Properties:** Add `@property` methods to `WeeklyPerformance` to dynamically calculate `total_read_time`, `total_review_time`, and `total_test_count` based on its related `subject_records`.
-- [ ] **Serializers:** Create `WeeklyPerformanceSerializer` and `SubjectPerformanceRecordSerializer` in `serializers.py`. Include nested read-only relations for the source material titles.
-- [ ] **Views (ViewSets):** 
-    - Create `WeeklyPerformanceViewSet`. Override `get_queryset` so `STUDENT` role only gets their own records, while `ADMIN` gets all.
-    - Use DRF `@action` or a nested router to handle `PATCH` updates to specific `subject_records`.
-- [ ] **URLs:** Map the ViewSet to `/api/planner/weekly-performance/` in `backend/config/urls.py`.
-- [ ] **Documentation:** Create `documentations/planner_models.md` and `documentations/planner_views.md` explaining the aggregation logic.
+### Backend TODOs 
+- [ ] **Architecture Refactor:** Remove the old `WeeklyPerformance` and `SubjectPerformanceRecord` models to prevent data duplication.
+- [ ] **Aggregation Service:** Create `PerformedPlanAggregationService`. This service must group `StudyActivity` records (filtered by the requested week) and left-join them with `TestRecord` data for the same `Chapter` and timeframe.
+- [ ] **Views:** Implement a single `GET` endpoint. Remove the previous `PATCH` endpoint, as updates are now strictly handled by Sub-module 5 (for time) and Sub-module 2 (for tests).
 
-### Frontend TODOs (Assignee: Mohammad Amin)
+### Frontend TODOs 
 - [ ] **Routing:** Add `/schedule/performed-weekly-plan` to `App.jsx` protected by `<RequireAuth>`.
-- [ ] **Service Layer:** Update `src/services/api.js` to include:
-    - `getWeeklyPerformances()`
-    - `updateSubjectRecord(performanceId, recordId, data)`
-- [ ] **i18n Localization:** Add translation keys in `fa/translation.json` and `en/translation.json` under the `"planner"` key for table headers (زبان، گسسته، آمار، زمان خواندن، زمان تست).
-- [ ] **Component Creation:** 
-    - Create `src/pages/student/planner/PerformedWeeklyPlan.jsx`.
-    - Create a reusable table component `src/components/planner/PerformanceTable.jsx` replicating the HTML grid from the raw file (using Bootstrap table classes, NOT raw tables).
-- [ ] **State Management:** Use `useEffect` to fetch data via `getWeeklyPerformances()`. Group the data by `week_number`.
-- [ ] **UI/UX Implementation:**
-    - Use the exact color codes from the raw HTML mockup as CSS Variables in `index.css`:
-        - `--read-color: #dbf0fe;`
-        - `--review-color: #cfebfd;`
-        - `--test-color: #c3e7fd;`
-    - Replace the raw static table with dynamic `.map()` rendering over `subject_records`.
-    - Implement a guide/legend box at the bottom explaining the colors (راهنما).
-- [ ] **Dark Mode Compatibility:** Ensure the new CSS variables (`--read-color`, etc.) have high-contrast alternatives inside the `[data-theme="dark"]` block in `index.css`.
+- [ ] **Service Layer:** Implement `getWeeklyPerformances(weekStart)` in `api.js`. Remove any `update` functions.
+- [ ] **Component Refactor:** Convert the `PerformedWeeklyPlan` UI into a strictly read-only data grid. Remove any inline input fields for editing time or test counts.
+- [ ] **UI/UX:** Add a clear call-to-action (CTA) message at the top of the page informing the user: *"To edit your study times, please visit the [Daily Schedule] page. To edit test results, visit the [Conclusion Plan] page."*
 
 ---
 
 ## 6. Verification Checklist
-- [ ] The `planner` app is isolated and does not create circular dependencies with `curriculum` or `wiki`.
-- [ ] API strictly returns `_jalali` formatted dates for UI rendering.
-- [ ] Frontend successfully displays the grid matching the HTML template's visual hierarchy (Glassmorphism + Bootstrap overrides).
-- [ ] Student cannot access or modify another student's `WeeklyPerformance` via the API (Tested via RBAC).
-- [ ] API documentation (`API.md`) is updated with the new `/api/planner/` routes.
-
-***
+- [ ] Database has a Single Source of Truth: No redundant tables exist for tracking performed plans.
+- [ ] API successfully joins and aggregates data from `StudyActivity` and `TestRecord` dynamically.
+- [ ] Frontend strictly renders a read-only view.
+- [ ] Granularity correctly matches the `Chapter` level to ensure consistency with Module 2 and Module 5.
 
 ```
+

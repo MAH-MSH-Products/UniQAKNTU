@@ -3,100 +3,65 @@
 ## 2. Module Architectures
 
 **Module ID:** `student-dashboard`
-**App Name (Django):** `planner` (extended) & `community` (new, for opinions)
-**Domain Boundary:** This module serves as the central hub for the student. It aggregates data from the study planner, provides utility widgets (Stopwatch, Persian Calendar, Exam Countdown), handles daily personal notes, enables consultation bookings, and introduces a gamified Leaderboard and Community Opinions section.
+**App Name (Django):** `planner` 
+**Domain Boundary:** This module serves as the central presentation hub for the student. It manages personal dashboard utilities including the Daily Personal Note, Consultation Bookings, and high-level summary statistics (Motivational Quote, Exam Countdown). 
+*Crucial Boundary Resolution:* To prevent domain overlap, this module **does not own or manage** the Community Opinions or the Leaderboard backend logic. The Dashboard frontend will simply act as a consumer, rendering UI widgets that fetch data from the `community` endpoints (owned entirely by Sub-module 4).
 
 **Layers:**
+* **Domain:** `DailyNote`, `ConsultationBooking`, `DashboardSummary` (Virtual)
+* **Application:** Aggregation services for dashboard top-level statistics (e.g., fetching total hours/tests from Sub-module 5 and Sub-module 2 to show in summary cards).
+* **Infrastructure:** PostgreSQL relational mapping via Django ORM.
+* **Interface:** DRF Views/Serializers (`/api/planner/dashboard/`), React SPA (`StudentDashboard.jsx`).
 
-* **Domain:** `DailyNote`, `ConsultationBooking`, `StudentOpinion`, `LeaderboardAggregation`
-* **Application:** Aggregation services for charts and leaderboards, Voting logic for opinions.
-* **Infrastructure:** PostgreSQL relational mapping via Django ORM, Redis for caching leaderboard data (performance critical).
-* **Interface:** DRF Views/Serializers (`/api/planner/dashboard/`, `/api/community/opinions/`), React SPA (`StudentDashboard.jsx`).
+**Data Model (Django `planner` app):**
 
-**Data Model (Django apps):**
-
-1. `DailyNote` (in `planner` app):
+1. `DailyNote`:
 * `id`: UUID / PK
-* `student`: ForeignKey to `User`
-* `date`: DateField (Unique per student)
+* `student`: ForeignKey to `accounts.User` (Role: STUDENT)
+* `date`: DateField (Unique per student per day)
 * `text`: TextField
 
-
-2. `ConsultationBooking` (in `planner` app):
+2. `ConsultationBooking`:
 * `id`: UUID / PK
-* `student`: ForeignKey to `User`
+* `student`: ForeignKey to `accounts.User` (Role: STUDENT)
 * `day_of_week`: Integer (1 to 7)
-
-
 * `time_slot`: TimeField
-
-
 * `created_at`: DateTimeField
 
-
-3. `StudentOpinion` (in `community` app):
-* `id`: UUID / PK
-* `student`: ForeignKey to `User`
-* `text`: TextField
-
-
-* `likes`: Integer (Default: 0)
-
-
-* `dislikes`: Integer (Default: 0)
-
-
-* `is_anonymous`: Boolean
-
-
-* `status`: Enum ('PENDING', 'APPROVED', 'REJECTED')
-
-
-4. `OpinionVote` (in `community` app):
-* `opinion`: ForeignKey to `StudentOpinion`
-* `user`: ForeignKey to `User`
-* `vote_type`: Integer (1 for Like, -1 for Dislike)
-* *Constraint*: `unique_together = ['opinion', 'user']`
-
-
-
 **Folder Placement:**
-
-* Backend: `backend/apps/planner/`, `backend/apps/community/`
+* Backend: `backend/apps/planner/views/dashboard_views.py`
 * Frontend: `frontend/src/pages/student/dashboard/StudentDashboard.jsx`
 
 **Naming Conventions Table:**
 
 | Concept | Backend (Django) | Frontend (React) | Database (PostgreSQL) | API Contract |
 | --- | --- | --- | --- | --- |
-| Dashboard Summary | `DashboardAggregator` | `DashboardSummary` | N/A | `dashboard/summary` |
-| Daily Note | `DailyNote` | `DailyNote` | `planner_dailynote` | `dashboard/notes` |
-| Consultation | `ConsultationBooking` | `Consultation` | `planner_consultation` | `dashboard/consultations` |
-| Leaderboard | `LeaderboardService` | `Leaderboard` | N/A (Redis Cached) | `dashboard/leaderboard` |
-| Community Opinion | `StudentOpinion` | `Opinion` | `community_studentopinion` | `community/opinions` |
+| Dashboard Summary | `DashboardAggregator` | `DashboardSummary` | N/A (Aggregated) | `dashboard/summary` |
+| Daily Note | `DailyNote` | `DailyNoteWidget` | `planner_dailynote` | `dashboard/notes` |
+| Consultation | `ConsultationBooking` | `ConsultationWidget` | `planner_consultationbooking` | `dashboard/consultations` |
 
 ---
 
 ## 3. API Contracts
 
 ```markdown
-# Student Dashboard & Community API Contract
+# Student Dashboard API Contract
 **Module ID:** `student-dashboard`
 **Version:** `v1`
-**Base Path:** `/api/planner/dashboard/` & `/api/community/`
-**Owner:** Backend Team (Mohammad Sajjad)
+**Base Path:** `/api/planner/dashboard/`
+**Owner:** Backend Team
 
 ## Endpoints
 
 ### `GET /api/planner/dashboard/summary/`
-**Summary:** Retrieves aggregated data for the dashboard (Motivational quote, countdown, user records, chart summaries)[cite: 8].
+**Summary:** Retrieves aggregated data for the dashboard's top row (Motivational quote, countdown to exam, and high-level user records).
 **Auth:** Required (`IsAuthenticated`, Role: `STUDENT`)
 **Response 200:**
 ```json
 {
   "quote": "شروع کردن و تسلیم نشدن...",
   "countdown": {
-    "target_name": "Master's Exam",
+    "target_name": "آزمون ارشد",
     "days": 227, "hours": 7, "minutes": 15
   },
   "records": {
@@ -113,69 +78,56 @@
 
 ```
 
-### `GET /api/planner/dashboard/leaderboard/`
+### `GET /api/planner/dashboard/notes/`
 
-**Summary:** Retrieves the top 10 students based on study hours and tests.
-**Query Params:** `?period=day|week|month|three_months`
+**Summary:** Retrieves the daily note for the current date.
+**Auth:** Required
 **Response 200:**
 
 ```json
 {
-  "total_active_users": 3972,
-  "results": [
-    {
-      "rank": 1,
-      "user": { "username": "سحر", "avatar": "url..." },
-      "major": "مهندسی کامپیوتر",
-      "study_hours": "06:45",
-      "test_count": 12
-    }
-  ]
+  "id": "uuid",
+  "date": "2026-09-20",
+  "text": "یادداشت امروز من..."
 }
 
 ```
 
 ### `POST /api/planner/dashboard/notes/`
 
-**Summary:** Upsert today's daily note.
-**Body Schema:** `{ "text": "یادداشت شما ..." }`
-**Response 200/201:** Returns saved note object.
-
-### `POST /api/planner/dashboard/consultations/`
-
-**Summary:** Book a weekly consultation slot.
-**Body Schema:** `{ "day_of_week": 1, "time_slot": "09:00:00" }`
-**Response 201:** `{ "message": "Consultation booked successfully." }`
-
-### `GET /api/community/opinions/`
-
-**Summary:** List approved community opinions, ordered by highest score (likes - dislikes).
-**Query Params:** `?period=week|month`, `?page=1`
-**Response 200:**
+**Summary:** Upsert today's daily note (updates if a note for today already exists).
+**Auth:** Required
+**Body Schema:**
 
 ```json
 {
-  "count": 50, "next": "...", "previous": null,
-  "results": [
-    {
-      "id": "uuid",
-      "author": { "username": "ابوطالب", "avatar": "url..." },
-      "text": "شش تا از مهمترین...",
-      "likes": 35,
-      "dislikes": 2,
-      "user_vote": 1,
-      "created_at_jalali": "1403/04/17"
-    }
-  ]
+  "text": "یادداشت شما ..."
 }
 
 ```
 
-### `POST /api/community/opinions/{id}/vote/`
+**Response 200/201:** Returns the saved `DailyNote` object.
 
-**Summary:** Cast a like or dislike on an opinion.
-**Body Schema:** `{ "value": 1 }` // 1 for like, -1 for dislike
-**Response 200:** `{ "likes": 36, "dislikes": 2, "user_vote": 1 }`
+### `POST /api/planner/dashboard/consultations/`
+
+**Summary:** Book a weekly consultation slot.
+**Auth:** Required
+**Body Schema:**
+
+```json
+{
+  "day_of_week": 1,
+  "time_slot": "09:00:00"
+}
+
+```
+
+**Response 201:**
+
+```json
+{ "message": "Consultation booked successfully." }
+
+```
 
 ## TypeScript Types (Frontend Integration)
 
@@ -183,18 +135,19 @@
 export interface DashboardSummaryDTO {
   quote: string;
   countdown: { days: number; hours: number; minutes: number; target_name: string };
-  records: Record<string, any>;
+  records: {
+    total_study_hours: string;
+    max_daily_study: string;
+    total_tests: number;
+    max_daily_tests: number;
+  };
   today_tasks: { has_reviews: boolean; has_studies: boolean };
 }
 
-export interface OpinionDTO {
+export interface DailyNoteDTO {
   id: string;
-  author: { username: string; avatar: string };
+  date: string;
   text: string;
-  likes: number;
-  dislikes: number;
-  user_vote: 1 | -1 | 0;
-  created_at_jalali: string;
 }
 
 ```
@@ -205,35 +158,31 @@ export interface OpinionDTO {
 
 ## 4. Integration Plan (Delegation TODOs)
 
-### Backend TODOs (Assignee: Mohammad Sajjad)
-- [ ] **App Creation:** Create the `community` app for handling social features (`StudentOpinion`, `OpinionVote`) to keep `planner` focused strictly on study data. Register it in `INSTALLED_APPS`.
-- [ ] **Models:** Implement `DailyNote`, `ConsultationBooking` (in `planner`), and `StudentOpinion`, `OpinionVote` (in `community`). 
-- [ ] **Aggregation Service (Leaderboard):** Create a service in `planner/services.py` that queries `WeeklyPerformance` and `SubjectPerformanceRecord` to calculate top users. **CRITICAL:** Use Redis caching for this endpoint to prevent heavy DB loads, as leaderboards require sorting across the entire user base[cite: 8].
-- [ ] **Voting Logic:** Implement the `vote/` endpoint using the exact same logic currently used for `Questions` and `Answers` in the `wiki` app (toggle vote on double click, calculate score)[cite: 8, 9].
-- [ ] **Admin/Moderator Approval:** Ensure `StudentOpinion` defaults to `status="PENDING"`. Only return `status="APPROVED"` to the `GET` endpoint. Add moderation capabilities to the existing `AdminSupportPanel`.
-- [ ] **Routing:** Add `/api/planner/dashboard/` and `/api/community/` routers.
+### Backend TODOs 
+- [ ] **Models:** Implement `DailyNote` and `ConsultationBooking` within the `planner` app. Ensure unique constraints are properly set (e.g., one note per student per day).
+- [ ] **Summary Service:** Create a lightweight `DashboardSummaryService` that queries Sub-module 5's tables (for total hours) and Sub-module 2's tables (for total tests) to formulate the `records` object.
+- [ ] **Daily Note Upsert:** Implement an upsert (update-or-create) logic in the `POST /notes/` endpoint to ensure a user doesn't create multiple notes for the same physical date. Use the server's timezone-aware current date.
+- [ ] **Decoupling:** Ensure *no* Community or Leaderboard models are defined here. Leave social features entirely to the `community` app (Sub-module 4).
 
-### Frontend TODOs (Assignee: Mohammad Amin)
-- [ ] **Routing:** Add `/panel/dashboard` to `App.jsx` protected by `<RequireAuth>`. Make this the default redirect after a successful login.
+### Frontend TODOs 
+- [ ] **Routing:** Add `/panel/dashboard` to `App.jsx` protected by `<RequireAuth>`. Configure this as the default redirect path after a successful login.
 - [ ] **Component Structure:**
-    - Create `StudentDashboard.jsx`.
-    - Extract sub-components to keep the file clean: `<LeaderboardWidget/>`, `<PersonalRecordsWidget/>`, `<StopwatchWidget/>`, `<CommunityOpinionsWidget/>`.
+    - Create `StudentDashboard.jsx` as the main container.
+    - Extract sub-components for modularity: `<PersonalRecordsWidget/>`, `<StopwatchWidget/>`, `<DailyNoteWidget/>`.
+    - Import `<LeaderboardGrid/>` and `<OpinionsList/>` directly from the `community` component folder (to be built in Sub-module 4).
 - [ ] **Client-Side Widgets (No Backend required):**
-    - Implement the **Stopwatch** entirely in React state (Start, Stop, Reset)[cite: 8].
-    - Implement the **Persian Calendar** using a React-compatible Jalali calendar library (e.g., `react-multi-date-picker` with Persian locale)[cite: 8].
-- [ ] **Charts Integration:** Integrate `Chart.js` (or `Recharts` for better React compatibility). Create reusable chart components for "Activity Pie Chart" and "Bar Charts" based on the HTML mockup[cite: 8]. *Note: For Sprint 2, mock the chart data if the backend analytics endpoints are not yet fully formulated.*
+    - Implement the **Stopwatch** entirely in React state (Start, Stop, Reset). Use `useRef` and `setInterval` to prevent the entire Dashboard from re-rendering every second.
+    - Implement the **Persian Calendar** using a React-compatible Jalali calendar library (e.g., `react-multi-date-picker` with Persian locale).
+- [ ] **API Consumption:** Wire up `getDashboardSummary()`, `getDailyNote()`, and `saveDailyNote()` using the `src/services/api.js` interceptor.
 - [ ] **Styling & Assets:** 
-    - Convert all raw inline styles and jQuery logic into scoped CSS/Styled Components or standard CSS variables.
-    - Implement the `[data-theme="dark"]` overrides for the leaderboard grid and opinion cards.
-- [ ] **i18n Localization:** Add translations for "ده نفر برتر روز", "شروع کردن و تسلیم نشدن", "ثبت ساعت مشاوره", etc., in the locale files.
+    - Utilize the project's native CSS variables and Glassmorphism UI guidelines to style the dashboard cards. Use Flexbox/CSS Grid for responsive layout adjustments (stacking vertically on mobile).
 
 ---
 
 ## 6. Verification Checklist
-- [ ] Leaderboard queries are cached in Redis and perform efficiently without triggering N+1 query problems in Django.
-- [ ] The Voting mechanism for Opinions correctly prevents users from voting multiple times on the same item.
-- [ ] The Stopwatch component does not cause the entire Dashboard layout to re-render every second (use appropriate React referencing or isolated state).
-- [ ] Daily Note properly upserts based on `request.user` and `timezone.now().date()`.
-- [ ] UI layout behaves responsively on mobile, shifting the 3-column layout into a single vertical stack.
+- [ ] **Strict Boundary Adherence:** The backend module contains absolutely no logic for leaderboards or user opinions (delegated strictly to Sub-module 4).
+- [ ] **Upsert Integrity:** Submitting a daily note multiple times on the same day updates the existing record rather than generating duplicates.
+- [ ] **Performance:** The Dashboard Summary query is heavily optimized (or cached briefly) to ensure the homepage loads instantly without executing heavy N+1 counts across the test and time-log tables.
+- [ ] **React State Optimization:** The Stopwatch widget isolates its state so that ticking seconds do not trigger React re-renders on sibling components (like the large leaderboard or chart widgets).
 
-***
+```
