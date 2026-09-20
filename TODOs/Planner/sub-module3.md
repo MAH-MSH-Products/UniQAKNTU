@@ -1,9 +1,3 @@
-Here is the detailed architectural design, API contract, and strict delegation TODOs for the third sub-module: **Dashboard & Tools (داشبورد)**.
-
-As requested, I am acting as the Senior Software Architect assigning tasks. **No source code is generated in this step**, only the blueprints and task breakdowns.
-
----
-
 # SUB-MODULE 3: Dashboard & Student Tools (داشبورد)
 
 ## 2. Module Architectures
