@@ -41,7 +41,8 @@ export const AuthProvider = ({ children }) => {
       return {
         ...basicUserData,
         username: response.data.username || basicUserData.username,
-        role: response.data.role || basicUserData.role
+        role: response.data.role || basicUserData.role,
+        tokens: response.data.tokens || 0 // Sprint 2: Token balance
       };
     } catch (error) {
       console.error('Failed to fetch user profile for role verification:', error);

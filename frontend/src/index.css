@@ -25,26 +25,37 @@
 
 :root {
   /* ==========================================
+     SPACING SYSTEM - 8px Baseline Grid
+     ========================================== */
+  --space-xs: 0.25rem;   /* 4px */
+  --space-sm: 0.5rem;    /* 8px */
+  --space-md: 1rem;      /* 16px */
+  --space-lg: 1.5rem;    /* 24px */
+  --space-xl: 2rem;      /* 32px */
+  --space-2xl: 3rem;     /* 48px */
+  --space-3xl: 4rem;     /* 64px */
+
+  /* ==========================================
      LIGHT MODE (حالت روز)
      ========================================== */
-  --bg-body: #F4F5F7;         
-  --bg-card: #FFFFFF;         
-  --bg-input: #FFFFFF;        
-  --bg-hover: #E9ECEF;        
-  
-  --text-main: #212529;       
-  --text-muted: #6C757D;      
-  --text-inverse: #FFFFFF;    
-  
-  --border-color: #DEE2E6;    
-  --border-dark: #CED4DA;     
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04); 
+  --bg-body: #F4F5F7;
+  --bg-card: #FFFFFF;
+  --bg-input: #FFFFFF;
+  --bg-hover: #E9ECEF;
+
+  --text-main: #212529;
+  --text-muted: #6C757D;
+  --text-inverse: #FFFFFF;
+
+  --border-color: #DEE2E6;
+  --border-dark: #CED4DA;
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.08);
-  
-  --primary-blue: #0A95FF;    
-  --primary-hover: #0074CC;   
-  --accent-orange: #F48024;   
-  
+
+  --primary-blue: #0A95FF;
+  --primary-hover: #0074CC;
+  --accent-orange: #F48024;
+
   --nav-bg: #FFFFFF;
   --sidebar-bg: #F8F9FA;
   --nav-border: #DEE2E6;
@@ -96,15 +107,22 @@
 
 body {
   margin: 0;
+  padding: 0;
   background-color: var(--bg-body) !important;
   color: var(--text-main) !important;
   font-family: var(--font-primary) !important;
   transition: background-color 0.3s ease, color 0.3s ease;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
 #root {
   min-height: 100vh;
   width: 100%;
+  overflow-x: hidden;
 }
 
 /* ============================================
@@ -483,4 +501,86 @@ input[type="checkbox"], input[type="radio"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
+}
+
+/* ============================================
+   Sprint 2: Floating Exam Cart
+   ============================================ */
+.floating-exam-cart:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+/* ============================================
+   Sprint 2: AI Features Dark Mode
+   ============================================ */
+[data-theme="dark"] .border-warning {
+  border-color: var(--accent-orange) !important;
+}
+
+[data-theme="dark"] .bg-warning {
+  background-color: #f59e0b !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .text-warning {
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .badge.bg-warning {
+  background-color: #f59e0b !important;
+  color: #1a1a1a !important;
+}
+
+/* AI Answer Styling */
+.ai-answer-text {
+  padding: 1rem;
+  background-color: rgba(255, 193, 7, 0.05);
+  border-left: 3px solid var(--accent-orange);
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .ai-answer-text {
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+/* Token Badge Improvements */
+.badge.bg-warning.text-dark {
+  font-weight: 600;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .badge.bg-warning.text-dark {
+  background-color: #f59e0b !important;
+  color: #1a1a1a !important;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Package Cards */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Custom Exam Builder */
+.list-group-item {
+  transition: background-color 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: var(--bg-hover);
+}
+
+[data-theme="dark"] .list-group-item {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .list-group-item:hover {
+  background-color: var(--bg-hover);
 }

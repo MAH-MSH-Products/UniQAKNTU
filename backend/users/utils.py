@@ -16,7 +16,7 @@ import hashlib
 import random
 import string
 from django.core.cache import cache
-from django.core.mail import send_mail
+from .tasks import send_email_task
 from django.conf import settings
 
 
@@ -231,12 +231,11 @@ def send_otp_email(user, otp_type: str, otp: str, to_email: str = None) -> None:
         otp=otp,
     )
     recipient = to_email if to_email else user.email
-    send_mail(
+    send_email_task.delay(
         subject=subject,
         message=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[recipient],
-        fail_silently=False,
     )
 
 
@@ -253,12 +252,11 @@ def send_security_alert_email(user, old_email: str, new_email: str) -> None:
         'If you did not make this change, please contact support immediately.\n\n'
         '-- The UniQAKNTU Team'
     )
-    send_mail(
+    send_email_task.delay(
         subject=subject,
         message=body,
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[old_email],
-        fail_silently=False,
     )
 
 # -------------------------------------------------

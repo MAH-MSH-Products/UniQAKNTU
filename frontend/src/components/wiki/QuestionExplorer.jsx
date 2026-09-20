@@ -1,24 +1,35 @@
+// src/components/wiki/QuestionExplorer.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { FiAward, FiPlusSquare, FiCheckSquare } from 'react-icons/fi';
 import api, { extractResults } from '../../services/api';
 import QuestionForm from './QuestionForm';
 import { useAuth } from '../../context/AuthContext';
+import { useCustomExam } from '../../context/CustomExamContext';
 import { getAuthorDisplayName } from '../../services/utils';
 
 const QuestionItemLight = ({ question }) => {
   const { user } = useAuth();
-  const displayAuthorName = getAuthorDisplayName(question.author, question.author_name || question.author__username, user);
+  const { t } = useTranslation();
+  const { addToExam, isInExam } = useCustomExam();
+  const displayAuthorName = getAuthorDisplayName(question.author, question.author_name, user);
+  const inExam = isInExam(question.id);
 
   return (
-    <div className="card mb-3 academic-card border-0 shadow-sm transition-hover">
+    <div className={`card mb-3 academic-card border-0 shadow-sm transition-hover ${question.is_official ? 'border-start border-primary border-4' : ''}`}>
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-start">
           <div>
-            <h5 className="card-title fw-bold mb-2">
+            <h5 className="card-title fw-bold mb-2 d-flex align-items-center flex-wrap gap-2">
               <Link to={`/questions/${question.id}`} className="text-decoration-none text-primary">
                 {question.title || `Question #${question.id}`}
               </Link>
+              {question.is_official && (
+                <span className="badge bg-primary d-inline-flex align-items-center gap-1" style={{ fontSize: '11px' }}>
+                  <FiAward /> {t('questions.official', 'Official')}
+                </span>
+              )}
             </h5>
             <div className="text-muted small mb-2">
               <span className="me-3">
@@ -41,13 +52,21 @@ const QuestionItemLight = ({ question }) => {
             )}
           </div>
           
-          <div className="d-flex flex-column align-items-end">
-            <span className={`badge mb-2 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
+          <div className="d-flex flex-column align-items-end gap-2">
+            <span className={`badge ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
               {question.status}
             </span>
             <div className="d-flex align-items-center gap-2 text-muted small border rounded px-2 py-1 bg-light">
               <div title="Score"><i className="bi bi-arrow-up-circle me-1"></i>{question.score || 0}</div>
             </div>
+            <button
+              className={`btn btn-sm ${inExam ? 'btn-success' : 'btn-outline-primary'}`}
+              onClick={() => addToExam(question)}
+              disabled={inExam}
+              title={inExam ? t('custom_exams.already_added', 'Already in exam') : t('custom_exams.add_to_exam', 'Add to Exam')}
+            >
+              {inExam ? <FiCheckSquare /> : <FiPlusSquare />}
+            </button>
           </div>
         </div>
       </div>
@@ -60,10 +79,8 @@ const QuestionExplorer = ({ examId: propExamId }) => {
   const { t } = useTranslation();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  
   const [searchTerm, setSearchTerm] = useState('');
-  const [submittedSearch, setSubmittedSearch] = useState(''); // ایجاد حالت جدید برای کنترل سرچ
-  
+  const [submittedSearch, setSubmittedSearch] = useState(''); 
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const { isAuthenticated } = useAuth();
   
@@ -77,7 +94,10 @@ const QuestionExplorer = ({ examId: propExamId }) => {
         url += `&search=${encodeURIComponent(submittedSearch)}`;
       }
       const response = await api.get(url);
-      setQuestions(extractResults(response));
+      const results = extractResults(response);
+      
+      const sortedResults = results.sort((a, b) => Number(b.is_official || false) - Number(a.is_official || false));
+      setQuestions(sortedResults);
     } catch (error) {
       console.error('Failed to fetch questions:', error);
       setQuestions([]);
@@ -90,7 +110,7 @@ const QuestionExplorer = ({ examId: propExamId }) => {
     if (currentExamId) {
       fetchQuestions();
     }
-  }, [currentExamId, submittedSearch]); // فقط هنگام تغییر عبارت ثبت‌شده API فراخوانی می‌شود
+  }, [currentExamId, submittedSearch]); 
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -131,7 +151,6 @@ const QuestionExplorer = ({ examId: propExamId }) => {
         />
       )}
 
-      {/* فرم جستجو با دکمه */}
       <div className="mb-4">
         <form onSubmit={handleSearchSubmit}>
           <div className="input-group shadow-sm">

@@ -1,17 +1,17 @@
+// src/pages/VerifyEmail.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { FiMail, FiKey } from 'react-icons/fi';
 import api from '../services/api';
-import 'bootstrap/dist/css/bootstrap.min.css';
 
 const VerifyEmail = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Try to prepopulate email if passed from Registration or Login
   const initialEmail = location.state?.email || '';
+  const autoSendOtp = location.state?.autoSendOtp || false;
 
   const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState('');
@@ -19,6 +19,26 @@ const VerifyEmail = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
+
+  // ارسال خودکار کد فقط اگر از صفحه لاگین آمده باشد و ایمیل موجود باشد
+  useEffect(() => {
+    if (initialEmail && autoSendOtp) {
+      handleResendInit(initialEmail);
+    }
+  }, []);
+
+  const handleResendInit = async (targetEmail) => {
+    setIsResending(true);
+    try {
+      await api.post('/auth/send-otp/', { email: targetEmail, otp_type: 'verify_email' });
+      setSuccessMsg(t('auth.otp_resent', 'A new verification code has been sent to your email.'));
+    } catch (err) {
+      console.error('Auto resend error:', err);
+      setError(err.response?.data?.detail || err.response?.data?.message || t('common.error', 'Failed to resend code.'));
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,12 +56,10 @@ const VerifyEmail = () => {
       await api.post('/auth/verify-email/', { email, otp });
       setSuccessMsg(t('auth.email_verified_success', 'Email verified successfully! Redirecting to login...'));
       
-      // Redirect to login after successful verification
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      console.error('Verify error:', err);
       setError(err.response?.data?.detail || err.response?.data?.message || t('common.error', 'Verification failed.'));
     } finally {
       setIsLoading(false);
@@ -62,7 +80,6 @@ const VerifyEmail = () => {
       await api.post('/auth/send-otp/', { email, otp_type: 'verify_email' });
       setSuccessMsg(t('auth.otp_resent', 'A new verification code has been sent to your email.'));
     } catch (err) {
-      console.error('Resend error:', err);
       setError(err.response?.data?.detail || err.response?.data?.message || t('common.error', 'Failed to resend code.'));
     } finally {
       setIsResending(false);
@@ -77,7 +94,8 @@ const VerifyEmail = () => {
         </div>
         
         <h2 className="auth-title mb-2 fs-3">{t('auth.verify_email', 'Verify Email')}</h2>
-        <p className="text-center mb-4 text-white-50 small">
+        
+        <p className="text-center mb-4 text-muted small">
           {t('auth.verify_email_desc', 'Please enter the 6-digit code sent to your email address.')}
         </p>
         
@@ -131,7 +149,8 @@ const VerifyEmail = () => {
         <div className="text-center mt-4 mb-2">
           <button 
             type="button" 
-            className="btn btn-link text-white-50 p-0 text-decoration-none small"
+            className="btn btn-link p-0 text-decoration-none small fw-bold"
+            style={{ color: 'var(--text-main)' }}
             onClick={handleResend}
             disabled={isResending || isLoading || successMsg.includes('Redirecting')}
           >
@@ -144,7 +163,7 @@ const VerifyEmail = () => {
         </div>
         
         <div className="auth-footer mt-2 pt-3 border-top border-secondary border-opacity-50">
-          <Link to="/login">{t('nav.login', 'Back to Login')}</Link>
+          <Link to="/login" className="text-primary fw-bold">{t('common.back', 'Back')}</Link>
         </div>
       </div>
     </div>

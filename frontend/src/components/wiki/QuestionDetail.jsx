@@ -1,31 +1,39 @@
+// src/components/wiki/QuestionDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FiThumbsUp, FiThumbsDown, FiTrash2, FiEdit, FiArrowLeft } from 'react-icons/fi';
-import api, { extractResults } from '../../services/api';
+import { FiThumbsUp, FiThumbsDown, FiTrash2, FiEdit, FiArrowLeft, FiAward, FiPlusSquare, FiCheckSquare, FiZap } from 'react-icons/fi';
+import api, { extractResults, generateAIAnswer } from '../../services/api';
 import AnswerCard from './AnswerCard';
 import AnswerForm from './AnswerForm';
 import CommentSection from './CommentSection';
 import SuggestEditModal from './SuggestEditModal';
 import { useAuth } from '../../context/AuthContext';
+import { useCustomExam } from '../../context/CustomExamContext';
 import { processMarkdown, getAuthorDisplayName, typesetMathJax } from '../../services/utils';
+import { getErrorMessage } from '../../utils/errorHandler';
 
 const QuestionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { user, isAuthenticated } = useAuth();
-  
+  const { user, isAuthenticated, canModerate } = useAuth();
+  const { addToExam, isInExam } = useCustomExam();
+
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [voting, setVoting] = useState(false);
   const [error, setError] = useState(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiAnswer, setAiAnswer] = useState(null);
 
   const authorId = typeof question?.author === 'object' ? question?.author?.id : question?.author;
   const isQuestionAuthor = Boolean(user?.id && authorId && String(authorId).toLowerCase() === String(user.id).toLowerCase());
+
   const displayAuthorName = getAuthorDisplayName(question?.author, question?.author_name, user);
+  const inExam = question ? isInExam(question.id) : false;
 
   const fetchQuestionDetails = async () => {
     setLoading(true);
@@ -76,13 +84,34 @@ const QuestionDetail = () => {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this question?')) {
+    if (window.confirm(t('questions.confirm_delete'))) {
       try {
         await api.delete(`/questions/${id}/`);
         navigate(-1);
       } catch (err) {
         console.error('Failed to delete question:', err);
-        alert('Failed to delete the question.');
+        alert(t('questions.delete_failed'));
+      }
+    }
+  };
+
+  const handleGenerateAIAnswer = async () => {
+    if (!isAuthenticated) {
+      alert(t('ai.login_required', 'Please login to use AI features'));
+      return;
+    }
+
+    if (window.confirm(t('ai.generate_confirm', 'Generate an AI answer? This will cost tokens.'))) {
+      setAiGenerating(true);
+      try {
+        const response = await generateAIAnswer(id);
+        setAiAnswer(response.data);
+        alert(t('ai.generate_success', 'AI answer generated! Cost: {cost} tokens').replace('{cost}', response.data.cost_in_tokens || 0));
+        setTimeout(() => typesetMathJax(), 100);
+      } catch (err) {
+        alert(getErrorMessage(err, 'ai.generate_failed'));
+      } finally {
+        setAiGenerating(false);
       }
     }
   };
@@ -91,7 +120,6 @@ const QuestionDetail = () => {
     return (
       <div className="text-center py-5">
         <div className="spinner-border text-primary" role="status"></div>
-        <p className="mt-2">Loading question...</p>
       </div>
     );
   }
@@ -106,28 +134,29 @@ const QuestionDetail = () => {
     );
   }
 
+  const sortedAnswers = [...answers].sort((a, b) => Number(b.is_official || false) - Number(a.is_official || false));
+
   return (
     <div className="question-detail-page py-4">
-      <button className="btn btn-outline-secondary mb-4 d-flex align-items-center gap-2" onClick={() => navigate(-1)}>
+      <button className="btn btn-sm btn-outline-secondary mb-3 d-flex align-items-center gap-2 border-0" onClick={() => navigate(-1)}>
         <FiArrowLeft /> {t('common.back')}
       </button>
 
-      {/* Question Header & Body */}
-      <div className="card mb-4 border-primary border-opacity-25 shadow-sm">
+      <div className={`card mb-4 border-0 shadow-sm ${question.is_official ? 'border-top border-primary border-4' : ''}`} style={{ borderTop: !question.is_official ? '3px solid var(--primary-blue)' : '' }}>
         <div className="card-body">
           <div className="d-flex gap-3">
-            {/* Voting Sidebar */}
+            
             <div className="d-flex flex-column align-items-center">
               <button
-                className={`btn btn-sm border-0 p-1 ${question.user_vote === 1 ? 'text-success' : 'text-secondary'}`}
+                className={`btn btn-sm border-0 p-1 ${question.user_vote === 1 ? 'text-success' : 'text-muted'}`}
                 onClick={() => handleVote(1)}
                 disabled={voting || !isAuthenticated}
               >
                 <FiThumbsUp size={24} className={question.user_vote === 1 ? 'fill-current' : ''} />
               </button>
-              <span className="fw-bold my-1 fs-5">{question.score || 0}</span>
+              <span className="fw-bold my-1 fs-5 text-dark">{question.score || 0}</span>
               <button
-                className={`btn btn-sm border-0 p-1 ${question.user_vote === -1 ? 'text-danger' : 'text-secondary'}`}
+                className={`btn btn-sm border-0 p-1 ${question.user_vote === -1 ? 'text-danger' : 'text-muted'}`}
                 onClick={() => handleVote(-1)}
                 disabled={voting || !isAuthenticated}
               >
@@ -135,51 +164,72 @@ const QuestionDetail = () => {
               </button>
             </div>
 
-            {/* Main Question Content */}
             <div className="flex-grow-1">
-              <h3 className="card-title text-primary fw-bold mb-3">
-                {question.title || `Question #${question.id}`}
-              </h3>
+              <div className="d-flex justify-content-between align-items-start mb-3">
+                <h3 className="card-title text-primary fw-bold mb-0">
+                  {question.title || `Question #${question.id}`}
+                </h3>
+                {question.is_official && (
+                  <span className="badge bg-primary d-flex align-items-center gap-1">
+                    <FiAward /> {t('questions.official', 'Official')}
+                  </span>
+                )}
+              </div>
               
               <div
-                className="question-text mb-4"
-                style={{ fontSize: '16px', lineHeight: '1.7' }}
+                className="question-text mb-4 text-dark"
+                style={{ fontSize: '15px', lineHeight: '1.7' }}
                 dangerouslySetInnerHTML={{
-                  __html: processMarkdown(question.body || question.text)
+                  __html: processMarkdown(question.body || question.text, question.attachments || [])
                 }}
               />
 
-              {/* Tags */}
               {question.tags && question.tags.length > 0 && (
                 <div className="mb-3 d-flex gap-2 flex-wrap">
                   {question.tags.map(tag => (
-                    <span key={tag.id || tag} className="badge bg-light text-secondary border">
+                    <span key={tag.id || tag} className="badge bg-light text-muted border">
                       {tag.value || tag}
                     </span>
                   ))}
                 </div>
               )}
 
-              {/* Metadata */}
               <div className="d-flex justify-content-between align-items-center border-top pt-3 text-muted small">
-                <div>
-                  <i className="bi bi-person me-1"></i>
-                  {displayAuthorName}
-                  <span className="mx-2">|</span>
-                  <i className="bi bi-calendar me-1"></i>
-                  {t('questions.asked')}: {question.created_at_jalali ? question.created_at_jalali.split('T')[0] : ''}
-                  
-                  <span className={`badge ms-3 ${question.status === 'APPROVED' ? 'bg-success' : 'bg-warning'}`}>
-                    {question.status}
+                <div className="d-flex align-items-center gap-3">
+                  <span>
+                    <i className="bi bi-person me-1"></i>
+                    {displayAuthorName}
                   </span>
+                  <span>
+                    <i className="bi bi-calendar me-1"></i>
+                    {t('questions.asked')}: {question.created_at_jalali ? question.created_at_jalali.split('T')[0] : ''}
+                  </span>
+
+                  {question.status !== 'APPROVED' && (
+                    <span className={`badge ${question.status === 'PENDING' ? 'bg-warning text-dark' : 'bg-danger'}`}>
+                      {question.status}
+                    </span>
+                  )}
                 </div>
-                
+
                 <div className="d-flex gap-2">
-                  <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onClick={() => setShowEditModal(true)}>
-                    <FiEdit /> {isQuestionAuthor ? t('common.edit') : t('common.suggest_edit')}
+                  <button
+                    className={`btn btn-sm ${inExam ? 'btn-success' : 'btn-outline-primary'} d-flex align-items-center gap-1`}
+                    onClick={() => addToExam(question)}
+                    disabled={inExam}
+                    title={inExam ? t('custom_exams.already_added') : t('custom_exams.add_to_exam')}
+                  >
+                    {inExam ? <FiCheckSquare /> : <FiPlusSquare />}
+                    {inExam ? t('custom_exams.added') : t('custom_exams.add_to_exam')}
                   </button>
-                  {isQuestionAuthor && (
-                    <button className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" onClick={handleDelete}>
+
+                  {(isQuestionAuthor || canModerate) && (
+                    <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 border-0" onClick={() => setShowEditModal(true)}>
+                      <FiEdit /> {canModerate || isQuestionAuthor ? t('common.edit') : t('common.suggest_edit')}
+                    </button>
+                  )}
+                  {(isQuestionAuthor || canModerate) && (
+                    <button className="btn btn-sm text-danger d-flex align-items-center gap-1 border-0" onClick={handleDelete}>
                       <FiTrash2 /> {t('common.delete')}
                     </button>
                   )}
@@ -192,14 +242,47 @@ const QuestionDetail = () => {
         </div>
       </div>
 
-      {/* Answers Section */}
       <div className="answers-section mt-5">
-        <h4 className="mb-4 pb-2 border-bottom">
-          {answers.length} {t('questions.answers')}
-        </h4>
+        <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+          <h4 className="mb-0 fw-bold text-dark">
+            {answers.length} {t('questions.answers')}
+          </h4>
+          {isAuthenticated && sortedAnswers.length === 0 && (
+            <button
+              className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+              onClick={handleGenerateAIAnswer}
+              disabled={aiGenerating}
+            >
+              <FiZap />
+              {aiGenerating ? t('ai.generating') : t('ai.ask_ai', 'Ask AI')}
+            </button>
+          )}
+        </div>
 
-        {answers.length > 0 ? (
-          answers.map((answer) => (
+        {aiAnswer && (
+          <div className="card mb-4 border-warning">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-start mb-2">
+                <h6 className="fw-bold text-warning">
+                  <FiZap className="me-1" />
+                  {t('ai.generated_answer', 'AI Generated Answer')}
+                </h6>
+                <span className="badge bg-warning text-dark">{t('ai.ai_badge', 'AI')}</span>
+              </div>
+              <div
+                className="ai-answer-text"
+                dangerouslySetInnerHTML={{ __html: processMarkdown(aiAnswer.text || '') }}
+              />
+              <small className="text-muted">
+                <i className="bi bi-info-circle me-1"></i>
+                {t('ai.disclaimer', 'AI-generated content may contain errors. Please verify with official sources.')}
+              </small>
+            </div>
+          </div>
+        )}
+
+        {sortedAnswers.length > 0 ? (
+          sortedAnswers.map((answer) => (
             <AnswerCard
               key={answer.id}
               answer={answer}
@@ -215,14 +298,12 @@ const QuestionDetail = () => {
         )}
       </div>
 
-      {/* Answer Form */}
       {isAuthenticated && (
         <div className="mt-5">
           <AnswerForm questionId={question.id} onSubmit={fetchQuestionDetails} />
         </div>
       )}
 
-      {/* Edit Modal */}
       <SuggestEditModal
         show={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -230,6 +311,7 @@ const QuestionDetail = () => {
         itemType="question"
         currentText={question.text || question.body || ''}
         currentAttachments={question.attachments || []}
+        isDirectEdit={canModerate}
         onSuccess={() => {
           setShowEditModal(false);
           fetchQuestionDetails();

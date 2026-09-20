@@ -1,7 +1,8 @@
-﻿from rest_framework import serializers
+from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.translation import gettext_lazy as _
 from .models import User, UserRole
 from .utils import OTPType
 
@@ -38,22 +39,22 @@ class RegisterSerializer(serializers.Serializer):
     password2 = serializers.CharField(
         write_only=True,
         style={'input_type': 'password'},
-        label='Confirm password',
+        label=_('Confirm password'),
     )
 
     def validate_username(self, value):
         if User.objects.filter(username__iexact=value).exists():
-            raise serializers.ValidationError('A user with this username already exists.')
+            raise serializers.ValidationError(_('A user with this username already exists.'))
         return value
 
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError('A user with this email already exists.')
+            raise serializers.ValidationError(_('A user with this email already exists.'))
         return value.lower()
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({'password2': 'Passwords do not match.'})
+            raise serializers.ValidationError({'password2': _('Passwords do not match.')})
         # Run Django built-in password validators
         try:
             validate_password(attrs['password'])
@@ -74,8 +75,8 @@ class RegisterSerializer(serializers.Serializer):
 
 class LoginSerializer(serializers.Serializer):
     identifier = serializers.CharField(
-        label='Username or Email',
-        help_text='Enter your username or email address.',
+        label=_('Username or Email'),
+        help_text=_('Enter your username or email address.'),
     )
     password = serializers.CharField(write_only=True, style={'input_type': 'password'})
 
@@ -99,19 +100,19 @@ class LoginSerializer(serializers.Serializer):
 
         if user is None:
             raise serializers.ValidationError(
-                'Invalid credentials. Please check your username/email and password.',
+                _('Invalid credentials. Please check your username/email and password.'),
                 code='authorization',
             )
 
         if not user.is_email_verified:
             raise serializers.ValidationError(
-                'Email address is not verified. Please verify your email before logging in.',
+                _('Email address is not verified. Please verify your email before logging in.'),
                 code='email_not_verified',
             )
 
         if not user.is_active:
             raise serializers.ValidationError(
-                'This account has been disabled.',
+                _('This account has been disabled.'),
                 code='disabled',
             )
 
@@ -145,7 +146,7 @@ class ResetPasswordSerializer(serializers.Serializer):
     new_password2 = serializers.CharField(
         write_only=True,
         style={'input_type': 'password'},
-        label='Confirm new password',
+        label=_('Confirm new password'),
     )
 
     def validate_email(self, value):
@@ -153,7 +154,7 @@ class ResetPasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password2']:
-            raise serializers.ValidationError({'new_password2': 'Passwords do not match.'})
+            raise serializers.ValidationError({'new_password2': _('Passwords do not match.')})
         try:
             validate_password(attrs['new_password'])
         except DjangoValidationError as e:
@@ -170,12 +171,12 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password2 = serializers.CharField(
         write_only=True,
         style={'input_type': 'password'},
-        label='Confirm new password',
+        label=_('Confirm new password'),
     )
 
     def validate(self, attrs):
         if attrs['new_password'] != attrs['new_password2']:
-            raise serializers.ValidationError({'new_password2': 'Passwords do not match.'})
+            raise serializers.ValidationError({'new_password2': _('Passwords do not match.')})
         try:
             validate_password(attrs['new_password'])
         except DjangoValidationError as e:
@@ -185,7 +186,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField(
-        help_text='The refresh token to blacklist.',
+        help_text=_('The refresh token to blacklist.'),
     )
 
 
@@ -208,7 +209,7 @@ class ChangeEmailRequestSerializer(serializers.Serializer):
     def validate_new_email(self, value):
         value = value.lower()
         if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError('A user with this email already exists.')
+            raise serializers.ValidationError(_('A user with this email already exists.'))
         return value
 
 
@@ -223,5 +224,6 @@ class MeUpdateSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         user = self.instance
         if user and User.objects.filter(username__iexact=value).exclude(pk=user.pk).exists():
-            raise serializers.ValidationError('A user with this username already exists.')
+            raise serializers.ValidationError(_('A user with this username already exists.'))
         return value
+

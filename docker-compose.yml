@@ -39,5 +39,21 @@ services:
       - db
       - redis
 
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: uniqakntu_celery
+    command: celery -A core worker -l INFO
+    volumes:
+      - ./backend:/app
+    env_file:
+      - ./backend/.env
+    environment:
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      - db
+      - redis
+
 volumes:
   postgres_data:

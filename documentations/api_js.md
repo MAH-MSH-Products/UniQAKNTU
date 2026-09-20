@@ -16,7 +16,7 @@ The `api.js` module provides a pre-configured Axios instance for all API request
 ## Authentication Flow
 
 ### Request Interceptor
-Automatically attaches JWT access token to outgoing requests:
+Automatically attaches JWT access token and active language (`Accept-Language`) to outgoing requests:
 
 ```javascript
 api.interceptors.request.use((config) => {
@@ -24,6 +24,8 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const currentLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+  config.headers['Accept-Language'] = currentLang;
   return config;
 });
 ```

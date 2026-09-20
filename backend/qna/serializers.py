@@ -10,11 +10,16 @@ from django.contrib.contenttypes.models import ContentType
 class FileAttachmentSerializer(serializers.ModelSerializer):
     uploaded_at_jalali = JalaliDateTimeField(source='uploaded_at', read_only=True)
     attached_to_model = serializers.SerializerMethodField()
+    relative_path = serializers.SerializerMethodField(help_text="Use this relative path when inserting into Markdown to avoid hardcoding domains.")
 
     class Meta:
         model = FileAttachment
-        fields = ['id', 'file', 'object_id', 'attached_to_model', 'uploaded_at', 'uploaded_at_jalali']
+        fields = ['id', 'file', 'relative_path', 'object_id', 'attached_to_model', 'uploaded_at', 'uploaded_at_jalali']
         read_only_fields = ['id', 'object_id', 'uploaded_at', 'attached_to_model']
+
+    @extend_schema_field(OpenApiTypes.STR)
+    def get_relative_path(self, obj):
+        return obj.file.name if obj.file else None
 
     @extend_schema_field(serializers.ChoiceField(choices=['question', 'answer', 'suggestededit']))
     def get_attached_to_model(self, obj):

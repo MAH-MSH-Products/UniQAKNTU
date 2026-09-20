@@ -16,6 +16,8 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const currentLang = (localStorage.getItem('i18nextLng') || 'en').split('-')[0];
+    config.headers['Accept-Language'] = currentLang;
     return config;
   },
   (error) => {
@@ -98,6 +100,62 @@ export const getAnswersByQuestionId = (questionId) => {
 
 export const getAnswerById = (id) => {
   return api.get(`/answers/${id}/`);
+};
+
+// ============================================
+// Sprint 2: Premium Packages & Marketplace
+// ============================================
+export const getPackages = (params = {}) => {
+  return api.get('/packages/', { params });
+};
+
+export const createPackage = (data) => {
+  return api.post('/packages/', data);
+};
+
+export const purchasePackage = (packageId) => {
+  return api.post(`/packages/${packageId}/purchase/`);
+};
+
+export const getMyPurchases = () => {
+  return api.get('/users/me/purchases/');
+};
+
+// ============================================
+// Sprint 2: Gamification & Reward Tokens
+// ============================================
+export const getTokenHistory = () => {
+  return api.get('/users/me/token-history/');
+};
+
+// ============================================
+// Sprint 2: Custom Exam Builder
+// ============================================
+export const createCustomExam = (data) => {
+  return api.post('/custom-exams/', data);
+};
+
+export const getCustomExams = () => {
+  return api.get('/custom-exams/');
+};
+
+export const getCustomExamById = (id) => {
+  return api.get(`/custom-exams/${id}/`);
+};
+
+export const deleteCustomExam = (id) => {
+  return api.delete(`/custom-exams/${id}/`);
+};
+
+// ============================================
+// Sprint 2: AI Integration & Tooling
+// ============================================
+export const generateAIAnswer = (questionId) => {
+  return api.post('/ai/generate-answer/', { question_id: questionId });
+};
+
+export const improveTextWithAI = (text) => {
+  return api.post('/ai/improve-text/', { text });
 };
 
 export default api;

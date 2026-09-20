@@ -1,3 +1,4 @@
+// src/pages/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -31,9 +32,14 @@ const Login = () => {
     if (result.success) {
       navigate('/');
     } else {
-      // Redirect to verification if email is unverified
+      // اگر حساب تایید نشده بود، به صفحه Verify می‌رویم و دستور ارسال خودکار کد را صادر می‌کنیم
       if (result.error === 'email_not_verified') {
-        navigate('/verify-email', { state: { email: identifier.includes('@') ? identifier : '' } });
+        navigate('/verify-email', { 
+          state: { 
+            email: identifier.includes('@') ? identifier : '', 
+            autoSendOtp: true 
+          } 
+        });
       } else {
         setError(result.error);
       }
@@ -92,7 +98,7 @@ const Login = () => {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 disabled={isLoading}
               />
-              {t('login.remember_me', 'Remember me')}
+              <span className="ms-2">{t('login.remember_me', 'Remember me')}</span>
             </label>
             <Link to="/forgot-password" className="auth-link">
               {t('login.forgot_password', 'Forgot Password?')}

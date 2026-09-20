@@ -15,6 +15,7 @@ from .serializers import (
 from .permissions import IsAuthorOrModerator, IsModeratorOrAdmin
 from .filters import QuestionFilter, AnswerFilter
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample, inline_serializer
 from drf_spectacular.types import OpenApiTypes
 from rest_framework import serializers
@@ -39,7 +40,7 @@ class PostActionMixin:
             body = request.data.get('body')
             parent_id = request.data.get('parent_id')
             if not body:
-                return Response({"error": "body is required"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": _("body is required")}, status=status.HTTP_400_BAD_REQUEST)
                 
             parent_comment = None
             if parent_id:
@@ -48,7 +49,7 @@ class PostActionMixin:
                     if parent_comment.parent_id:
                         parent_comment = parent_comment.parent
                 except Comment.DoesNotExist:
-                    return Response({"error": "Invalid parent_id for this post"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": _("Invalid parent_id for this post")}, status=status.HTTP_400_BAD_REQUEST)
                     
             comment = Comment.objects.create(author=request.user, body=body, content_type=ctype, object_id=instance.id, parent=parent_comment)
             return Response(CommentSerializer(comment, context={'request': request}).data, status=status.HTTP_201_CREATED)
@@ -67,7 +68,7 @@ class PostActionMixin:
             return Response(status=status.HTTP_404_NOT_FOUND)
             
         if comment.author != request.user and not (request.user.is_moderator() or request.user.is_admin()):
-            raise PermissionDenied("You can only delete your own comments.")
+            raise PermissionDenied(_("You can only delete your own comments."))
             
         if comment.replies.exists():
             comment.is_deleted = True
@@ -88,7 +89,7 @@ class PostActionMixin:
         instance = self.get_object()
         value = request.data.get('value')
         if value not in [1, -1, '1', '-1']:
-            return Response({"error": "value must be 1 or -1"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _("value must be 1 or -1")}, status=status.HTTP_400_BAD_REQUEST)
             
         value = int(value)
         ctype = ContentType.objects.get_for_model(instance)
@@ -108,7 +109,7 @@ class PostActionMixin:
             instance.score += value
             instance.save()
             
-        return Response({"message": "Vote recorded.", "new_score": instance.score})
+        return Response({"message": _("Vote recorded."), "new_score": instance.score})
 
 @extend_schema_view(
     list=extend_schema(summary="List all source materials (e.g. exams)"),
@@ -162,7 +163,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         user = request.user
         if not (user.is_moderator() or user.is_admin()):
-            raise PermissionDenied("Students cannot edit directly. Use the suggest-edit endpoint.")
+            raise PermissionDenied(_("Students cannot edit directly. Use the suggest-edit endpoint."))
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
@@ -172,7 +173,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         user = request.user
         if not (user.is_moderator() or user.is_admin()):
-            raise PermissionDenied("Only admins and moderators can delete posts.")
+            raise PermissionDenied(_("Only admins and moderators can delete posts."))
         return super().destroy(request, *args, **kwargs)
 
     @extend_schema(
@@ -185,7 +186,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
         question = self.get_object()
         question.status = PostStatus.APPROVED
         question.save()
-        return Response({"message": "Question approved."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Question approved.")}, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="[Admins/Moderators Only] Reject a pending question",
@@ -197,7 +198,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
         question = self.get_object()
         question.status = PostStatus.REJECTED
         question.save()
-        return Response({"message": "Question rejected."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Question rejected.")}, status=status.HTTP_200_OK)
     @extend_schema(
         summary="[Students/Authors] Suggest an edit to an existing question",
         request=inline_serializer(
@@ -223,7 +224,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
             
         proposed_text = request.data.get('proposed_text')
         if not proposed_text:
-            return Response({"error": "proposed_text is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _("proposed_text is required")}, status=status.HTTP_400_BAD_REQUEST)
             
         attachment_ids = request.data.get('attachment_ids', [])
         
@@ -251,7 +252,7 @@ class QuestionViewSet(PostActionMixin, viewsets.ModelViewSet):
             ).update(content_type=se_ctype, object_id=suggested_edit.id)
         
         return Response(
-            {"message": "Edit submitted for admin approval.", "suggested_edit_id": suggested_edit.id},
+            {"message": _("Edit submitted for admin approval."), "suggested_edit_id": suggested_edit.id},
             status=status.HTTP_201_CREATED
         )
 
@@ -291,7 +292,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         user = request.user
         if not (user.is_moderator() or user.is_admin()):
-            raise PermissionDenied("Students cannot edit directly. Use the suggest-edit endpoint.")
+            raise PermissionDenied(_("Students cannot edit directly. Use the suggest-edit endpoint."))
         return super().update(request, *args, **kwargs)
 
     def partial_update(self, request, *args, **kwargs):
@@ -301,7 +302,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         user = request.user
         if not (user.is_moderator() or user.is_admin()):
-            raise PermissionDenied("Only admins and moderators can delete posts.")
+            raise PermissionDenied(_("Only admins and moderators can delete posts."))
         return super().destroy(request, *args, **kwargs)
 
     @extend_schema(
@@ -314,7 +315,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
         answer = self.get_object()
         answer.status = PostStatus.APPROVED
         answer.save()
-        return Response({"message": "Answer approved."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Answer approved.")}, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="[Admins/Moderators Only] Reject a pending answer",
@@ -326,7 +327,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
         answer = self.get_object()
         answer.status = PostStatus.REJECTED
         answer.save()
-        return Response({"message": "Answer rejected."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Answer rejected.")}, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="[Question Author Only] Accept this answer",
@@ -339,7 +340,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
         
         # Only the author of the question can accept an answer
         if answer.question.author != request.user:
-            return Response({"error": "Only the author of the question can accept an answer."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("Only the author of the question can accept an answer.")}, status=status.HTTP_403_FORBIDDEN)
             
         # Un-accept all other answers for this question
         answer.question.answers.update(is_accepted=False)
@@ -348,7 +349,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
         answer.is_accepted = True
         answer.save()
         
-        return Response({"message": "Answer accepted."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Answer accepted.")}, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="[Students/Authors] Suggest an edit to an existing answer",
@@ -375,7 +376,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
             
         proposed_text = request.data.get('proposed_text')
         if not proposed_text:
-            return Response({"error": "proposed_text is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _("proposed_text is required")}, status=status.HTTP_400_BAD_REQUEST)
             
         attachment_ids = request.data.get('attachment_ids', [])
         
@@ -403,7 +404,7 @@ class AnswerViewSet(PostActionMixin, viewsets.ModelViewSet):
             ).update(content_type=se_ctype, object_id=suggested_edit.id)
         
         return Response(
-            {"message": "Edit submitted for admin approval.", "suggested_edit_id": suggested_edit.id},
+            {"message": _("Edit submitted for admin approval."), "suggested_edit_id": suggested_edit.id},
             status=status.HTTP_201_CREATED
         )
 
@@ -450,7 +451,7 @@ class SuggestedEditViewSet(viewsets.ReadOnlyModelViewSet):
         suggested_edit.status = PostStatus.APPROVED
         suggested_edit.save()
         
-        return Response({"message": "Edit approved and applied."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Edit approved and applied.")}, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="[Admins/Moderators Only] Reject a suggested edit",
@@ -469,7 +470,7 @@ class SuggestedEditViewSet(viewsets.ReadOnlyModelViewSet):
         suggested_edit = self.get_object()
         suggested_edit.status = PostStatus.REJECTED
         suggested_edit.save()
-        return Response({"message": "Edit rejected."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Edit rejected.")}, status=status.HTTP_200_OK)
 
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import mixins

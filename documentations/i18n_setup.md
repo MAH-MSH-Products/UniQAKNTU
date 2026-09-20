@@ -157,8 +157,10 @@ const MyComponent = () => {
 | File | Purpose |
 |------|---------|
 | `src/i18n.js` | i18next configuration |
-| `src/locales/en/translation.json` | English translations |
-| `src/locales/fa/translation.json` | Persian translations |
+| `src/locales/en/translation.json` | English translations (UI, errors, enums) |
+| `src/locales/fa/translation.json` | Persian translations (UI, errors, enums) |
+| `src/utils/errorHandler.js` | Localized error extraction helper |
+| `src/services/api.js` | Axios Accept-Language header attachment |
 | `src/App.jsx` | RTL/LTR direction handling |
 | `src/components/layout/Navbar.jsx` | Language switcher + translations |
 | `src/components/layout/Sidebar.jsx` | Sidebar translations |
@@ -187,6 +189,10 @@ npm install i18next react-i18next i18next-browser-languagedetector
   - Implemented RTL/LTR automatic switching
   - Added language switcher to Navbar
   - Refactored existing components (Home, Login, Sidebar, Navbar) to use translations
+- **Phase 8 - Backend Integration & Error Translation**:
+  - Attached dynamic `Accept-Language` header in Axios request interceptor
+  - Added `errorHandler.js` to parse and localize backend DRF responses and network errors
+  - Synchronized `errors` and `enums` translation trees across English and Persian dictionaries
 
 ---
 
