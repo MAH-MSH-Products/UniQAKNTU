@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'axes',                                       # Brute-force login protection
 
     # Local Apps
+    'curriculum.apps.CurriculumConfig',
     'users.apps.UsersConfig',
     'qna.apps.QnaConfig',
     'tags.apps.TagsConfig',
