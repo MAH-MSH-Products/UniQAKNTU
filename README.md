@@ -1,14 +1,16 @@
-# UniQAKNTU (AzmoonHub Nasir): Instructor-Led Exam Q&A Platform
-
 <div align="center">
-  <img src="documentations/imgs/djangoReact.png" alt="Django and React Integration" width="700"/>
+  <img src="banner.svg" alt="UniQAKNTU (AzmoonHub Nasir) Banner" width="100%"/>
 </div>
+
+# UniQAKNTU (AzmoonHub Nasir): Instructor-Led Exam Q&A Platform
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
   <img src="https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=green" alt="Django" />
   <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
   <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white" alt="JWT" />
+  <img src="https://img.shields.io/badge/KNTU-Academic_Wiki-184980?style=for-the-badge" alt="KNTU Wiki" />
 </p>
 
 ## Overview
