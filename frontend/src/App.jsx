@@ -30,6 +30,7 @@ import CustomExamDetail from './pages/custom-exams/CustomExamDetail';
 import './i18n';
 import i18n from 'i18next';
 import ForgotPassword from './pages/ForgotPassword';
+import PerformedWeeklyPlan from './pages/student/planner/PerformedWeeklyPlan/PerformedWeeklyPlan';
 function App() {
   useEffect(() => {
     const handleLanguageChange = (lng) => {
@@ -76,6 +77,7 @@ function App() {
                   <Route path="/support" element={<SupportCenter />} />
                   <Route path="/tickets" element={<SupportCenter />} />
                   <Route path="/reports" element={<UserReports />} />
+                  <Route path="/schedule/performed-weekly-plan" element={<PerformedWeeklyPlan />} />
                   <Route path="/admin" element={<Navigate to="/admin/support" replace />} />
                   <Route path="/admin/support" element={<AdminSupportPanel />} />
                   <Route path="/answers/:answerId" element={<AnswerDetail />} />

@@ -34,6 +34,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/support/', include('support.urls')),
     path('api/widgets/', include('widgets.urls')),
+    path('api/planner/', include('planner.urls')),
 ]
 
 from django.conf import settings

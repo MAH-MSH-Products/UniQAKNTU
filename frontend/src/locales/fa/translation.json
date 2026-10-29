@@ -422,5 +422,31 @@
     "notFound": "مورد درخواستی یافت نشد.",
     "serverError": "خطای سرور. لطفا بعدا دوباره تلاش کنید.",
     "network": "اتصال به سرور برقرار نشد. لطفا اتصال اینترنت خود را بررسی کنید."
+  },
+  "planner": {
+    "performed_weekly_plan": "برنامه هفتگی انجام شده",
+    "performed_weekly_plan_desc": "گزارش تجمیعی زمان‌های مطالعه و تست‌های انجام شده شما.",
+    "week_navigator": "انتخاب هفته",
+    "prev_week": "هفته قبل",
+    "next_week": "هفته بعد",
+    "current_week": "هفته جاری",
+    "week_range": "هفته {{start}} تا {{end}}",
+    "cta_info": "توجه: این صفحه صرفاً یک نمای گزارشی (Read-Only) است.",
+    "cta_edit_time": "جهت ویرایش ساعات مطالعه به صفحه",
+    "cta_edit_tests": "جهت ویرایش نتایج تست‌ها به صفحه",
+    "daily_schedule_link": "برنامه روزانه",
+    "conclusion_plan_link": "جدول جمع‌بندی",
+    "total_read_time": "مجموع زمان مطالعه",
+    "total_review_time": "مجموع زمان مرور",
+    "total_tests": "تعداد کل تست‌های حل شده",
+    "course_title": "درس / آزمون",
+    "chapter_title": "فصل",
+    "read_time": "مطالعه (دقیقه)",
+    "review_time": "مرور (دقیقه)",
+    "test_count": "تست‌های حل شده",
+    "minutes_abbr": "دقیقه",
+    "hours_abbr": "ساعت",
+    "no_records_for_week": "هیچ فعالیت مطالعاتی یا تستی در این هفته ثبت نشده است.",
+    "loading_plan": "در حال دریافت عملکرد هفتگی..."
   }
 }

@@ -20,7 +20,7 @@ class WidgetViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'], url_path='latest-exams')
     def latest_exams(self, request):
-        courses = SourceMaterial.objects.order_by('-created_at')[:5]
+        courses = SourceMaterial.objects.order_by('-created_at', '-id')[:5]
         serializer = WidgetCourseSerializer(courses, many=True)
         return Response({'results': serializer.data})
 

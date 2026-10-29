@@ -421,5 +421,31 @@
     "notFound": "Requested item was not found.",
     "serverError": "Server error. Please try again later.",
     "network": "Unable to connect to the server. Please check your internet connection."
+  },
+  "planner": {
+    "performed_weekly_plan": "Performed Weekly Plan",
+    "performed_weekly_plan_desc": "Aggregated summary of your actual executed study time and tests.",
+    "week_navigator": "Week Navigator",
+    "prev_week": "Previous Week",
+    "next_week": "Next Week",
+    "current_week": "Current Week",
+    "week_range": "Week {{start}} to {{end}}",
+    "cta_info": "Notice: This is a read-only reporting view.",
+    "cta_edit_time": "To edit study hours, visit the",
+    "cta_edit_tests": "To edit test results, visit the",
+    "daily_schedule_link": "Daily Schedule",
+    "conclusion_plan_link": "Conclusion Plan",
+    "total_read_time": "Total Reading Time",
+    "total_review_time": "Total Review Time",
+    "total_tests": "Total Tests Solved",
+    "course_title": "Course / Exam",
+    "chapter_title": "Chapter",
+    "read_time": "Reading (mins)",
+    "review_time": "Review (mins)",
+    "test_count": "Tests Solved",
+    "minutes_abbr": "min",
+    "hours_abbr": "h",
+    "no_records_for_week": "No study activities or tests recorded for this week.",
+    "loading_plan": "Loading weekly performance..."
   }
 }

@@ -107,23 +107,23 @@ export interface WeeklyPerformanceDTO {
 ## 4. Integration Plan (Delegation TODOs)
 
 ### Backend TODOs 
-- [ ] **Architecture Refactor:** Remove the old `WeeklyPerformance` and `SubjectPerformanceRecord` models to prevent data duplication.
-- [ ] **Aggregation Service:** Create `PerformedPlanAggregationService`. This service must group `StudyActivity` records (filtered by the requested week) and left-join them with `TestRecord` data for the same `Chapter` and timeframe.
-- [ ] **Views:** Implement a single `GET` endpoint. Remove the previous `PATCH` endpoint, as updates are now strictly handled by Sub-module 5 (for time) and Sub-module 2 (for tests).
+- [x] **Architecture Refactor:** Remove the old `WeeklyPerformance` and `SubjectPerformanceRecord` models to prevent data duplication.
+- [x] **Aggregation Service:** Create `PerformedPlanAggregationService`. This service must group `StudyActivity` records (filtered by the requested week) and left-join them with `TestRecord` data for the same `Chapter` and timeframe.
+- [x] **Views:** Implement a single `GET` endpoint. Remove the previous `PATCH` endpoint, as updates are now strictly handled by Sub-module 5 (for time) and Sub-module 2 (for tests).
 
 ### Frontend TODOs 
-- [ ] **Routing:** Add `/schedule/performed-weekly-plan` to `App.jsx` protected by `<RequireAuth>`.
-- [ ] **Service Layer:** Implement `getWeeklyPerformances(weekStart)` in `api.js`. Remove any `update` functions.
-- [ ] **Component Refactor:** Convert the `PerformedWeeklyPlan` UI into a strictly read-only data grid. Remove any inline input fields for editing time or test counts.
-- [ ] **UI/UX:** Add a clear call-to-action (CTA) message at the top of the page informing the user: *"To edit your study times, please visit the [Daily Schedule] page. To edit test results, visit the [Conclusion Plan] page."*
+- [x] **Routing:** Add `/schedule/performed-weekly-plan` to `App.jsx` protected by `<RequireAuth>`.
+- [x] **Service Layer:** Implement `getWeeklyPerformances(weekStart)` in `api.js`. Remove any `update` functions.
+- [x] **Component Refactor:** Convert the `PerformedWeeklyPlan` UI into a strictly read-only data grid. Remove any inline input fields for editing time or test counts.
+- [x] **UI/UX:** Add a clear call-to-action (CTA) message at the top of the page informing the user: *"To edit your study times, please visit the [Daily Schedule] page. To edit test results, visit the [Conclusion Plan] page."*
 
 ---
 
 ## 6. Verification Checklist
-- [ ] Database has a Single Source of Truth: No redundant tables exist for tracking performed plans.
-- [ ] API successfully joins and aggregates data from `StudyActivity` and `TestRecord` dynamically.
-- [ ] Frontend strictly renders a read-only view.
-- [ ] Granularity correctly matches the `Chapter` level to ensure consistency with Module 2 and Module 5.
+- [x] Database has a Single Source of Truth: No redundant tables exist for tracking performed plans.
+- [x] API successfully joins and aggregates data from `StudyActivity` and `TestRecord` dynamically.
+- [x] Frontend strictly renders a read-only view.
+- [x] Granularity correctly matches the `Chapter` level to ensure consistency with Module 2 and Module 5.
 
 ```
 

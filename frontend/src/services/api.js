@@ -158,4 +158,11 @@ export const improveTextWithAI = (text) => {
   return api.post('/ai/improve-text/', { text });
 };
 
+// ============================================
+// Planner: Sub-module 1 - Performed Weekly Plan
+// ============================================
+export const getWeeklyPerformance = (params = {}) => {
+  return api.get('/planner/weekly-performance/', { params });
+};
+
 export default api;

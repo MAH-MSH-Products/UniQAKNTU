@@ -6,7 +6,7 @@ import api, { extractResults } from '../../services/api';
 import { FiSend } from 'react-icons/fi';
 
 const AdminSupportPanel = () => {
-  const { user, canModerate, isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { t } = useTranslation();
   
   const [activeTab, setActiveTab] = useState('tickets'); 
@@ -17,6 +17,12 @@ const AdminSupportPanel = () => {
   const [replyMessage, setReplyMessage] = useState('');
   const [replyStatus, setReplyStatus] = useState({ type: '', message: '' });
   const [replying, setReplying] = useState(false);
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      fetchItems();
+    }
+  }, [activeTab, user, isAdmin]);
 
   // فقط ادمین به این پنل دسترسی دارد
   if (!user || !isAdmin) {
@@ -29,10 +35,6 @@ const AdminSupportPanel = () => {
       </div>
     );
   }
-
-  useEffect(() => {
-    fetchItems();
-  }, [activeTab]);
 
   const fetchItems = async () => {
     setLoading(true);
