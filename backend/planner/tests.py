@@ -939,3 +939,328 @@ class DashboardAPITests(TestCase):
         res = self.client.get(self.url_consultations)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 0)
+
+
+# ============================================
+# Sub-module 5: Weekly Study Hours API Tests
+# ============================================
+
+class WeeklyStudyHoursAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.student = User.objects.create_user(
+            username='hour_student',
+            email='hour_student@test.com',
+            password='password123',
+            is_email_verified=True
+        )
+        self.other_student = User.objects.create_user(
+            username='hour_other_student',
+            email='hour_other@test.com',
+            password='password123',
+            is_email_verified=True
+        )
+
+        self.course = SourceMaterial.objects.create(title='ریاضیات گسسته')
+        self.chapter1 = Chapter.objects.create(source_material=self.course, title='نظریه گراف', order=1)
+        self.chapter2 = Chapter.objects.create(source_material=self.course, title='ترکیبیات', order=2)
+
+        self.url_current = '/api/planner/weekly-hours/current/'
+        self.url_daily_logs = '/api/planner/weekly-hours/daily-logs/'
+
+    def test_unauthenticated_access_denied(self):
+        # 1. current overview requires auth
+        res_current = self.client.get(self.url_current)
+        self.assertEqual(res_current.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # 2. daily log detail requires auth
+        today_str = date.today().isoformat()
+        res_detail = self.client.get(f"{self.url_daily_logs}{today_str}/")
+        self.assertEqual(res_detail.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # 3. daily log upsert requires auth
+        res_put = self.client.put(f"{self.url_daily_logs}{today_str}/", {}, format='json')
+        self.assertEqual(res_put.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_weekly_overview_empty_week(self):
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(self.url_current)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        self.assertIn('week_number', res.data)
+        self.assertIn('start_date', res.data)
+        self.assertIn('end_date', res.data)
+        self.assertTrue(res.data['can_edit_previous_week'])
+        self.assertEqual(len(res.data['days']), 7)
+
+        # Every day in empty week has 0 minutes, not finalized, and a valid Jalali day name
+        for day in res.data['days']:
+            self.assertEqual(day['total_study_duration_minutes'], 0)
+            self.assertFalse(day['is_finalized'])
+            self.assertIn('day_name_jalali', day)
+            self.assertTrue(len(day['day_name_jalali']) > 0)
+
+    def test_weekly_overview_with_logs_and_activities(self):
+        self.client.force_authenticate(user=self.student)
+        today = date.today()
+        # Create log for today with reading and class activities + sleep
+        log = DailyStudyLog.objects.create(
+            student=self.student,
+            date=today,
+            sleep_duration_minutes=480,
+            is_finalized=True
+        )
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=90
+        )
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter2,
+            activity_type=StudyActivityType.CLASS,
+            duration_minutes=60
+        )
+
+        res = self.client.get(self.url_current)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        today_str = today.isoformat()
+        day_entry = next((d for d in res.data['days'] if d['date'] == today_str), None)
+        self.assertIsNotNone(day_entry)
+        self.assertTrue(day_entry['is_finalized'])
+        # Study duration should sum activities only (90 + 60 = 150), sleep is not study
+        self.assertEqual(day_entry['total_study_duration_minutes'], 150)
+
+    def test_weekly_overview_custom_date_query_param(self):
+        self.client.force_authenticate(user=self.student)
+        # Sunday 2026-09-20 -> Week should run from 2026-09-20 to 2026-09-26
+        res = self.client.get(f"{self.url_current}?date=2026-09-20")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['start_date'], '2026-09-20')
+        self.assertEqual(res.data['end_date'], '2026-09-26')
+        self.assertEqual(len(res.data['days']), 7)
+        self.assertEqual(res.data['days'][0]['date'], '2026-09-20')
+        # Check Jalali name for Sunday 29 Shahrivar
+        self.assertIn('شهریور', res.data['days'][0]['day_name_jalali'])
+
+    def test_weekly_overview_invalid_date_param(self):
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(f"{self.url_current}?date=invalid-date")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', res.data)
+
+    def test_get_daily_log_nonexistent(self):
+        self.client.force_authenticate(user=self.student)
+        today_str = date.today().isoformat()
+        res = self.client.get(f"{self.url_daily_logs}{today_str}/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['date'], today_str)
+        self.assertEqual(res.data['sleep_duration_minutes'], 0)
+        self.assertFalse(res.data['is_finalized'])
+        self.assertEqual(res.data['activities'], [])
+
+    def test_get_daily_log_existing(self):
+        self.client.force_authenticate(user=self.student)
+        today = date.today()
+        log = DailyStudyLog.objects.create(
+            student=self.student,
+            date=today,
+            sleep_duration_minutes=420,
+            is_finalized=True
+        )
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.REVIEW,
+            duration_minutes=75
+        )
+
+        res = self.client.get(f"{self.url_daily_logs}{today.isoformat()}/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['sleep_duration_minutes'], 420)
+        self.assertTrue(res.data['is_finalized'])
+        self.assertEqual(len(res.data['activities']), 1)
+        act = res.data['activities'][0]
+        self.assertEqual(act['chapter_id'], self.chapter1.id)
+        self.assertEqual(act['chapter_title'], 'نظریه گراف')
+        self.assertEqual(act['source_material_title'], 'ریاضیات گسسته')
+        self.assertEqual(act['activity_type'], 'REVIEW')
+        self.assertEqual(act['duration_minutes'], 75)
+
+    def test_upsert_daily_log_atomic_wipe_and_replace(self):
+        self.client.force_authenticate(user=self.student)
+        today = date.today()
+        today_str = today.isoformat()
+
+        # 1. Initial PUT with 2 activities
+        payload1 = {
+            'sleep_duration_minutes': 480,
+            'is_finalized': False,
+            'activities': [
+                {
+                    'chapter_id': self.chapter1.id,
+                    'activity_type': 'READING',
+                    'duration_minutes': 120
+                },
+                {
+                    'chapter_id': self.chapter2.id,
+                    'activity_type': 'CLASS',
+                    'duration_minutes': 60
+                }
+            ]
+        }
+        res1 = self.client.put(f"{self.url_daily_logs}{today_str}/", payload1, format='json')
+        self.assertEqual(res1.status_code, status.HTTP_200_OK)
+        self.assertEqual(res1.data['message'], 'Daily log updated successfully.')
+
+        log = DailyStudyLog.objects.get(student=self.student, date=today)
+        self.assertEqual(log.sleep_duration_minutes, 480)
+        self.assertFalse(log.is_finalized)
+        self.assertEqual(log.activities.count(), 2)
+
+        # 2. Second PUT with 1 activity (atomic wipe and replace: previous 2 must be purged, no orphans)
+        payload2 = {
+            'sleep_duration_minutes': 500,
+            'is_finalized': True,
+            'activities': [
+                {
+                    'chapter_id': self.chapter1.id,
+                    'activity_type': 'REVIEW',
+                    'duration_minutes': 90
+                }
+            ]
+        }
+        res2 = self.client.put(f"{self.url_daily_logs}{today_str}/", payload2, format='json')
+        self.assertEqual(res2.status_code, status.HTTP_200_OK)
+
+        log.refresh_from_db()
+        self.assertEqual(log.sleep_duration_minutes, 500)
+        self.assertTrue(log.is_finalized)
+        self.assertEqual(log.activities.count(), 1)
+        remaining_act = log.activities.first()
+        self.assertEqual(remaining_act.activity_type, 'REVIEW')
+        self.assertEqual(remaining_act.duration_minutes, 90)
+
+    def test_temporal_security_lock_older_than_previous_week(self):
+        self.client.force_authenticate(user=self.student)
+        # Calculate a date that is strictly 3 weeks in the past
+        old_date = date.today() - timedelta(days=21)
+        old_date_str = old_date.isoformat()
+
+        payload = {
+            'sleep_duration_minutes': 480,
+            'is_finalized': True,
+            'activities': [
+                {
+                    'chapter_id': self.chapter1.id,
+                    'activity_type': 'READING',
+                    'duration_minutes': 60
+                }
+            ]
+        }
+        res = self.client.put(f"{self.url_daily_logs}{old_date_str}/", payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.data.get('error'), 'Cannot edit logs older than the previous week.')
+
+        # Verify no log or activities were created
+        self.assertFalse(DailyStudyLog.objects.filter(student=self.student, date=old_date).exists())
+
+    def test_temporal_security_current_and_previous_week_allowed(self):
+        self.client.force_authenticate(user=self.student)
+        today = date.today()
+        # Today is in current week
+        res_today = self.client.put(
+            f"{self.url_daily_logs}{today.isoformat()}/",
+            {'sleep_duration_minutes': 400, 'is_finalized': False, 'activities': []},
+            format='json'
+        )
+        self.assertEqual(res_today.status_code, status.HTTP_200_OK)
+
+        # 4 days ago is either in current week or previous week, definitely not older than previous week
+        recent_date = today - timedelta(days=4)
+        res_recent = self.client.put(
+            f"{self.url_daily_logs}{recent_date.isoformat()}/",
+            {'sleep_duration_minutes': 420, 'is_finalized': False, 'activities': []},
+            format='json'
+        )
+        self.assertEqual(res_recent.status_code, status.HTTP_200_OK)
+
+    def test_daily_log_upsert_total_duration_exceeds_24_hours(self):
+        self.client.force_authenticate(user=self.student)
+        today_str = date.today().isoformat()
+        # 12 hours sleep (720 min) + 13 hours reading (780 min) = 1500 min > 1440 min (24 hours)
+        payload = {
+            'sleep_duration_minutes': 720,
+            'is_finalized': False,
+            'activities': [
+                {
+                    'chapter_id': self.chapter1.id,
+                    'activity_type': 'READING',
+                    'duration_minutes': 780
+                }
+            ]
+        }
+        res = self.client.put(f"{self.url_daily_logs}{today_str}/", payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('non_field_errors', res.data)
+
+    def test_daily_log_upsert_invalid_chapter_id(self):
+        self.client.force_authenticate(user=self.student)
+        today_str = date.today().isoformat()
+        payload = {
+            'sleep_duration_minutes': 480,
+            'is_finalized': False,
+            'activities': [
+                {
+                    'chapter_id': 999999,
+                    'activity_type': 'READING',
+                    'duration_minutes': 60
+                }
+            ]
+        }
+        res = self.client.put(f"{self.url_daily_logs}{today_str}/", payload, format='json')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('activities', res.data)
+
+    def test_student_data_isolation(self):
+        today = date.today()
+        # Create log for student 1
+        log1 = DailyStudyLog.objects.create(
+            student=self.student,
+            date=today,
+            sleep_duration_minutes=480,
+            is_finalized=True
+        )
+        StudyActivity.objects.create(
+            daily_log=log1,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=120
+        )
+
+        # Authenticate as other student
+        self.client.force_authenticate(user=self.other_student)
+
+        # Other student's overview shows 0 minutes for today
+        res_overview = self.client.get(self.url_current)
+        today_entry = next(d for d in res_overview.data['days'] if d['date'] == today.isoformat())
+        self.assertEqual(today_entry['total_study_duration_minutes'], 0)
+        self.assertFalse(today_entry['is_finalized'])
+
+        # Other student's daily log GET returns blank default
+        res_detail = self.client.get(f"{self.url_daily_logs}{today.isoformat()}/")
+        self.assertEqual(res_detail.data['sleep_duration_minutes'], 0)
+        self.assertEqual(len(res_detail.data['activities']), 0)
+
+        # Other student's PUT does not overwrite student 1's log
+        self.client.put(
+            f"{self.url_daily_logs}{today.isoformat()}/",
+            {'sleep_duration_minutes': 300, 'is_finalized': False, 'activities': []},
+            format='json'
+        )
+        log1.refresh_from_db()
+        self.assertEqual(log1.sleep_duration_minutes, 480)
+        self.assertTrue(log1.is_finalized)
+        self.assertEqual(log1.activities.count(), 1)

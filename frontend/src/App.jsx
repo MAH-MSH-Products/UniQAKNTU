@@ -32,6 +32,7 @@ import i18n from 'i18next';
 import ForgotPassword from './pages/ForgotPassword';
 import PerformedWeeklyPlan from './pages/student/planner/PerformedWeeklyPlan/PerformedWeeklyPlan';
 import ConclusionPlan from './pages/student/planner/ConclusionPlan/ConclusionPlan';
+import HourWeeklyPlan from './pages/student/planner/HourWeeklyPlan/HourWeeklyPlan';
 import StudentDashboard from './pages/student/dashboard/StudentDashboard';
 function App() {
   useEffect(() => {
@@ -81,6 +82,8 @@ function App() {
                   <Route path="/support" element={<SupportCenter />} />
                   <Route path="/tickets" element={<SupportCenter />} />
                   <Route path="/reports" element={<UserReports />} />
+                  <Route path="/schedule/hour-weekly-plan" element={<HourWeeklyPlan />} />
+                  <Route path="/schedule/daily" element={<Navigate to="/schedule/hour-weekly-plan" replace />} />
                   <Route path="/schedule/performed-weekly-plan" element={<PerformedWeeklyPlan />} />
                   <Route path="/schedule/conclusion-plan" element={<ConclusionPlan />} />
                   <Route path="/admin" element={<Navigate to="/admin/support" replace />} />

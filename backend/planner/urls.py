@@ -10,6 +10,8 @@ from planner.views import (
     DashboardSummaryView,
     DailyNoteView,
     ConsultationBookingView,
+    WeeklyHoursOverviewView,
+    DailyStudyLogDetailView,
 )
 
 app_name = 'planner'
@@ -30,4 +32,8 @@ urlpatterns = [
     path('dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
     path('dashboard/notes/', DailyNoteView.as_view(), name='dashboard-notes'),
     path('dashboard/consultations/', ConsultationBookingView.as_view(), name='dashboard-consultations'),
+
+    # Sub-module 5: Weekly Study Hours
+    path('weekly-hours/current/', WeeklyHoursOverviewView.as_view(), name='weekly-hours-current'),
+    path('weekly-hours/daily-logs/<str:date_str>/', DailyStudyLogDetailView.as_view(), name='weekly-hours-daily-log-detail'),
 ]

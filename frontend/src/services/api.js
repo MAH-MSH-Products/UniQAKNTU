@@ -236,5 +236,20 @@ export const voteOpinion = (id, value) => {
   return api.post(`/community/opinions/${id}/vote/`, { value });
 };
 
+// ============================================
+// Planner: Sub-module 5 - Weekly Study Hours
+// ============================================
+export const getWeeklyHoursOverview = (params = {}) => {
+  return api.get('/planner/weekly-hours/current/', { params });
+};
+
+export const getDailyStudyLog = (date) => {
+  return api.get(`/planner/weekly-hours/daily-logs/${date}/`);
+};
+
+export const saveDailyStudyLog = (date, data) => {
+  return api.put(`/planner/weekly-hours/daily-logs/${date}/`, data);
+};
+
 export default api;
 

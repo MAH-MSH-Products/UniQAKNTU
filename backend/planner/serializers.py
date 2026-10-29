@@ -1,6 +1,17 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from curriculum.models import SourceMaterialChapter
-from planner.models import TestFormat, TestMethod, TestRecord, ChapterMastery, DailyNote, ConsultationBooking
+from planner.models import (
+    TestFormat,
+    TestMethod,
+    TestRecord,
+    ChapterMastery,
+    DailyNote,
+    ConsultationBooking,
+    StudyActivityType,
+    DailyStudyLog,
+    StudyActivity,
+)
 
 
 class ChapterRecordSerializer(serializers.Serializer):
@@ -161,3 +172,67 @@ class ConsultationBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConsultationBooking
         fields = ['id', 'day_of_week', 'time_slot', 'created_at']
+
+
+# ============================================
+# Sub-module 5: Weekly Study Hours
+# ============================================
+
+class WeeklyHoursDayOverviewSerializer(serializers.Serializer):
+    date = serializers.CharField()
+    day_name_jalali = serializers.CharField()
+    is_finalized = serializers.BooleanField()
+    is_locked = serializers.BooleanField()
+    total_study_duration_minutes = serializers.IntegerField()
+
+
+class WeeklyHoursOverviewSerializer(serializers.Serializer):
+    week_number = serializers.IntegerField()
+    start_date = serializers.CharField()
+    end_date = serializers.CharField()
+    can_edit_previous_week = serializers.BooleanField()
+    days = WeeklyHoursDayOverviewSerializer(many=True)
+
+
+class StudyActivityDetailSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    chapter_id = serializers.IntegerField()
+    chapter_title = serializers.CharField(required=False, allow_blank=True)
+    source_material_id = serializers.IntegerField(required=False, allow_null=True)
+    source_material_title = serializers.CharField(required=False, allow_blank=True)
+    activity_type = serializers.CharField()
+    duration_minutes = serializers.IntegerField()
+
+
+class DailyStudyLogDetailSerializer(serializers.Serializer):
+    date = serializers.CharField()
+    sleep_duration_minutes = serializers.IntegerField()
+    is_finalized = serializers.BooleanField()
+    activities = StudyActivityDetailSerializer(many=True)
+
+
+class StudyActivityItemUpsertSerializer(serializers.Serializer):
+    chapter_id = serializers.IntegerField(required=True)
+    activity_type = serializers.ChoiceField(choices=StudyActivityType.choices, required=True)
+    duration_minutes = serializers.IntegerField(min_value=0, max_value=1440, required=True)
+
+    def validate_chapter_id(self, value):
+        if not SourceMaterialChapter.objects.filter(id=value).exists():
+            raise serializers.ValidationError(_("Chapter not found."))
+        return value
+
+
+class DailyStudyLogUpsertSerializer(serializers.Serializer):
+    sleep_duration_minutes = serializers.IntegerField(min_value=0, max_value=1440, required=False, default=0)
+    is_finalized = serializers.BooleanField(required=False, default=False)
+    activities = StudyActivityItemUpsertSerializer(many=True, required=False, default=list)
+
+    def validate(self, attrs):
+        sleep = attrs.get('sleep_duration_minutes', 0)
+        activities = attrs.get('activities', [])
+        total_activity_mins = sum(a.get('duration_minutes', 0) for a in activities)
+        if sleep + total_activity_mins > 1440:
+            raise serializers.ValidationError(
+                _("Total study and sleep time in a day cannot exceed 24 hours (1440 minutes).")
+            )
+        return attrs

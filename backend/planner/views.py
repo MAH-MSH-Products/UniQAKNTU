@@ -9,6 +9,7 @@ from curriculum.models import SourceMaterialChapter
 from planner.services.performed_plan_service import PerformedPlanAggregationService
 from planner.services.conclusion_plan_service import ConclusionPlanService
 from planner.services.dashboard_service import DashboardSummaryService
+from planner.services.time_lock_service import TimeLockService, WeeklyHoursService
 from planner.serializers import (
     WeeklyPerformanceSerializer,
     ConclusionPlanResponseSerializer,
@@ -21,6 +22,9 @@ from planner.serializers import (
     DailyNoteSerializer,
     DailyNoteCreateSerializer,
     ConsultationBookingSerializer,
+    WeeklyHoursOverviewSerializer,
+    DailyStudyLogDetailSerializer,
+    DailyStudyLogUpsertSerializer,
 )
 
 
@@ -364,4 +368,119 @@ class ConsultationBookingView(APIView):
                 "booking": ConsultationBookingSerializer(booking).data,
             },
             status=status.HTTP_201_CREATED
+        )
+
+
+# ============================================
+# Sub-module 5: Weekly Study Hours
+# ============================================
+
+class WeeklyHoursOverviewView(APIView):
+    """
+    Sub-module 5: Weekly Study Hours Overview.
+    Retrieves the 7-day overview of the active week including status and lock flags.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Weekly Hours Overview",
+        description="Retrieves the 7-day overview for the active tracking week.",
+        parameters=[
+            OpenApiParameter(
+                name="date",
+                description="Optional reference date (YYYY-MM-DD) within the week.",
+                required=False,
+                type=str,
+            ),
+        ],
+        responses={200: WeeklyHoursOverviewSerializer},
+    )
+    def get(self, request):
+        date_str = request.query_params.get('date')
+        target_date = None
+        if date_str:
+            try:
+                target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response(
+                    {'error': _('Invalid date format. Expected YYYY-MM-DD.')},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        overview_data = WeeklyHoursService.get_weekly_overview(
+            student=request.user,
+            target_date=target_date
+        )
+        serializer = WeeklyHoursOverviewSerializer(overview_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DailyStudyLogDetailView(APIView):
+    """
+    Sub-module 5: Daily Study Log Details and Bulk Upsert.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def _parse_date(self, date_str):
+        try:
+            return datetime.strptime(date_str, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            return None
+
+    @extend_schema(
+        summary="Get Daily Study Log",
+        description="Retrieves detailed study activities and sleep duration for a specific date.",
+        responses={200: DailyStudyLogDetailSerializer},
+    )
+    def get(self, request, date_str):
+        target_date = self._parse_date(date_str)
+        if not target_date:
+            return Response(
+                {'error': _('Invalid date format. Expected YYYY-MM-DD.')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        log_data = WeeklyHoursService.get_daily_log_detail(
+            student=request.user,
+            target_date=target_date
+        )
+        serializer = DailyStudyLogDetailSerializer(log_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Upsert Daily Study Log and Activities",
+        description="Atomically updates or creates a daily study log and its activities. Enforces temporal locking.",
+        request=DailyStudyLogUpsertSerializer,
+        responses={
+            200: dict,
+            400: dict,
+            403: dict,
+        },
+    )
+    def put(self, request, date_str):
+        target_date = self._parse_date(date_str)
+        if not target_date:
+            return Response(
+                {'error': _('Invalid date format. Expected YYYY-MM-DD.')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if TimeLockService.is_date_locked(target_date):
+            return Response(
+                {'error': _('Cannot edit logs older than the previous week.')},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        serializer = DailyStudyLogUpsertSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        WeeklyHoursService.upsert_daily_log(
+            student=request.user,
+            target_date=target_date,
+            data=serializer.validated_data
+        )
+        return Response(
+            {'message': _('Daily log updated successfully.')},
+            status=status.HTTP_200_OK
         )

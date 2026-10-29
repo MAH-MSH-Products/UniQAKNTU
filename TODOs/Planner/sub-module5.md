@@ -163,29 +163,29 @@ export interface DailyLogDTO {
 ## 4. Integration Plan (Delegation TODOs)
 
 ### Backend TODOs 
-- [ ] **Models Definition:** Create `DailyStudyLog` and `StudyActivity` models in `apps/planner/models.py`. 
-- [ ] **Granularity Fix:** Ensure the `StudyActivity` model links to `curriculum.SourceMaterialChapter` via `chapter_id`, matching the granularity of Sub-module 2.
-- [ ] **Data Cleanup:** Remove any fields related to `test_count` or `test_percentage` from this module's design, as tests are exclusively tracked by the Conclusion Plan module.
-- [ ] **Temporal Validation Logic:** Create a validation service (`TimeLockService`) that strictly enforces the deadline rule: users can only modify `DailyStudyLog` records falling within the current active week (Sunday to Saturday) and the immediately preceding week. Attempts to modify older records must raise a `PermissionDenied` (403).
-- [ ] **Transactional Upsert:** Implement the `PUT /daily-logs/{date}/` endpoint using `transaction.atomic()`. Wiping and replacing a day's activities must not leave orphaned records if an error occurs mid-request.
+- [x] **Models Definition:** Create `DailyStudyLog` and `StudyActivity` models in `apps/planner/models.py`. 
+- [x] **Granularity Fix:** Ensure the `StudyActivity` model links to `curriculum.SourceMaterialChapter` via `chapter_id`, matching the granularity of Sub-module 2.
+- [x] **Data Cleanup:** Remove any fields related to `test_count` or `test_percentage` from this module's design, as tests are exclusively tracked by the Conclusion Plan module.
+- [x] **Temporal Validation Logic:** Create a validation service (`TimeLockService`) that strictly enforces the deadline rule: users can only modify `DailyStudyLog` records falling within the current active week (Sunday to Saturday) and the immediately preceding week. Attempts to modify older records must raise a `PermissionDenied` (403).
+- [x] **Transactional Upsert:** Implement the `PUT /daily-logs/{date}/` endpoint using `transaction.atomic()`. Wiping and replacing a day's activities must not leave orphaned records if an error occurs mid-request.
 
 ### Frontend TODOs 
-- [ ] **Routing:** Add `/schedule/hour-weekly-plan` to the React router, protected by `<RequireAuth>`.
-- [ ] **Component Structure:**
+- [x] **Routing:** Add `/schedule/hour-weekly-plan` to the React router, protected by `<RequireAuth>`.
+- [x] **Component Structure:**
     - `HourWeeklyPlan.jsx` (Main container).
     - `DailyStatusList.jsx` (Renders the vertical list of days with their "Finalized" or "Locked" status).
     - `DailyLogForm.jsx` (The data entry interface for a specific day, accessed via the edit button).
-- [ ] **Duration Input Handling:** Build a custom input component or use a specialized library to handle time durations (`HH:MM` format in UI) cleanly, parsing them to `duration_minutes` (integers) before submission to the backend.
-- [ ] **Chapter Dropdown:** Implement a cascading dropdown: first select the `SourceMaterial` (Book/Course), then select the `Chapter`.
-- [ ] **Video Modal Integration:** Convert the Bootstrap/jQuery `#helpModal` containing the Plyr.js video into a React-friendly modal. Ensure the video pauses when the modal unmounts.
+- [x] **Duration Input Handling:** Build a custom input component or use a specialized library to handle time durations (`HH:MM` format in UI) cleanly, parsing them to `duration_minutes` (integers) before submission to the backend.
+- [x] **Chapter Dropdown:** Implement a cascading dropdown: first select the `SourceMaterial` (Book/Course), then select the `Chapter`.
+- [x] **Video Modal Integration:** Convert the Bootstrap/jQuery `#helpModal` containing the Plyr.js video into a React-friendly modal. Ensure the video pauses when the modal unmounts.
 
 ---
 
 ## 6. Verification Checklist
-- [ ] **Single Source of Truth:** No test-related data is sent to or stored in this module.
-- [ ] **Temporal Security:** API strictly blocks modifications to records older than the previous week.
-- [ ] **Atomicity:** Daily activity updates correctly purge old activities for that specific day and insert new ones without duplication or orphaned rows.
-- [ ] **Granularity Match:** Dropdowns and payloads successfully utilize `chapter_id` instead of vague course/subject IDs.
-- [ ] **Input Constraints:** Frontend restricts time inputs to valid bounds (e.g., impossible to enter 25 hours in a single day).
+- [x] **Single Source of Truth:** No test-related data is sent to or stored in this module.
+- [x] **Temporal Security:** API strictly blocks modifications to records older than the previous week.
+- [x] **Atomicity:** Daily activity updates correctly purge old activities for that specific day and insert new ones without duplication or orphaned rows.
+- [x] **Granularity Match:** Dropdowns and payloads successfully utilize `chapter_id` instead of vague course/subject IDs.
+- [x] **Input Constraints:** Frontend restricts time inputs to valid bounds (e.g., impossible to enter 25 hours in a single day).
 
 ```
