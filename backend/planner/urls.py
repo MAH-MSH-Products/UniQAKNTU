@@ -7,6 +7,9 @@ from planner.views import (
     TestRecordDetailView,
     ChapterMasteryView,
     ChapterMasteryDetailView,
+    DashboardSummaryView,
+    DailyNoteView,
+    ConsultationBookingView,
 )
 
 app_name = 'planner'
@@ -22,4 +25,9 @@ urlpatterns = [
     path('conclusion-plan/test-records/<int:pk>/', TestRecordDetailView.as_view(), name='conclusion-plan-test-record-detail'),
     path('conclusion-plan/mastery/', ChapterMasteryView.as_view(), name='conclusion-plan-mastery'),
     path('conclusion-plan/mastery/<int:chapter_id>/', ChapterMasteryDetailView.as_view(), name='conclusion-plan-mastery-detail'),
+
+    # Sub-module 3: Dashboard & Student Tools
+    path('dashboard/summary/', DashboardSummaryView.as_view(), name='dashboard-summary'),
+    path('dashboard/notes/', DailyNoteView.as_view(), name='dashboard-notes'),
+    path('dashboard/consultations/', ConsultationBookingView.as_view(), name='dashboard-consultations'),
 ]

@@ -159,30 +159,30 @@ export interface DailyNoteDTO {
 ## 4. Integration Plan (Delegation TODOs)
 
 ### Backend TODOs 
-- [ ] **Models:** Implement `DailyNote` and `ConsultationBooking` within the `planner` app. Ensure unique constraints are properly set (e.g., one note per student per day).
-- [ ] **Summary Service:** Create a lightweight `DashboardSummaryService` that queries Sub-module 5's tables (for total hours) and Sub-module 2's tables (for total tests) to formulate the `records` object.
-- [ ] **Daily Note Upsert:** Implement an upsert (update-or-create) logic in the `POST /notes/` endpoint to ensure a user doesn't create multiple notes for the same physical date. Use the server's timezone-aware current date.
-- [ ] **Decoupling:** Ensure *no* Community or Leaderboard models are defined here. Leave social features entirely to the `community` app (Sub-module 4).
+- [x] **Models:** Implement `DailyNote` and `ConsultationBooking` within the `planner` app. Ensure unique constraints are properly set (e.g., one note per student per day).
+- [x] **Summary Service:** Create a lightweight `DashboardSummaryService` that queries Sub-module 5's tables (for total hours) and Sub-module 2's tables (for total tests) to formulate the `records` object.
+- [x] **Daily Note Upsert:** Implement an upsert (update-or-create) logic in the `POST /notes/` endpoint to ensure a user doesn't create multiple notes for the same physical date. Use the server's timezone-aware current date.
+- [x] **Decoupling:** Ensure *no* Community or Leaderboard models are defined here. Leave social features entirely to the `community` app (Sub-module 4).
 
 ### Frontend TODOs 
-- [ ] **Routing:** Add `/panel/dashboard` to `App.jsx` protected by `<RequireAuth>`. Configure this as the default redirect path after a successful login.
-- [ ] **Component Structure:**
+- [x] **Routing:** Add `/panel/dashboard` to `App.jsx` protected by `<RequireAuth>`. Configure this as the default redirect path after a successful login.
+- [x] **Component Structure:**
     - Create `StudentDashboard.jsx` as the main container.
     - Extract sub-components for modularity: `<PersonalRecordsWidget/>`, `<StopwatchWidget/>`, `<DailyNoteWidget/>`.
     - Import `<LeaderboardGrid/>` and `<OpinionsList/>` directly from the `community` component folder (to be built in Sub-module 4).
-- [ ] **Client-Side Widgets (No Backend required):**
+- [x] **Client-Side Widgets (No Backend required):**
     - Implement the **Stopwatch** entirely in React state (Start, Stop, Reset). Use `useRef` and `setInterval` to prevent the entire Dashboard from re-rendering every second.
     - Implement the **Persian Calendar** using a React-compatible Jalali calendar library (e.g., `react-multi-date-picker` with Persian locale).
-- [ ] **API Consumption:** Wire up `getDashboardSummary()`, `getDailyNote()`, and `saveDailyNote()` using the `src/services/api.js` interceptor.
-- [ ] **Styling & Assets:** 
+- [x] **API Consumption:** Wire up `getDashboardSummary()`, `getDailyNote()`, and `saveDailyNote()` using the `src/services/api.js` interceptor.
+- [x] **Styling & Assets:** 
     - Utilize the project's native CSS variables and Glassmorphism UI guidelines to style the dashboard cards. Use Flexbox/CSS Grid for responsive layout adjustments (stacking vertically on mobile).
 
 ---
 
 ## 6. Verification Checklist
-- [ ] **Strict Boundary Adherence:** The backend module contains absolutely no logic for leaderboards or user opinions (delegated strictly to Sub-module 4).
-- [ ] **Upsert Integrity:** Submitting a daily note multiple times on the same day updates the existing record rather than generating duplicates.
-- [ ] **Performance:** The Dashboard Summary query is heavily optimized (or cached briefly) to ensure the homepage loads instantly without executing heavy N+1 counts across the test and time-log tables.
-- [ ] **React State Optimization:** The Stopwatch widget isolates its state so that ticking seconds do not trigger React re-renders on sibling components (like the large leaderboard or chart widgets).
+- [x] **Strict Boundary Adherence:** The backend module contains absolutely no logic for leaderboards or user opinions (delegated strictly to Sub-module 4).
+- [x] **Upsert Integrity:** Submitting a daily note multiple times on the same day updates the existing record rather than generating duplicates.
+- [x] **Performance:** The Dashboard Summary query is heavily optimized (or cached briefly) to ensure the homepage loads instantly without executing heavy N+1 counts across the test and time-log tables.
+- [x] **React State Optimization:** The Stopwatch widget isolates its state so that ticking seconds do not trigger React re-renders on sibling components (like the large leaderboard or chart widgets).
 
 ```

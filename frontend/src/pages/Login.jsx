@@ -18,7 +18,7 @@ const Login = () => {
   const { t } = useTranslation();
 
   if (isAuthenticated) {
-    navigate('/');
+    navigate('/panel/dashboard');
     return null;
   }
 
@@ -30,7 +30,7 @@ const Login = () => {
     const result = await login(identifier, password);
     
     if (result.success) {
-      navigate('/');
+      navigate('/panel/dashboard');
     } else {
       // اگر حساب تایید نشده بود، به صفحه Verify می‌رویم و دستور ارسال خودکار کد را صادر می‌کنیم
       if (result.error === 'email_not_verified') {

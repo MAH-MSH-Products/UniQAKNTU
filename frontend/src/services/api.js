@@ -194,4 +194,27 @@ export const deleteChapterMastery = (chapterId) => {
   return api.delete(`/planner/conclusion-plan/mastery/${chapterId}/`);
 };
 
-export default api;
+// ============================================
+// Planner: Sub-module 3 - Dashboard & Student Tools
+// ============================================
+export const getDashboardSummary = () => {
+  return api.get('/planner/dashboard/summary/');
+};
+
+export const getDailyNote = () => {
+  return api.get('/planner/dashboard/notes/');
+};
+
+export const saveDailyNote = (data) => {
+  return api.post('/planner/dashboard/notes/', data);
+};
+
+export const getConsultations = () => {
+  return api.get('/planner/dashboard/consultations/');
+};
+
+export const bookConsultation = (data) => {
+  return api.post('/planner/dashboard/consultations/', data);
+};
+
+export default api;

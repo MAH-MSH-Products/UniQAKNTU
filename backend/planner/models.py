@@ -1,3 +1,4 @@
+import uuid
 from datetime import date
 from django.db import models
 from django.conf import settings
@@ -186,3 +187,61 @@ class TestRecord(models.Model):
 
     def __str__(self):
         return f"{self.student.username} - {self.chapter.title} ({self.test_format}/{self.test_method}): {self.percentage}%"
+
+
+# ============================================
+# Sub-module 3: Dashboard & Student Tools
+# ============================================
+
+class DailyNote(models.Model):
+    """
+    Sub-module 3: Personal daily note for the student.
+    Enforces uniqueness per student per date.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='daily_notes',
+        verbose_name=_('Student')
+    )
+    date = models.DateField(default=date.today, verbose_name=_('Date'))
+    text = models.TextField(verbose_name=_('Note Text'))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['student', 'date']
+        ordering = ['-date', '-created_at']
+        verbose_name = _('Daily Note')
+        verbose_name_plural = _('Daily Notes')
+
+    def __str__(self):
+        return f"{self.student.username} - {self.date}: {self.text[:30]}"
+
+
+class ConsultationBooking(models.Model):
+    """
+    Sub-module 3: Consultation booking slots chosen by the student.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='consultation_bookings',
+        verbose_name=_('Student')
+    )
+    day_of_week = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(7)],
+        verbose_name=_('Day of Week (1-7)')
+    )
+    time_slot = models.TimeField(verbose_name=_('Time Slot'))
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Consultation Booking')
+        verbose_name_plural = _('Consultation Bookings')
+
+    def __str__(self):
+        return f"{self.student.username} - Day {self.day_of_week} at {self.time_slot}"

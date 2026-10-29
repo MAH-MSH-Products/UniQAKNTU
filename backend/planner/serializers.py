@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from curriculum.models import SourceMaterialChapter
-from planner.models import TestFormat, TestMethod, TestRecord, ChapterMastery
+from planner.models import TestFormat, TestMethod, TestRecord, ChapterMastery, DailyNote, ConsultationBooking
 
 
 class ChapterRecordSerializer(serializers.Serializer):
@@ -109,3 +109,55 @@ class SourceMaterialChapterSerializer(serializers.ModelSerializer):
     class Meta:
         model = SourceMaterialChapter
         fields = ['id', 'title', 'chapter_number', 'source_material_id', 'page_count']
+
+
+# ============================================
+# Sub-module 3: Dashboard & Student Tools
+# ============================================
+
+class CountdownSerializer(serializers.Serializer):
+    target_name = serializers.CharField()
+    days = serializers.IntegerField()
+    hours = serializers.IntegerField()
+    minutes = serializers.IntegerField()
+
+
+class PersonalRecordsSerializer(serializers.Serializer):
+    total_study_hours = serializers.CharField()
+    max_daily_study = serializers.CharField()
+    total_tests = serializers.IntegerField()
+    max_daily_tests = serializers.IntegerField()
+
+
+class TodayTasksSerializer(serializers.Serializer):
+    has_reviews = serializers.BooleanField()
+    has_studies = serializers.BooleanField()
+
+
+class DashboardSummarySerializer(serializers.Serializer):
+    quote = serializers.CharField()
+    countdown = CountdownSerializer()
+    records = PersonalRecordsSerializer()
+    today_tasks = TodayTasksSerializer()
+
+
+class DailyNoteSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
+    date = serializers.DateField(read_only=True)
+
+    class Meta:
+        model = DailyNote
+        fields = ['id', 'date', 'text']
+
+
+class DailyNoteCreateSerializer(serializers.Serializer):
+    text = serializers.CharField(allow_blank=True)
+
+
+class ConsultationBookingSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = ConsultationBooking
+        fields = ['id', 'day_of_week', 'time_slot', 'created_at']

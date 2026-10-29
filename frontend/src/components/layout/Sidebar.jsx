@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit, FiShield, FiShoppingBag, FiPackage, FiCalendar, FiCheckSquare } from 'react-icons/fi';
+import { FiBook, FiTag, FiAlertTriangle, FiPieChart, FiEdit, FiShield, FiShoppingBag, FiPackage, FiCalendar, FiCheckSquare, FiGrid } from 'react-icons/fi';
 
 const Sidebar = () => {
   const { t } = useTranslation();
@@ -36,6 +36,11 @@ const Sidebar = () => {
 
           {isAuthenticated && (
             <>
+              <li className="nav-item">
+                <Link className="nav-link d-flex align-items-center gap-2" to="/panel/dashboard" style={navLinkStyle}>
+                  <FiGrid /> <span>{t('dashboard.title', 'My Dashboard')}</span>
+                </Link>
+              </li>
               <li className="nav-item">
                 <Link className="nav-link d-flex align-items-center gap-2" to="/schedule/performed-weekly-plan" style={navLinkStyle}>
                   <FiCalendar /> <span>{t('planner.performed_weekly_plan', 'Weekly Plan')}</span>

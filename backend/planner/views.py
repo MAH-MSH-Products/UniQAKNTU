@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
@@ -8,6 +8,7 @@ from django.utils.translation import gettext as _
 from curriculum.models import SourceMaterialChapter
 from planner.services.performed_plan_service import PerformedPlanAggregationService
 from planner.services.conclusion_plan_service import ConclusionPlanService
+from planner.services.dashboard_service import DashboardSummaryService
 from planner.serializers import (
     WeeklyPerformanceSerializer,
     ConclusionPlanResponseSerializer,
@@ -16,6 +17,10 @@ from planner.serializers import (
     ChapterMasterySerializer,
     ChapterMasteryCreateUpdateSerializer,
     SourceMaterialChapterSerializer,
+    DashboardSummarySerializer,
+    DailyNoteSerializer,
+    DailyNoteCreateSerializer,
+    ConsultationBookingSerializer,
 )
 
 
@@ -253,3 +258,110 @@ class ConclusionPlanChaptersView(APIView):
         chapters = ConclusionPlanService.get_chapters_for_source_material(source_material_id)
         serializer = SourceMaterialChapterSerializer(chapters, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# ============================================
+# Sub-module 3: Dashboard & Student Tools
+# ============================================
+
+class DashboardSummaryView(APIView):
+    """
+    Sub-module 3: Retrieves aggregated data for the dashboard's top row
+    (Motivational quote, countdown to exam, and high-level student records).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Dashboard Summary",
+        description="Retrieves motivational quote, countdown to exam, student aggregated records, and today's tasks status.",
+        responses={200: DashboardSummarySerializer},
+    )
+    def get(self, request):
+        summary_data = DashboardSummaryService.get_dashboard_summary(student=request.user)
+        serializer = DashboardSummarySerializer(summary_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DailyNoteView(APIView):
+    """
+    Sub-module 3: Retrieves or upserts today's personal note for the student.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Today's Daily Note",
+        description="Retrieves the personal note of the authenticated student for today's date.",
+        responses={200: DailyNoteSerializer},
+    )
+    def get(self, request):
+        note = DashboardSummaryService.get_daily_note(student=request.user)
+        if note:
+            serializer = DailyNoteSerializer(note)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "id": None,
+                "date": str(date.today()),
+                "text": "",
+            },
+            status=status.HTTP_200_OK
+        )
+
+    @extend_schema(
+        summary="Upsert Today's Daily Note",
+        description="Creates or updates today's daily note for the student.",
+        request=DailyNoteCreateSerializer,
+        responses={200: DailyNoteSerializer, 201: DailyNoteSerializer},
+    )
+    def post(self, request):
+        serializer = DailyNoteCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        note = DashboardSummaryService.upsert_daily_note(
+            student=request.user,
+            text=serializer.validated_data.get('text', '')
+        )
+        response_serializer = DailyNoteSerializer(note)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class ConsultationBookingView(APIView):
+    """
+    Sub-module 3: Book weekly consultation slots and retrieve existing bookings.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="List Consultation Bookings",
+        description="Returns all consultation bookings for the authenticated student.",
+        responses={200: ConsultationBookingSerializer(many=True)},
+    )
+    def get(self, request):
+        bookings = DashboardSummaryService.get_consultations(student=request.user)
+        serializer = ConsultationBookingSerializer(bookings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Book Consultation Slot",
+        description="Books a weekly consultation slot (day_of_week: 1 to 7, time_slot: HH:MM:SS).",
+        request=ConsultationBookingSerializer,
+        responses={201: ConsultationBookingSerializer},
+    )
+    def post(self, request):
+        serializer = ConsultationBookingSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        booking = DashboardSummaryService.book_consultation(
+            student=request.user,
+            day_of_week=serializer.validated_data['day_of_week'],
+            time_slot=serializer.validated_data['time_slot']
+        )
+        return Response(
+            {
+                "message": _("Consultation booked successfully."),
+                "booking": ConsultationBookingSerializer(booking).data,
+            },
+            status=status.HTTP_201_CREATED
+        )

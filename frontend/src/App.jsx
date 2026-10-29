@@ -32,6 +32,7 @@ import i18n from 'i18next';
 import ForgotPassword from './pages/ForgotPassword';
 import PerformedWeeklyPlan from './pages/student/planner/PerformedWeeklyPlan/PerformedWeeklyPlan';
 import ConclusionPlan from './pages/student/planner/ConclusionPlan/ConclusionPlan';
+import StudentDashboard from './pages/student/dashboard/StudentDashboard';
 function App() {
   useEffect(() => {
     const handleLanguageChange = (lng) => {
@@ -75,6 +76,8 @@ function App() {
               {/* Protected Routes - Require Authentication */}
               <Route element={<RequireAuth />}>
                 <Route element={<MainLayout />}>
+                  <Route path="/panel/dashboard" element={<StudentDashboard />} />
+                  <Route path="/dashboard" element={<Navigate to="/panel/dashboard" replace />} />
                   <Route path="/support" element={<SupportCenter />} />
                   <Route path="/tickets" element={<SupportCenter />} />
                   <Route path="/reports" element={<UserReports />} />
