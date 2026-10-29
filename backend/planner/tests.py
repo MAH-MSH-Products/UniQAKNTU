@@ -1671,3 +1671,257 @@ class StudentAnalyticsAPITests(TestCase):
         self.assertEqual(res_alloc.data['totals']['total_tests'], 0)
 
 
+class ChapterCRUDAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.student = User.objects.create_user(
+            username='student_crud',
+            email='student_crud@test.com',
+            password='password123',
+            role='STUDENT',
+            is_email_verified=True,
+        )
+        self.instructor = User.objects.create_user(
+            username='instructor_crud',
+            email='instructor_crud@test.com',
+            password='password123',
+            role='INSTRUCTOR',
+            is_staff=True,
+            is_email_verified=True,
+        )
+        self.material = SourceMaterial.objects.create(title='ریاضیات گسسته')
+        self.chapter1 = Chapter.objects.create(
+            source_material=self.material,
+            title='فصل اول: گراف',
+            order=1,
+            chapter_number=1,
+            page_count=30,
+        )
+        self.url_list = '/api/planner/chapters/'
+
+    def test_list_chapters_authenticated(self):
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(f"{self.url_list}?source_material_id={self.material.id}")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['title'], 'فصل اول: گراف')
+
+    def test_student_cannot_create_chapter(self):
+        self.client.force_authenticate(user=self.student)
+        payload = {
+            'source_material_id': self.material.id,
+            'title': 'فصل دوم: ترکیبیات',
+            'chapter_number': 2,
+            'page_count': 40,
+        }
+        res = self.client.post(self.url_list, payload)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_instructor_can_create_chapter(self):
+        self.client.force_authenticate(user=self.instructor)
+        payload = {
+            'source_material_id': self.material.id,
+            'title': 'فصل دوم: ترکیبیات',
+            'chapter_number': 2,
+            'page_count': 40,
+        }
+        res = self.client.post(self.url_list, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data['chapter_number'], 2)
+        self.assertEqual(Chapter.objects.filter(source_material=self.material).count(), 2)
+
+    def test_duplicate_chapter_number_fails(self):
+        self.client.force_authenticate(user=self.instructor)
+        payload = {
+            'source_material_id': self.material.id,
+            'title': 'فصل تکراری',
+            'chapter_number': 1,  # chapter 1 already exists
+            'page_count': 25,
+        }
+        res = self.client.post(self.url_list, payload)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue('chapter_number' in res.data or 'non_field_errors' in res.data)
+
+    def test_instructor_can_update_chapter(self):
+        self.client.force_authenticate(user=self.instructor)
+        url_detail = f'/api/planner/chapters/{self.chapter1.id}/'
+        payload = {
+            'source_material_id': self.material.id,
+            'title': 'فصل اول: مبانی گراف',
+            'chapter_number': 1,
+            'page_count': 35,
+        }
+        res = self.client.put(url_detail, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.chapter1.refresh_from_db()
+        self.assertEqual(self.chapter1.title, 'فصل اول: مبانی گراف')
+        self.assertEqual(self.chapter1.page_count, 35)
+
+    def test_delete_chapter_with_existing_records_fails(self):
+        self.client.force_authenticate(user=self.instructor)
+        log = DailyStudyLog.objects.create(student=self.student, date=date.today())
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=30
+        )
+
+        url_detail = f'/api/planner/chapters/{self.chapter1.id}/'
+        res = self.client.delete(url_detail)
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(Chapter.objects.filter(id=self.chapter1.id).exists())
+
+    def test_delete_empty_chapter_succeeds(self):
+        self.client.force_authenticate(user=self.instructor)
+        empty_chapter = Chapter.objects.create(
+            source_material=self.material,
+            title='فصل خالی',
+            order=99,
+            chapter_number=99,
+        )
+        url_detail = f'/api/planner/chapters/{empty_chapter.id}/'
+        res = self.client.delete(url_detail)
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Chapter.objects.filter(id=empty_chapter.id).exists())
+
+
+class AdminConsultationAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.student = User.objects.create_user(
+            username='student_consult',
+            email='student_consult@test.com',
+            password='password123',
+            role='STUDENT',
+            is_email_verified=True,
+        )
+        self.admin = User.objects.create_user(
+            username='admin_consult',
+            email='admin_consult@test.com',
+            password='password123',
+            role='ADMIN',
+            is_staff=True,
+            is_superuser=True,
+            is_email_verified=True,
+        )
+        self.booking = ConsultationBooking.objects.create(
+            student=self.student,
+            day_of_week=2,
+            time_slot='10:00:00',
+            status='CONFIRMED',
+        )
+        self.url_student_list = '/api/planner/dashboard/consultations/'
+        self.url_admin_list = '/api/planner/admin/consultations/'
+
+    def test_student_can_cancel_own_consultation(self):
+        self.client.force_authenticate(user=self.student)
+        url_detail = f'/api/planner/dashboard/consultations/{self.booking.id}/'
+        res = self.client.delete(url_detail)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, 'CANCELLED')
+
+    def test_student_cannot_access_admin_consultation_list(self):
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(self.url_admin_list)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_can_list_consultations(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.get(self.url_admin_list)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(len(res.data) >= 1)
+        self.assertEqual(res.data[0]['student']['username'], 'student_consult')
+
+    def test_admin_can_update_consultation_status_and_notes(self):
+        self.client.force_authenticate(user=self.admin)
+        url_detail = f'/api/planner/admin/consultations/{self.booking.id}/'
+        payload = {
+            'status': 'COMPLETED',
+            'notes': 'جلسه بسیار مفید بود و برنامه ریزی اصلاح شد.'
+        }
+        res = self.client.patch(url_detail, payload)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.booking.refresh_from_db()
+        self.assertEqual(self.booking.status, 'COMPLETED')
+        self.assertEqual(self.booking.notes, 'جلسه بسیار مفید بود و برنامه ریزی اصلاح شد.')
+
+
+class AdvisorStudentInspectionTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.student = User.objects.create_user(
+            username='student_advisee',
+            email='student_advisee@test.com',
+            password='password123',
+            role='STUDENT',
+            is_email_verified=True,
+        )
+        self.other_student = User.objects.create_user(
+            username='student_other',
+            email='student_other@test.com',
+            password='password123',
+            role='STUDENT',
+            is_email_verified=True,
+        )
+        self.advisor = User.objects.create_user(
+            username='advisor_user',
+            email='advisor@test.com',
+            password='password123',
+            role='INSTRUCTOR',
+            is_staff=True,
+            is_email_verified=True,
+        )
+
+        self.course = SourceMaterial.objects.create(title='هوش مصنوعی')
+        self.chapter = Chapter.objects.create(source_material=self.course, title='جستجو', order=1)
+
+        # Create study activity for advisee
+        today = date.today()
+        log = DailyStudyLog.objects.create(student=self.student, date=today)
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=90
+        )
+        TestRecord.objects.create(
+            student=self.student,
+            chapter=self.chapter,
+            date=today,
+            total_tests=30,
+            correct_tests=25,
+            wrong_tests=5
+        )
+
+    def test_student_cannot_inspect_other_student_performance(self):
+        self.client.force_authenticate(user=self.other_student)
+        url = f'/api/planner/weekly-performance/?student_id={self.student.id}'
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_advisor_can_inspect_advisee_weekly_performance(self):
+        self.client.force_authenticate(user=self.advisor)
+        url = f'/api/planner/weekly-performance/?student_id={self.student.id}'
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['total_read_time_minutes'], 90)
+        self.assertEqual(res.data['total_test_count'], 30)
+
+    def test_advisor_can_inspect_advisee_reports(self):
+        self.client.force_authenticate(user=self.advisor)
+        url = f'/api/planner/reports/weekly/?student_id={self.student.id}'
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['student_name'], self.student.username)
+
+    def test_advisor_can_inspect_advisee_analytics(self):
+        self.client.force_authenticate(user=self.advisor)
+        url = f'/api/planner/analytics/total-activity/?student_id={self.student.id}'
+        res = self.client.get(url)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['summary']['total_read_minutes'], 90)
+
+
+

@@ -7,8 +7,9 @@ import {
   FiCheck,
   FiAlertCircle,
   FiPlusCircle,
+  FiTrash2,
 } from 'react-icons/fi';
-import { getConsultations, bookConsultation } from '../../../services/api';
+import { getConsultations, bookConsultation, cancelConsultationBooking } from '../../../services/api';
 import { getErrorMessage } from '../../../utils/errorHandler';
 
 const DAYS_OF_WEEK = [
@@ -77,6 +78,20 @@ const ConsultationWidget = () => {
       setError(getErrorMessage(err, 'errors.default'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm(t('dashboard.cancel_confirm', 'Are you sure you want to cancel this consultation booking?'))) {
+      return;
+    }
+    try {
+      await cancelConsultationBooking(bookingId);
+      setSuccessMsg(t('dashboard.cancel_success', 'Consultation booking cancelled successfully.'));
+      fetchBookings();
+      setTimeout(() => setSuccessMsg(null), 4000);
+    } catch (err) {
+      setError(getErrorMessage(err, 'errors.default'));
     }
   };
 
@@ -203,9 +218,37 @@ const ConsultationWidget = () => {
                   <div className="d-flex align-items-center gap-2">
                     <FiCalendar className="text-primary" />
                     <span className="fw-semibold">{getDayName(b.day_of_week)}</span>
+                    {b.status && (
+                      <span
+                        className={`badge ${
+                          b.status === 'CONFIRMED'
+                            ? 'bg-success'
+                            : b.status === 'CANCELLED'
+                            ? 'bg-danger'
+                            : b.status === 'COMPLETED'
+                            ? 'bg-secondary'
+                            : 'bg-warning text-dark'
+                        }`}
+                        style={{ fontSize: '10px' }}
+                      >
+                        {b.status}
+                      </span>
+                    )}
                   </div>
-                  <div className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 font-monospace">
-                    {b.time_slot ? b.time_slot.slice(0, 5) : ''}
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1 font-monospace">
+                      {b.time_slot ? b.time_slot.slice(0, 5) : ''}
+                    </div>
+                    {b.status !== 'CANCELLED' && b.status !== 'COMPLETED' && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm p-1 py-0 d-flex align-items-center"
+                        onClick={() => handleCancelBooking(b.id)}
+                        title={t('dashboard.cancel_booking', 'Cancel Booking')}
+                      >
+                        <FiTrash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

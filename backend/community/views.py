@@ -183,3 +183,78 @@ class OpinionVoteView(APIView):
         )
 
         return Response(vote_result, status=status.HTTP_200_OK)
+
+
+class IsAdminOrModerator(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return bool(
+            getattr(user, 'is_staff', False) or
+            getattr(user, 'is_superuser', False) or
+            (hasattr(user, 'is_admin') and user.is_admin()) or
+            (hasattr(user, 'is_moderator') and user.is_moderator()) or
+            getattr(user, 'role', '') in ['ADMIN', 'MODERATOR']
+        )
+
+
+class AdminOpinionListView(APIView):
+    """
+    Sub-module 4: Admin list opinions for moderation.
+    """
+    permission_classes = [IsAdminOrModerator]
+
+    @extend_schema(
+        summary="List Opinions for Admin Moderation",
+        parameters=[
+            OpenApiParameter(name="status", description="Filter by status (PENDING, APPROVED, REJECTED, all)", required=False, type=str, default="PENDING"),
+        ],
+        responses={200: StudentOpinionSerializer(many=True)},
+    )
+    def get(self, request):
+        status_filter = request.query_params.get('status', 'PENDING')
+        queryset = StudentOpinion.objects.select_related('author').order_by('-created_at')
+        if status_filter and status_filter.lower() != 'all':
+            queryset = queryset.filter(status=status_filter.upper())
+
+        paginator = OpinionPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = StudentOpinionSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = StudentOpinionSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AdminOpinionModerateView(APIView):
+    """
+    Sub-module 4: Approve or reject student opinions.
+    """
+    permission_classes = [IsAdminOrModerator]
+
+    @extend_schema(
+        summary="Moderate Opinion",
+        description="Approve or reject a student opinion.",
+        responses={200: StudentOpinionSerializer},
+    )
+    def post(self, request, pk):
+        opinion = get_object_or_404(StudentOpinion, pk=pk)
+        action = request.data.get('action', '').upper()
+        if action not in ['APPROVE', 'REJECT']:
+            return Response(
+                {'error': _("Action must be either 'APPROVE' or 'REJECT'.")},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        new_status = OpinionStatus.APPROVED if action == 'APPROVE' else OpinionStatus.REJECTED
+        opinion.status = new_status
+        opinion.save(update_fields=['status', 'updated_at'])
+
+        serializer = StudentOpinionSerializer(opinion, context={'request': request})
+        return Response({
+            'message': _('Opinion status updated successfully.'),
+            'status': opinion.status,
+            'opinion': serializer.data
+        }, status=status.HTTP_200_OK)

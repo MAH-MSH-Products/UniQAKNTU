@@ -220,6 +220,13 @@ class DailyNote(models.Model):
         return f"{self.student.username} - {self.date}: {self.text[:30]}"
 
 
+class ConsultationStatus(models.TextChoices):
+    PENDING = 'PENDING', _('Pending')
+    CONFIRMED = 'CONFIRMED', _('Confirmed')
+    COMPLETED = 'COMPLETED', _('Completed')
+    CANCELLED = 'CANCELLED', _('Cancelled')
+
+
 class ConsultationBooking(models.Model):
     """
     Sub-module 3: Consultation booking slots chosen by the student.
@@ -236,6 +243,13 @@ class ConsultationBooking(models.Model):
         verbose_name=_('Day of Week (1-7)')
     )
     time_slot = models.TimeField(verbose_name=_('Time Slot'))
+    status = models.CharField(
+        max_length=20,
+        choices=ConsultationStatus.choices,
+        default=ConsultationStatus.CONFIRMED,
+        verbose_name=_('Status')
+    )
+    notes = models.TextField(blank=True, default='', verbose_name=_('Notes'))
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -244,4 +258,5 @@ class ConsultationBooking(models.Model):
         verbose_name_plural = _('Consultation Bookings')
 
     def __str__(self):
-        return f"{self.student.username} - Day {self.day_of_week} at {self.time_slot}"
+        return f"{self.student.username} - Day {self.day_of_week} at {self.time_slot} ({self.status})"
+

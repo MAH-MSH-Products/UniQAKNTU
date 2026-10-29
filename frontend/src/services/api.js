@@ -194,6 +194,26 @@ export const deleteChapterMastery = (chapterId) => {
   return api.delete(`/planner/conclusion-plan/mastery/${chapterId}/`);
 };
 
+export const getChapters = (params = {}) => {
+  return api.get('/planner/chapters/', { params });
+};
+
+export const createChapter = (data) => {
+  return api.post('/planner/chapters/', data);
+};
+
+export const updateChapter = (id, data) => {
+  return api.put(`/planner/chapters/${id}/`, data);
+};
+
+export const patchChapter = (id, data) => {
+  return api.patch(`/planner/chapters/${id}/`, data);
+};
+
+export const deleteChapter = (id) => {
+  return api.delete(`/planner/chapters/${id}/`);
+};
+
 // ============================================
 // Planner: Sub-module 3 - Dashboard & Student Tools
 // ============================================
@@ -217,6 +237,18 @@ export const bookConsultation = (data) => {
   return api.post('/planner/dashboard/consultations/', data);
 };
 
+export const cancelConsultationBooking = (id) => {
+  return api.delete(`/planner/dashboard/consultations/${id}/`);
+};
+
+export const getAdminConsultations = (params = {}) => {
+  return api.get('/planner/admin/consultations/', { params });
+};
+
+export const updateConsultationStatus = (id, data) => {
+  return api.patch(`/planner/admin/consultations/${id}/`, data);
+};
+
 // ============================================
 // Community: Sub-module 4 - Community & Leaderboard
 // ============================================
@@ -234,6 +266,14 @@ export const submitOpinion = (data) => {
 
 export const voteOpinion = (id, value) => {
   return api.post(`/community/opinions/${id}/vote/`, { value });
+};
+
+export const getAdminOpinions = (params = {}) => {
+  return api.get('/community/admin/opinions/', { params });
+};
+
+export const moderateOpinion = (id, action) => {
+  return api.post(`/community/admin/opinions/${id}/moderate/`, { action });
 };
 
 // ============================================

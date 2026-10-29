@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api, { extractResults } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import { FiEdit, FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiBookOpen } from 'react-icons/fi';
+import ChapterManagerModal from '../components/ChapterManagerModal';
 
 const SourceMaterialsList = () => {
   const { t } = useTranslation();
@@ -18,6 +18,7 @@ const SourceMaterialsList = () => {
 
   // وضعیت‌های مربوط به مودال CRUD
   const [showModal, setShowModal] = useState(false);
+  const [managingChaptersMaterial, setManagingChaptersMaterial] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ title: '', year: '' });
   const [files, setFiles] = useState({ question_pdf: null, answer_pdf: null });
@@ -149,6 +150,13 @@ const SourceMaterialsList = () => {
                 {/* دکمه‌های مدیریت برای مدیران */}
                 {canModerate && (
                   <div className="position-absolute top-0 end-0 p-2 d-flex gap-1 z-2">
+                    <button
+                      className="btn btn-sm btn-light border"
+                      onClick={() => setManagingChaptersMaterial(material)}
+                      title={t('chapters.manage_chapters', 'Manage Chapters')}
+                    >
+                      <FiBookOpen className="text-primary" />
+                    </button>
                     <button className="btn btn-sm btn-light border" onClick={() => openModal(material)}>
                       <FiEdit className="text-secondary" />
                     </button>
@@ -186,6 +194,16 @@ const SourceMaterialsList = () => {
                       <a href={material.answer_pdf} target="_blank" rel="noopener noreferrer" className="btn btn-outline-secondary btn-sm w-100 mb-3">
                         <i className="bi bi-file-earmark-check me-2"></i>{t('source_materials.download_answers')}
                       </a>
+                    )}
+                    
+                    {canModerate && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-info btn-sm w-100 mb-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                        onClick={() => setManagingChaptersMaterial(material)}
+                      >
+                        <FiBookOpen /> {t('chapters.manage_chapters', 'Manage Chapters')}
+                      </button>
                     )}
                     
                     <Link to={`/source-materials/${material.id}/questions`} className="btn btn-primary w-100 fw-bold">
@@ -254,6 +272,14 @@ const SourceMaterialsList = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Chapter Manager Modal */}
+      {managingChaptersMaterial && (
+        <ChapterManagerModal
+          material={managingChaptersMaterial}
+          onClose={() => setManagingChaptersMaterial(null)}
+        />
       )}
     </div>
   );

@@ -284,7 +284,16 @@
     "review_report_notice": "محتوای گزارش شده را در صفحه عمومی بررسی کنید و اقدام مناسب را انجام دهید. پس از رسیدگی، وضعیت را در بالا به‌روزرسانی کنید.",
     "msg_approved": "با موفقیت تایید شد.",
     "msg_rejected": "با موفقیت رد شد.",
-    "role_updated": "نقش کاربر با موفقیت تغییر کرد."
+    "role_updated": "نقش کاربر با موفقیت تغییر کرد.",
+    "student_opinions": "نظرات دانشجویان",
+    "consultation_bookings": "جلسات مشاوره",
+    "th_student": "دانشجو",
+    "th_content": "محتوا",
+    "th_votes": "آرا",
+    "consultation_notes": "یادداشت مشاور",
+    "notes_placeholder": "نکات یا توصیه‌های جلسه مشاوره را وارد کنید...",
+    "consultation_status_updated": "وضعیت جلسه مشاوره با موفقیت به‌روزرسانی شد.",
+    "opinion_content": "متن نظر دانشجو"
   },
   "auth": {
     "verify_email": "تایید ایمیل",
@@ -532,6 +541,9 @@
     "booking_success": "نوبت مشاوره با موفقیت ثبت شد.",
     "booked_consultations": "جلسات رزرو شده",
     "no_consultations": "هیچ نوبت مشاوره‌ای ثبت نشده است.",
+    "cancel_booking": "لغو جلسه",
+    "cancel_confirm": "آیا از لغو این نوبت مشاوره اطمینان دارید؟",
+    "cancel_success": "نوبت مشاوره با موفقیت لغو شد.",
     "days_names": {
       "1": "شنبه",
       "2": "یکشنبه",
@@ -728,6 +740,24 @@
     "test": "تست",
     "class": "کلاس",
     "total": "کل"
+  },
+  "chapters": {
+    "manage_chapters": "مدیریت فصل‌ها",
+    "add_chapter": "افزودن فصل",
+    "edit_chapter": "ویرایش فصل",
+    "delete_chapter": "حذف فصل",
+    "chapter_number": "شماره فصل",
+    "chapter_title": "عنوان فصل",
+    "page_count": "تعداد صفحات",
+    "title_placeholder": "مثال: نظریه گراف‌ها",
+    "chapters_list": "فهرست فصل‌های موجود",
+    "no_chapters": "هنوز فصلی برای این کتاب تعریف نشده است. از فرم بالا اولین فصل را اضافه کنید.",
+    "create_success": "فصل جدید با موفقیت ایجاد شد.",
+    "update_success": "فصل با موفقیت به‌روزرسانی شد.",
+    "delete_success": "فصل با موفقیت حذف شد.",
+    "delete_confirm": "آیا از حذف این فصل اطمینان دارید؟",
+    "delete_failed": "امکان حذف فصلی که سوابق مطالعه یا تست دارد وجود ندارد.",
+    "fetch_error": "خطا در دریافت لیست فصل‌ها."
   }
 }
 

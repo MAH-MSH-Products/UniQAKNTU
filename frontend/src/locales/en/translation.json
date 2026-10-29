@@ -283,7 +283,16 @@
     "review_report_notice": "Review the reported content on the public page and take appropriate action.",
     "msg_approved": "Approved successfully.",
     "msg_rejected": "Rejected successfully.",
-    "role_updated": "Role updated successfully."
+    "role_updated": "Role updated successfully.",
+    "student_opinions": "Student Opinions",
+    "consultation_bookings": "Consultation Bookings",
+    "th_student": "Student",
+    "th_content": "Content",
+    "th_votes": "Votes",
+    "consultation_notes": "Counselor Notes",
+    "notes_placeholder": "Add notes or advice for this session...",
+    "consultation_status_updated": "Consultation status updated successfully.",
+    "opinion_content": "Opinion Text"
   },
   "auth": {
     "verify_email": "Verify Email",
@@ -531,6 +540,9 @@
     "booking_success": "Consultation slot booked successfully.",
     "booked_consultations": "Booked Sessions",
     "no_consultations": "No consultation sessions booked yet.",
+    "cancel_booking": "Cancel Booking",
+    "cancel_confirm": "Are you sure you want to cancel this consultation booking?",
+    "cancel_success": "Consultation booking cancelled successfully.",
     "days_names": {
       "1": "Saturday",
       "2": "Sunday",
@@ -727,6 +739,24 @@
     "test": "Test",
     "class": "Class",
     "total": "Total"
+  },
+  "chapters": {
+    "manage_chapters": "Manage Chapters",
+    "add_chapter": "Add Chapter",
+    "edit_chapter": "Edit Chapter",
+    "delete_chapter": "Delete Chapter",
+    "chapter_number": "Chapter No.",
+    "chapter_title": "Chapter Title",
+    "page_count": "Page Count",
+    "title_placeholder": "e.g. Graph Theory",
+    "chapters_list": "Existing Chapters",
+    "no_chapters": "No chapters found for this book yet. Add the first chapter above.",
+    "create_success": "Chapter created successfully.",
+    "update_success": "Chapter updated successfully.",
+    "delete_success": "Chapter deleted successfully.",
+    "delete_confirm": "Are you sure you want to delete this chapter?",
+    "delete_failed": "Cannot delete chapter with existing study records.",
+    "fetch_error": "Failed to load chapters."
   }
 }
 

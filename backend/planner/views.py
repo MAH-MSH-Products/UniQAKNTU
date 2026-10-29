@@ -8,6 +8,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.utils.translation import gettext as _
 
 from curriculum.models import SourceMaterialChapter
+from planner.models import ConsultationBooking
 from django.core.cache import cache
 from planner.services.performed_plan_service import PerformedPlanAggregationService
 from planner.services.conclusion_plan_service import ConclusionPlanService
@@ -22,6 +23,9 @@ from planner.services.analytics_service import (
     TimeAllocationAggregator,
     StackedActivityAggregator,
 )
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import PermissionDenied, NotFound
+from django.contrib.auth import get_user_model
 from planner.serializers import (
     WeeklyPerformanceSerializer,
     ConclusionPlanResponseSerializer,
@@ -34,6 +38,8 @@ from planner.serializers import (
     DailyNoteSerializer,
     DailyNoteCreateSerializer,
     ConsultationBookingSerializer,
+    AdminConsultationBookingSerializer,
+    AdminConsultationBookingUpdateSerializer,
     WeeklyHoursOverviewSerializer,
     DailyStudyLogDetailSerializer,
     DailyStudyLogUpsertSerializer,
@@ -43,6 +49,71 @@ from planner.serializers import (
     TimeAllocationAnalyticsSerializer,
     StackedCourseActivityAnalyticsSerializer,
 )
+
+
+
+class IsAdminOrInstructor(permissions.BasePermission):
+    """
+    Allows write/manage access to admins, instructors, moderators, and staff.
+    """
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False):
+            return True
+        if hasattr(user, 'is_admin') and user.is_admin():
+            return True
+        if hasattr(user, 'is_moderator') and user.is_moderator():
+            return True
+        role = getattr(user, 'role', '')
+        return role in ['ADMIN', 'INSTRUCTOR', 'MODERATOR']
+
+
+class IsAdminOrInstructorOrReadOnly(permissions.BasePermission):
+    """
+    Allows read access to any authenticated user, and write access only to admin/instructors.
+    """
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        user = request.user
+        if getattr(user, 'is_staff', False) or getattr(user, 'is_superuser', False):
+            return True
+        if hasattr(user, 'is_admin') and user.is_admin():
+            return True
+        if hasattr(user, 'is_moderator') and user.is_moderator():
+            return True
+        role = getattr(user, 'role', '')
+        return role in ['ADMIN', 'INSTRUCTOR', 'MODERATOR']
+
+
+def resolve_target_student(request):
+    """
+    Resolves target student for advisor and admin inspection.
+    """
+    student_id = request.query_params.get('student_id')
+    if not student_id:
+        return request.user
+
+    user = request.user
+    is_privileged = (
+        getattr(user, 'is_staff', False) or
+        getattr(user, 'is_superuser', False) or
+        (hasattr(user, 'is_admin') and user.is_admin()) or
+        (hasattr(user, 'is_moderator') and user.is_moderator()) or
+        getattr(user, 'role', '') in ['ADMIN', 'INSTRUCTOR', 'MODERATOR']
+    )
+    if not is_privileged:
+        raise PermissionDenied(_('Only instructors and administrators can inspect other students.'))
+
+    User = get_user_model()
+    try:
+        return User.objects.get(pk=student_id)
+    except (User.DoesNotExist, ValueError):
+        raise NotFound(_('Target student not found.'))
 
 
 # ============================================
@@ -58,7 +129,7 @@ class WeeklyPerformanceView(APIView):
 
     @extend_schema(
         summary="Get Aggregated Weekly Performance",
-        description="Retrieves aggregated study times and test counts for the authenticated student. Defaults to current week.",
+        description="Retrieves aggregated study times and test counts for the authenticated student or advised student (?student_id). Defaults to current week.",
         parameters=[
             OpenApiParameter(
                 name="week_start",
@@ -66,10 +137,17 @@ class WeeklyPerformanceView(APIView):
                 required=False,
                 type=str,
             ),
+            OpenApiParameter(
+                name="student_id",
+                description="Optional student ID for instructors/admins to inspect an advisee's performance.",
+                required=False,
+                type=str,
+            ),
         ],
         responses={200: WeeklyPerformanceSerializer},
     )
     def get(self, request):
+        target_student = resolve_target_student(request)
         week_start_param = request.query_params.get('week_start')
 
         if week_start_param:
@@ -82,11 +160,12 @@ class WeeklyPerformanceView(APIView):
                 )
 
         aggregated_data = PerformedPlanAggregationService.aggregate_weekly_performance(
-            student=request.user,
+            student=target_student,
             week_start=week_start_param
         )
         serializer = WeeklyPerformanceSerializer(aggregated_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 # ============================================
@@ -281,9 +360,88 @@ class ConclusionPlanChaptersView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class ChapterListCreateView(APIView):
+    """
+    Sub-module 2: List chapters (optionally filtered by source_material_id) or create a new chapter (Admin/Instructor only).
+    """
+    permission_classes = [IsAdminOrInstructorOrReadOnly]
+
+    @extend_schema(
+        summary="List or Create Chapters",
+        description="List chapters or create a new chapter for a source material (Curriculum management).",
+        parameters=[
+            OpenApiParameter(name="source_material_id", description="Filter by source material ID", required=False, type=int),
+        ],
+        responses={200: SourceMaterialChapterSerializer(many=True), 201: SourceMaterialChapterSerializer},
+    )
+    def get(self, request):
+        source_material_id = request.query_params.get('source_material_id')
+        queryset = SourceMaterialChapter.objects.select_related('source_material').all()
+        if source_material_id:
+            try:
+                queryset = queryset.filter(source_material_id=int(source_material_id))
+            except ValueError:
+                return Response({'error': _('Invalid source_material_id format.')}, status=status.HTTP_400_BAD_REQUEST)
+        queryset = queryset.order_by('source_material', 'chapter_number')
+        serializer = SourceMaterialChapterSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = SourceMaterialChapterSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        chapter = serializer.save()
+        return Response(SourceMaterialChapterSerializer(chapter).data, status=status.HTTP_201_CREATED)
+
+
+class ChapterDetailView(APIView):
+    """
+    Sub-module 2: Retrieve, update, or delete a chapter (Admin/Instructor only for modifications).
+    """
+    permission_classes = [IsAdminOrInstructorOrReadOnly]
+
+    def get_object(self, pk):
+        return get_object_or_404(SourceMaterialChapter.objects.select_related('source_material'), pk=pk)
+
+    def get(self, request, pk):
+        chapter = self.get_object(pk)
+        return Response(SourceMaterialChapterSerializer(chapter).data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        chapter = self.get_object(pk)
+        serializer = SourceMaterialChapterSerializer(chapter, data=request.data, partial=False)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        updated = serializer.save()
+        return Response(SourceMaterialChapterSerializer(updated).data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        chapter = self.get_object(pk)
+        serializer = SourceMaterialChapterSerializer(chapter, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        updated = serializer.save()
+        return Response(SourceMaterialChapterSerializer(updated).data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        chapter = self.get_object(pk)
+        # Safeguard: check for existing study activities, test records, or mastery
+        has_activities = chapter.study_activities.exists()
+        has_tests = chapter.test_records.exists()
+        has_mastery = chapter.mastery_records.exists()
+        if has_activities or has_tests or has_mastery:
+            return Response(
+                {'error': _('Cannot delete chapter with existing study activities, test records, or mastery logs.')},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        chapter.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 # ============================================
 # Sub-module 3: Dashboard & Student Tools
 # ============================================
+
 
 class DashboardSummaryView(APIView):
     """
@@ -388,6 +546,71 @@ class ConsultationBookingView(APIView):
         )
 
 
+class ConsultationBookingDetailView(APIView):
+    """
+    Sub-module 3: Student cancel or remove their consultation booking.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Cancel Consultation Booking",
+        description="Cancels an active consultation booking owned by the student.",
+        responses={200: ConsultationBookingSerializer, 404: None},
+    )
+    def delete(self, request, pk):
+        booking = get_object_or_404(ConsultationBooking, pk=pk, student=request.user)
+        booking.status = 'CANCELLED'
+        booking.save(update_fields=['status'])
+        return Response({
+            'message': _('Consultation booking cancelled successfully.'),
+            'booking': ConsultationBookingSerializer(booking).data
+        }, status=status.HTTP_200_OK)
+
+
+class AdminConsultationListView(APIView):
+    """
+    Sub-module 3: Admin & Advisor Consultation management list.
+    """
+    permission_classes = [IsAdminOrInstructor]
+
+    @extend_schema(
+        summary="List Consultation Bookings (Admin)",
+        description="List all booked consultation sessions with student details for academic counselors.",
+        parameters=[
+            OpenApiParameter(name="status", description="Filter by status (PENDING, CONFIRMED, COMPLETED, CANCELLED)", required=False, type=str),
+        ],
+        responses={200: AdminConsultationBookingSerializer(many=True)},
+    )
+    def get(self, request):
+        status_param = request.query_params.get('status')
+        queryset = ConsultationBooking.objects.select_related('student').all().order_by('-created_at')
+        if status_param:
+            queryset = queryset.filter(status=status_param.upper())
+        serializer = AdminConsultationBookingSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AdminConsultationUpdateView(APIView):
+    """
+    Sub-module 3: Admin & Advisor update consultation status or notes.
+    """
+    permission_classes = [IsAdminOrInstructor]
+
+    @extend_schema(
+        summary="Update Consultation Status (Admin)",
+        description="Update status (CONFIRMED, COMPLETED, CANCELLED) or notes for a consultation booking.",
+        request=AdminConsultationBookingUpdateSerializer,
+        responses={200: AdminConsultationBookingSerializer},
+    )
+    def patch(self, request, pk):
+        booking = get_object_or_404(ConsultationBooking, pk=pk)
+        serializer = AdminConsultationBookingUpdateSerializer(booking, data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        booking = serializer.save()
+        return Response(AdminConsultationBookingSerializer(booking).data, status=status.HTTP_200_OK)
+
+
 # ============================================
 # Sub-module 5: Weekly Study Hours
 # ============================================
@@ -401,7 +624,7 @@ class WeeklyHoursOverviewView(APIView):
 
     @extend_schema(
         summary="Get Weekly Hours Overview",
-        description="Retrieves the 7-day overview for the active tracking week.",
+        description="Retrieves the 7-day overview for the active tracking week for authenticated student or advisee (?student_id).",
         parameters=[
             OpenApiParameter(
                 name="date",
@@ -409,10 +632,17 @@ class WeeklyHoursOverviewView(APIView):
                 required=False,
                 type=str,
             ),
+            OpenApiParameter(
+                name="student_id",
+                description="Optional student ID for instructors/admins to inspect advisee weekly hours.",
+                required=False,
+                type=str,
+            ),
         ],
         responses={200: WeeklyHoursOverviewSerializer},
     )
     def get(self, request):
+        target_student = resolve_target_student(request)
         date_str = request.query_params.get('date')
         target_date = None
         if date_str:
@@ -425,11 +655,12 @@ class WeeklyHoursOverviewView(APIView):
                 )
 
         overview_data = WeeklyHoursService.get_weekly_overview(
-            student=request.user,
+            student=target_student,
             target_date=target_date
         )
         serializer = WeeklyHoursOverviewSerializer(overview_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class DailyStudyLogDetailView(APIView):
@@ -450,6 +681,7 @@ class DailyStudyLogDetailView(APIView):
         responses={200: DailyStudyLogDetailSerializer},
     )
     def get(self, request, date_str):
+        target_student = resolve_target_student(request)
         target_date = self._parse_date(date_str)
         if not target_date:
             return Response(
@@ -458,7 +690,7 @@ class DailyStudyLogDetailView(APIView):
             )
 
         log_data = WeeklyHoursService.get_daily_log_detail(
-            student=request.user,
+            student=target_student,
             target_date=target_date
         )
         serializer = DailyStudyLogDetailSerializer(log_data)
@@ -466,7 +698,7 @@ class DailyStudyLogDetailView(APIView):
 
     @extend_schema(
         summary="Upsert Daily Study Log and Activities",
-        description="Atomically updates or creates a daily study log and its activities. Enforces temporal locking.",
+        description="Atomically updates or creates a daily study log and its activities. Enforces temporal locking unless overridden by advisor/admin.",
         request=DailyStudyLogUpsertSerializer,
         responses={
             200: dict,
@@ -475,6 +707,7 @@ class DailyStudyLogDetailView(APIView):
         },
     )
     def put(self, request, date_str):
+        target_student = resolve_target_student(request)
         target_date = self._parse_date(date_str)
         if not target_date:
             return Response(
@@ -482,7 +715,14 @@ class DailyStudyLogDetailView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if TimeLockService.is_date_locked(target_date):
+        is_admin_override = (
+            getattr(request.user, 'is_staff', False) or
+            getattr(request.user, 'is_superuser', False) or
+            (hasattr(request.user, 'is_admin') and request.user.is_admin()) or
+            getattr(request.user, 'role', '') in ['ADMIN', 'INSTRUCTOR']
+        )
+
+        if TimeLockService.is_date_locked(target_date) and not is_admin_override:
             return Response(
                 {'error': _('Cannot edit logs older than the previous week.')},
                 status=status.HTTP_403_FORBIDDEN
@@ -493,7 +733,7 @@ class DailyStudyLogDetailView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         WeeklyHoursService.upsert_daily_log(
-            student=request.user,
+            student=target_student,
             target_date=target_date,
             data=serializer.validated_data
         )
@@ -525,11 +765,12 @@ class BaseReportView(APIView):
     renderer_classes = [JSONRenderer, PdfRenderer]
 
     def _render_report(self, request, report_type, fetch_func, filename_prefix):
+        target_student = resolve_target_student(request)
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
         report_data = fetch_func(
-            student=request.user,
+            student=target_student,
             start_date=start_date,
             end_date=end_date,
         )
@@ -541,7 +782,7 @@ class BaseReportView(APIView):
         )
 
         if is_pdf:
-            pdf_bytes = PdfExportService.generate_pdf(report_type, report_data, student=request.user)
+            pdf_bytes = PdfExportService.generate_pdf(report_type, report_data, student=target_student)
             filename = f"{filename_prefix}_{report_data['week_start']}.pdf"
             response = HttpResponse(pdf_bytes, content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -549,6 +790,7 @@ class BaseReportView(APIView):
 
         serializer = ReportBaseResponseSerializer(report_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class WeeklyReportView(BaseReportView):
@@ -669,12 +911,13 @@ class TotalActivityAnalyticsView(APIView):
         responses={200: TotalActivityAnalyticsSerializer},
     )
     def get(self, request):
+        target_student = resolve_target_student(request)
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         interval = request.query_params.get('interval', 'weekly')
 
         cache_key = AnalyticsCacheService.make_cache_key(
-            student_id=request.user.id,
+            student_id=target_student.id,
             endpoint_name='total_activity',
             params_str=f"{start_date}:{end_date}:{interval}"
         )
@@ -683,7 +926,7 @@ class TotalActivityAnalyticsView(APIView):
             return Response(cached, status=status.HTTP_200_OK)
 
         data = ActivityAggregator.aggregate(
-            student=request.user,
+            student=target_student,
             start_date=start_date,
             end_date=end_date,
             interval=interval,
@@ -711,17 +954,19 @@ class CourseAveragesAnalyticsView(APIView):
             OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
             OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
             OpenApiParameter(name="interval", description="Interval enum", required=False, type=str),
+            OpenApiParameter(name="student_id", description="Optional student ID for instructors/admins to inspect advisee data.", required=False, type=str),
         ],
         responses={200: CourseAveragesAnalyticsSerializer},
     )
     def get(self, request):
+        target_student = resolve_target_student(request)
         metric_type = request.query_params.get('metric_type', 'percent')
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         interval = request.query_params.get('interval', 'all')
 
         cache_key = AnalyticsCacheService.make_cache_key(
-            student_id=request.user.id,
+            student_id=target_student.id,
             endpoint_name='course_averages',
             params_str=f"{metric_type}:{start_date}:{end_date}:{interval}"
         )
@@ -730,7 +975,7 @@ class CourseAveragesAnalyticsView(APIView):
             return Response(cached, status=status.HTTP_200_OK)
 
         data = CourseAverageAggregator.aggregate(
-            student=request.user,
+            student=target_student,
             metric_type=metric_type,
             start_date=start_date,
             end_date=end_date,
@@ -753,16 +998,18 @@ class TimeAllocationAnalyticsView(APIView):
             OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
             OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
             OpenApiParameter(name="interval", description="Interval enum", required=False, type=str),
+            OpenApiParameter(name="student_id", description="Optional student ID for instructors/admins to inspect advisee data.", required=False, type=str),
         ],
         responses={200: TimeAllocationAnalyticsSerializer},
     )
     def get(self, request):
+        target_student = resolve_target_student(request)
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         interval = request.query_params.get('interval', 'all')
 
         cache_key = AnalyticsCacheService.make_cache_key(
-            student_id=request.user.id,
+            student_id=target_student.id,
             endpoint_name='time_allocation',
             params_str=f"{start_date}:{end_date}:{interval}"
         )
@@ -771,7 +1018,7 @@ class TimeAllocationAnalyticsView(APIView):
             return Response(cached, status=status.HTTP_200_OK)
 
         data = TimeAllocationAggregator.aggregate(
-            student=request.user,
+            student=target_student,
             start_date=start_date,
             end_date=end_date,
             interval=interval,
@@ -793,16 +1040,18 @@ class StackedCourseActivityAnalyticsView(APIView):
             OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
             OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
             OpenApiParameter(name="interval", description="Interval enum", required=False, type=str),
+            OpenApiParameter(name="student_id", description="Optional student ID for instructors/admins to inspect advisee data.", required=False, type=str),
         ],
         responses={200: StackedCourseActivityAnalyticsSerializer},
     )
     def get(self, request):
+        target_student = resolve_target_student(request)
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         interval = request.query_params.get('interval', 'all')
 
         cache_key = AnalyticsCacheService.make_cache_key(
-            student_id=request.user.id,
+            student_id=target_student.id,
             endpoint_name='stacked_course_activity',
             params_str=f"{start_date}:{end_date}:{interval}"
         )
@@ -811,11 +1060,12 @@ class StackedCourseActivityAnalyticsView(APIView):
             return Response(cached, status=status.HTTP_200_OK)
 
         data = StackedActivityAggregator.aggregate(
-            student=request.user,
+            student=target_student,
             start_date=start_date,
             end_date=end_date,
             interval=interval,
         )
         cache.set(cache_key, data, timeout=AnalyticsCacheService.CACHE_TIMEOUT)
         return Response(data, status=status.HTTP_200_OK)
+
 

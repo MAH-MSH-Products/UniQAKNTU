@@ -344,3 +344,73 @@ class CommunityAPITests(TestCase):
         # Check all caches were populated
         for p in ['day', 'week', 'month', 'three_months']:
             self.assertIsNotNone(cache.get(f"leaderboard:{p}"))
+
+
+class AdminOpinionModerationAPITests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+
+        self.student = User.objects.create_user(
+            username='student_test',
+            email='student_test@test.com',
+            password='password123',
+            role='STUDENT',
+            is_email_verified=True,
+        )
+        self.admin = User.objects.create_user(
+            username='admin_test',
+            email='admin_test@test.com',
+            password='password123',
+            role='ADMIN',
+            is_staff=True,
+            is_superuser=True,
+            is_email_verified=True,
+        )
+        self.opinion = StudentOpinion.objects.create(
+            author=self.student,
+            text='مطالعه مستمر کلید موفقیت است.',
+            status=OpinionStatus.PENDING,
+        )
+
+        self.url_admin_list = '/api/community/admin/opinions/'
+        self.url_moderate = f'/api/community/admin/opinions/{self.opinion.id}/moderate/'
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_student_cannot_access_admin_opinions(self):
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(self.url_admin_list)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+        res_mod = self.client.post(self.url_moderate, {'action': 'APPROVE'})
+        self.assertEqual(res_mod.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_can_list_pending_opinions(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.get(self.url_admin_list)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        results = res.data.get('results', res.data)
+        self.assertTrue(len(results) >= 1)
+        self.assertEqual(results[0]['id'], str(self.opinion.id))
+
+    def test_admin_can_approve_opinion(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post(self.url_moderate, {'action': 'APPROVE'})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.opinion.refresh_from_db()
+        self.assertEqual(self.opinion.status, OpinionStatus.APPROVED)
+
+    def test_admin_can_reject_opinion(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post(self.url_moderate, {'action': 'REJECT'})
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.opinion.refresh_from_db()
+        self.assertEqual(self.opinion.status, OpinionStatus.REJECTED)
+
+    def test_invalid_moderate_action_returns_bad_request(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.post(self.url_moderate, {'action': 'UNKNOWN'})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+

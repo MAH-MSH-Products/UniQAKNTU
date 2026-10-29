@@ -11,7 +11,9 @@ from planner.models import (
     StudyActivityType,
     DailyStudyLog,
     StudyActivity,
+    ConsultationStatus,
 )
+from qna.models import SourceMaterial
 
 
 class ChapterRecordSerializer(serializers.Serializer):
@@ -117,9 +119,37 @@ class ConclusionPlanResponseSerializer(serializers.Serializer):
 
 
 class SourceMaterialChapterSerializer(serializers.ModelSerializer):
+    source_material_id = serializers.PrimaryKeyRelatedField(
+        queryset=SourceMaterial.objects.all(),
+        source='source_material',
+        required=True
+    )
+    source_material_title = serializers.CharField(source='source_material.title', read_only=True)
+
     class Meta:
         model = SourceMaterialChapter
-        fields = ['id', 'title', 'chapter_number', 'source_material_id', 'page_count']
+        fields = ['id', 'title', 'chapter_number', 'source_material_id', 'source_material_title', 'page_count', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'order' in data and 'chapter_number' not in data:
+            data['chapter_number'] = data['order']
+        return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        source_material = attrs.get('source_material', getattr(self.instance, 'source_material', None))
+        chapter_number = attrs.get('chapter_number', getattr(self.instance, 'chapter_number', None))
+
+        if source_material and chapter_number:
+            qs = SourceMaterialChapter.objects.filter(source_material=source_material, chapter_number=chapter_number)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError({
+                    'chapter_number': _('A chapter with this number already exists for this source material.')
+                })
+        return attrs
 
 
 # ============================================
@@ -167,11 +197,38 @@ class DailyNoteCreateSerializer(serializers.Serializer):
 
 class ConsultationBookingSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    notes = serializers.CharField(required=False, allow_blank=True)
     created_at = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = ConsultationBooking
-        fields = ['id', 'day_of_week', 'time_slot', 'created_at']
+        fields = ['id', 'day_of_week', 'time_slot', 'status', 'notes', 'created_at']
+
+
+class AdminConsultationBookingSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)
+    student = serializers.SerializerMethodField()
+    created_at = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = ConsultationBooking
+        fields = ['id', 'student', 'day_of_week', 'time_slot', 'status', 'notes', 'created_at']
+
+    def get_student(self, obj):
+        return {
+            'id': str(obj.student.id),
+            'username': obj.student.username,
+            'email': obj.student.email,
+            'first_name': obj.student.first_name,
+            'last_name': obj.student.last_name,
+        }
+
+
+class AdminConsultationBookingUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConsultationBooking
+        fields = ['status', 'notes']
 
 
 # ============================================
