@@ -1467,3 +1467,207 @@ class StudentReportsAPITests(TestCase):
         self.assertEqual(res_filtered.status_code, status.HTTP_200_OK)
         self.assertEqual(res_filtered.data['data']['total_read_time_minutes'], 150)
 
+
+# ============================================
+# Sub-module 7: Student Analytics Tests
+# ============================================
+
+class StudentAnalyticsAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.student = User.objects.create_user(
+            username='analytics_student1',
+            email='anal1@test.com',
+            password='password123',
+            is_email_verified=True
+        )
+        self.other_student = User.objects.create_user(
+            username='analytics_student2',
+            email='anal2@test.com',
+            password='password123',
+            is_email_verified=True
+        )
+
+        self.course1 = SourceMaterial.objects.create(title='ساختمان داده')
+        self.course2 = SourceMaterial.objects.create(title='سیستم عامل')
+
+        self.chapter1 = Chapter.objects.create(source_material=self.course1, title='درخت‌ها', order=1)
+        self.chapter2 = Chapter.objects.create(source_material=self.course2, title='مدیریت حافظه', order=1)
+
+        self.url_total_activity = '/api/planner/analytics/total-activity/'
+        self.url_course_averages = '/api/planner/analytics/course-averages/'
+        self.url_time_allocation = '/api/planner/analytics/time-allocation/'
+        self.url_stacked_activity = '/api/planner/analytics/stacked-course-activity/'
+
+    def test_unauthenticated_access_denied(self):
+        urls = [
+            self.url_total_activity,
+            self.url_course_averages,
+            self.url_time_allocation,
+            self.url_stacked_activity,
+        ]
+        for url in urls:
+            res = self.client.get(url)
+            self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_total_activity_empty_and_populated(self):
+        self.client.force_authenticate(user=self.student)
+        # Empty
+        res_empty = self.client.get(self.url_total_activity)
+        self.assertEqual(res_empty.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_empty.data['summary']['total_overall_minutes'], 0)
+
+        # Populated
+        today = date.today()
+        log = DailyStudyLog.objects.create(student=self.student, date=today)
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=120
+        )
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.REVIEW,
+            duration_minutes=60
+        )
+        TestRecord.objects.create(
+            student=self.student,
+            chapter=self.chapter1,
+            date=today,
+            total_tests=30,
+            correct_tests=25,
+            wrong_tests=5
+        )
+
+        res = self.client.get(f"{self.url_total_activity}?interval=daily")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        summary = res.data['summary']
+        self.assertEqual(summary['total_read_minutes'], 120)
+        self.assertEqual(summary['total_review_minutes'], 60)
+        self.assertEqual(summary['total_test_minutes'], 60)
+        self.assertEqual(summary['total_overall_minutes'], 240)
+
+        self.assertIn('line_chart', res.data)
+        self.assertIn('pie_chart', res.data)
+        self.assertEqual(res.data['pie_chart']['read'], 2.0)
+        self.assertEqual(res.data['pie_chart']['review'], 1.0)
+        self.assertEqual(res.data['pie_chart']['test'], 1.0)
+
+    def test_course_averages_division_by_zero_safety(self):
+        self.client.force_authenticate(user=self.student)
+        # Without any data -> must safely return 0.0 without ZeroDivisionError
+        res_pct = self.client.get(f"{self.url_course_averages}?metric_type=percent")
+        self.assertEqual(res_pct.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_pct.data['metric'], 'percent')
+        for val in res_pct.data['datasets']:
+            self.assertEqual(val, 0.0)
+
+        res_time = self.client.get(f"{self.url_course_averages}?metric_type=time_per_test")
+        self.assertEqual(res_time.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_time.data['metric'], 'time_per_test')
+        for val in res_time.data['datasets']:
+            self.assertEqual(val, 0.0)
+
+    def test_time_allocation_exact_table_and_chart_match(self):
+        self.client.force_authenticate(user=self.student)
+        today = date.today()
+        log = DailyStudyLog.objects.create(student=self.student, date=today)
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=90
+        )
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter2,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=60
+        )
+        TestRecord.objects.create(
+            student=self.student,
+            chapter=self.chapter1,
+            date=today,
+            total_tests=40,
+            correct_tests=35,
+            wrong_tests=5
+        )
+
+        res = self.client.get(self.url_time_allocation)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        bar_chart = res.data['bar_chart']
+        table_data = res.data['table_data']
+        totals = res.data['totals']
+
+        # Exact match between chart datasets sum and totals
+        chart_sum = round(sum(bar_chart['datasets']), 2)
+        table_sum = round(sum(row['total_hours'] for row in table_data), 2)
+        self.assertEqual(chart_sum, totals['total_hours'])
+        self.assertEqual(table_sum, totals['total_hours'])
+
+        # Total tests match
+        table_tests_sum = sum(row['total_tests'] for row in table_data)
+        self.assertEqual(table_tests_sum, totals['total_tests'])
+        self.assertEqual(totals['total_tests'], 40)
+
+    def test_stacked_course_activity(self):
+        self.client.force_authenticate(user=self.student)
+        today = date.today()
+        log = DailyStudyLog.objects.create(student=self.student, date=today)
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=60
+        )
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.CLASS,
+            duration_minutes=120
+        )
+
+        res = self.client.get(self.url_stacked_activity)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('labels', res.data)
+        self.assertIn('datasets', res.data)
+        self.assertIn('read', res.data['datasets'])
+        self.assertIn('review', res.data['datasets'])
+        self.assertIn('class', res.data['datasets'])
+        self.assertIn('test', res.data['datasets'])
+
+    def test_student_data_isolation(self):
+        # Create activities and tests for other_student
+        today = date.today()
+        other_log = DailyStudyLog.objects.create(student=self.other_student, date=today)
+        StudyActivity.objects.create(
+            daily_log=other_log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=300
+        )
+        TestRecord.objects.create(
+            student=self.other_student,
+            chapter=self.chapter1,
+            date=today,
+            total_tests=150,
+            correct_tests=140,
+            wrong_tests=10
+        )
+
+        # Authenticate as self.student
+        self.client.force_authenticate(user=self.student)
+        res_total = self.client.get(self.url_total_activity)
+        self.assertEqual(res_total.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_total.data['summary']['total_read_minutes'], 0)
+        self.assertEqual(res_total.data['summary']['total_overall_minutes'], 0)
+
+        res_alloc = self.client.get(self.url_time_allocation)
+        self.assertEqual(res_alloc.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_alloc.data['totals']['total_hours'], 0.0)
+        self.assertEqual(res_alloc.data['totals']['total_tests'], 0)
+
+

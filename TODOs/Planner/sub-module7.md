@@ -165,27 +165,27 @@ export interface TotalActivityDTO {
 ## 4. Integration Plan (Delegation TODOs)
 
 ### Backend TODOs
-- [ ] **RESTful Refactoring:** Convert the legacy `POST` endpoints into standard `GET` requests utilizing query parameters (`start_date`, `end_date`, `interval`).
-- [ ] **Core Analytics Engine:** Implement `CoreAnalyticsEngine` in `planner/services/`. This engine uses Django ORM `annotate()` with `TruncDate`, `TruncWeek`, `TruncMonth` to safely group data from `StudyActivity` and `TestRecord`. Share this engine with Sub-module 6.
-- [ ] **Chart Formatting Layer:** Create `ChartAdapterService` that takes the generic Pandas/Dict output from `CoreAnalyticsEngine` and shapes it strictly into the `labels` and `datasets` arrays expected by Chart.js.
-- [ ] **Mathematical Safety:** Ensure zero-division safety when calculating averages (e.g., `time_per_test` = `duration / total_tests`). Return `0` or `null` gracefully if `total_tests` is 0.
-- [ ] **Caching Layer:** Wrap the analytics endpoint responses in a Redis cache (e.g., 1-hour TTL) for standard queries (like "All Time" or "6 Months") to reduce DB load, invalidating the cache when the user finalizes a new daily log in Sub-module 5.
+- [x] **RESTful Refactoring:** Convert the legacy `POST` endpoints into standard `GET` requests utilizing query parameters (`start_date`, `end_date`, `interval`).
+- [x] **Core Analytics Engine:** Implement `CoreAnalyticsEngine` in `planner/services/`. This engine uses Django ORM `annotate()` with `TruncDate`, `TruncWeek`, `TruncMonth` to safely group data from `StudyActivity` and `TestRecord`. Share this engine with Sub-module 6.
+- [x] **Chart Formatting Layer:** Create `ChartAdapterService` that takes the generic Pandas/Dict output from `CoreAnalyticsEngine` and shapes it strictly into the `labels` and `datasets` arrays expected by Chart.js.
+- [x] **Mathematical Safety:** Ensure zero-division safety when calculating averages (e.g., `time_per_test` = `duration / total_tests`). Return `0` or `null` gracefully if `total_tests` is 0.
+- [x] **Caching Layer:** Wrap the analytics endpoint responses in a Redis cache (e.g., 1-hour TTL) for standard queries (like "All Time" or "6 Months") to reduce DB load, invalidating the cache when the user finalizes a new daily log in Sub-module 5.
 
 ### Frontend TODOs
-- [ ] **Library Migration:** Migrate from vanilla `Chart.js` DOM manipulations to `react-chartjs-2` to align natively with the React SPA architecture.
-- [ ] **Component Modularization:** 
+- [x] **Library Migration:** Migrate from vanilla `Chart.js` DOM manipulations to `react-chartjs-2` to align natively with the React SPA architecture.
+- [x] **Component Modularization:** 
   - Break down the massive `charts-management` HTML into individual React components: `<TotalActivityChart/>`, `<CourseAverageChart/>`, `<TimeAllocationChart/>`, and `<StackedActivityChart/>`.
   - Create a reusable `<DateRangeFilter/>` component to handle the custom Modal date selection and the `interval` tab switching.
-- [ ] **State Management:** Use a data-fetching library (like React Query or SWR) to handle caching, loading states, and refetching when the user changes the date range or interval tab.
-- [ ] **UI/UX Refinement:** Replicate the custom tooltips (e.g., showing `ساعت` or `دقیقه` dynamically based on the chart context) and legend positioning exactly as specified in the legacy configuration. Ensure RTL tooltips display correctly.
+- [x] **State Management:** Use a data-fetching library (like React Query or SWR) to handle caching, loading states, and refetching when the user changes the date range or interval tab.
+- [x] **UI/UX Refinement:** Replicate the custom tooltips (e.g., showing `ساعت` or `دقیقه` dynamically based on the chart context) and legend positioning exactly as specified in the legacy configuration. Ensure RTL tooltips display correctly.
 
 ---
 
 ## 6. Verification Checklist
-- [ ] **DRY Architecture:** The backend utilizes the shared `CoreAnalyticsEngine`, meaning Reports (Module 6) and Analytics (Module 7) are guaranteed to show matching numbers.
-- [ ] **REST Compliance:** Legacy `POST` chart fetches are successfully refactored to cache-friendly `GET` requests with query parameters.
-- [ ] **Mathematical Integrity:** Division by zero errors are strictly mitigated in average calculation endpoints (time per test, time per page).
-- [ ] **Data Match:** The Data Table (جدول میزان زمان اختصاص داده شده) precisely matches the sum of the corresponding Doughnut/Bar charts.
-- [ ] **Responsiveness:** Chart sizing operates correctly within the React grid system without canvas distortion upon resizing.
+- [x] **DRY Architecture:** The backend utilizes the shared `CoreAnalyticsEngine`, meaning Reports (Module 6) and Analytics (Module 7) are guaranteed to show matching numbers.
+- [x] **REST Compliance:** Legacy `POST` chart fetches are successfully refactored to cache-friendly `GET` requests with query parameters.
+- [x] **Mathematical Integrity:** Division by zero errors are strictly mitigated in average calculation endpoints (time per test, time per page).
+- [x] **Data Match:** The Data Table (جدول میزان زمان اختصاص داده شده) precisely matches the sum of the corresponding Doughnut/Bar charts.
+- [x] **Responsiveness:** Chart sizing operates correctly within the React grid system without canvas distortion upon resizing.
 
 ```

@@ -290,6 +290,25 @@ export const downloadReportPdf = async (type, params = {}) => {
   window.URL.revokeObjectURL(url);
 };
 
+// ============================================
+// Planner: Sub-module 7 - Student Analytics
+// ============================================
+export const getTotalActivityAnalytics = (params = {}) => {
+  return api.get('/planner/analytics/total-activity/', { params });
+};
+
+export const getCourseAveragesAnalytics = (params = {}) => {
+  return api.get('/planner/analytics/course-averages/', { params });
+};
+
+export const getTimeAllocationAnalytics = (params = {}) => {
+  return api.get('/planner/analytics/time-allocation/', { params });
+};
+
+export const getStackedCourseActivityAnalytics = (params = {}) => {
+  return api.get('/planner/analytics/stacked-course-activity/', { params });
+};
+
 export default api;
 
 

@@ -250,3 +250,32 @@ class ReportBaseResponseSerializer(serializers.Serializer):
     generated_at = serializers.CharField()
     student_name = serializers.CharField()
     data = serializers.DictField()
+
+
+# ============================================
+# Sub-module 7: Student Analytics
+# ============================================
+
+class TotalActivityAnalyticsSerializer(serializers.Serializer):
+    summary = serializers.DictField()
+    line_chart = serializers.DictField()
+    pie_chart = serializers.DictField()
+
+
+class CourseAveragesAnalyticsSerializer(serializers.Serializer):
+    metric = serializers.CharField()
+    unit = serializers.CharField()
+    labels = serializers.ListField(child=serializers.CharField())
+    datasets = serializers.ListField(child=serializers.FloatField())
+
+
+class TimeAllocationAnalyticsSerializer(serializers.Serializer):
+    bar_chart = serializers.DictField()
+    table_data = serializers.ListField(child=serializers.DictField())
+    totals = serializers.DictField()
+
+
+class StackedCourseActivityAnalyticsSerializer(serializers.Serializer):
+    labels = serializers.ListField(child=serializers.CharField())
+    datasets = serializers.DictField()
+

@@ -680,6 +680,54 @@
     "sub_weekly_header": "بخش ۱: برنامه هفتگی روزانه",
     "sub_performed_header": "بخش ۲: عملکرد هفتگی واقعی",
     "sub_conclusion_header": "بخش ۳: جمع‌بندی و تسلط مباحث"
+  },
+  "analytics": {
+    "title": "نمودارهای تحلیلی و آماری",
+    "subtitle": "تحلیل روند مطالعه، میانگین نمرات و توزیع زمان دروس با نمودارهای هوشمند",
+    "tab_total_activity": "فعالیت کل",
+    "tab_course_averages": "میانگین دروس",
+    "tab_time_allocation": "تخصیص زمان دروس",
+    "tab_stacked_activity": "ترکیب فعالیت دروس",
+    "interval": "بازه زمانی",
+    "intervals": {
+      "daily": "روزانه",
+      "weekly": "هفتگی",
+      "monthly": "ماهانه",
+      "3-month": "۳ ماهه",
+      "6-month": "۶ ماهه",
+      "1-year": "۱ ساله",
+      "all": "کل دوره"
+    },
+    "custom_date": "بازه انتخابی",
+    "metric_type": "نوع شاخص",
+    "metrics": {
+      "percent": "درصد پاسخگویی آزمون (%)",
+      "time_per_test": "زمان به ازای هر تست (دقیقه)",
+      "time_per_read_page": "زمان مطالعه به ازای هر صفحه (دقیقه)",
+      "time_per_review_page": "زمان مرور به ازای هر صفحه (دقیقه)"
+    },
+    "total_read_time": "مجموع مطالعه",
+    "total_review_time": "مجموع مرور",
+    "total_class_time": "مجموع کلاس",
+    "total_test_time": "مجموع تست",
+    "total_overall_time": "مجموع کل زمان",
+    "activity_distribution": "توزیع فعالیت‌های مطالعاتی",
+    "line_chart_title": "روند مطالعه در طول زمان",
+    "bar_chart_title": "میزان ساعات اختصاص داده شده به دروس",
+    "stacked_chart_title": "ترکیب فعالیت‌ها به تفکیک درس",
+    "course_type": "نام درس / مجموعه",
+    "total_hours": "مجموع ساعات",
+    "total_tests": "تعداد تست‌ها",
+    "total_row": "مجموع کل",
+    "table_title": "جدول میزان زمان اختصاص داده شده",
+    "no_data": "اطلاعاتی در این بازه زمانی یافت نشد.",
+    "hours_unit": "ساعت",
+    "minutes_unit": "دقیقه",
+    "reading": "مطالعه",
+    "review": "مرور",
+    "test": "تست",
+    "class": "کلاس",
+    "total": "کل"
   }
 }
 

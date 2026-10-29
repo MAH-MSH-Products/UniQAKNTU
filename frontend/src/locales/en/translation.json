@@ -679,6 +679,54 @@
     "sub_weekly_header": "Section 1: Weekly Daily Plan",
     "sub_performed_header": "Section 2: Executed Weekly Performance",
     "sub_conclusion_header": "Section 3: Chapter Mastery & Tests"
+  },
+  "analytics": {
+    "title": "Analytics & Statistics",
+    "subtitle": "Analyze study trends, score averages, and course time distributions with smart charts",
+    "tab_total_activity": "Total Activity",
+    "tab_course_averages": "Course Averages",
+    "tab_time_allocation": "Time Allocation",
+    "tab_stacked_activity": "Stacked Activity",
+    "interval": "Time Interval",
+    "intervals": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "3-month": "3 Months",
+      "6-month": "6 Months",
+      "1-year": "1 Year",
+      "all": "All Time"
+    },
+    "custom_date": "Custom Range",
+    "metric_type": "Metric Type",
+    "metrics": {
+      "percent": "Test Score Percentage (%)",
+      "time_per_test": "Time per Test (minutes)",
+      "time_per_read_page": "Reading Time per Page (minutes)",
+      "time_per_review_page": "Review Time per Page (minutes)"
+    },
+    "total_read_time": "Total Reading",
+    "total_review_time": "Total Review",
+    "total_class_time": "Total Class",
+    "total_test_time": "Total Test",
+    "total_overall_time": "Grand Total Time",
+    "activity_distribution": "Study Activity Distribution",
+    "line_chart_title": "Study Trend Over Time",
+    "bar_chart_title": "Hours Allocated by Course",
+    "stacked_chart_title": "Activity Composition by Course",
+    "course_type": "Course / Subject Area",
+    "total_hours": "Total Hours",
+    "total_tests": "Total Tests",
+    "total_row": "Grand Total",
+    "table_title": "Time Allocation Data Table",
+    "no_data": "No study data found for this period.",
+    "hours_unit": "h",
+    "minutes_unit": "min",
+    "reading": "Reading",
+    "review": "Review",
+    "test": "Test",
+    "class": "Class",
+    "total": "Total"
   }
 }
 

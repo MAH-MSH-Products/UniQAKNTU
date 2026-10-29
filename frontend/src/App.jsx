@@ -36,6 +36,7 @@ import HourWeeklyPlan from './pages/student/planner/HourWeeklyPlan/HourWeeklyPla
 import StudentDashboard from './pages/student/dashboard/StudentDashboard';
 import ReportsList from './pages/student/planner/Reports/ReportsList';
 import ReportViewer from './pages/student/planner/Reports/ReportViewer';
+import ChartsManagement from './pages/student/planner/Charts/ChartsManagement';
 
 function App() {
   useEffect(() => {
@@ -93,6 +94,8 @@ function App() {
                   <Route path="/schedule/daily" element={<Navigate to="/schedule/hour-weekly-plan" replace />} />
                   <Route path="/schedule/performed-weekly-plan" element={<PerformedWeeklyPlan />} />
                   <Route path="/schedule/conclusion-plan" element={<ConclusionPlan />} />
+                  <Route path="/charts" element={<ChartsManagement />} />
+                  <Route path="/schedule/charts" element={<Navigate to="/charts" replace />} />
                   <Route path="/admin" element={<Navigate to="/admin/support" replace />} />
                   <Route path="/admin/support" element={<AdminSupportPanel />} />
                   <Route path="/answers/:answerId" element={<AnswerDetail />} />

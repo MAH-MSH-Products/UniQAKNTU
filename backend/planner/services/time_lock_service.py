@@ -214,4 +214,9 @@ class WeeklyHoursService:
             if new_activities:
                 StudyActivity.objects.bulk_create(new_activities)
 
+        # Invalidate analytics cache for this student
+        from planner.services.analytics_service import AnalyticsCacheService
+        AnalyticsCacheService.invalidate_student_cache(student.id)
+
         return log
+

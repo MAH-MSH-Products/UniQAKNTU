@@ -8,12 +8,20 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.utils.translation import gettext as _
 
 from curriculum.models import SourceMaterialChapter
+from django.core.cache import cache
 from planner.services.performed_plan_service import PerformedPlanAggregationService
 from planner.services.conclusion_plan_service import ConclusionPlanService
 from planner.services.dashboard_service import DashboardSummaryService
 from planner.services.time_lock_service import TimeLockService, WeeklyHoursService
 from planner.services.report_service import ReportFormattingService
 from planner.services.pdf_export_service import PdfExportService
+from planner.services.analytics_service import (
+    AnalyticsCacheService,
+    ActivityAggregator,
+    CourseAverageAggregator,
+    TimeAllocationAggregator,
+    StackedActivityAggregator,
+)
 from planner.serializers import (
     WeeklyPerformanceSerializer,
     ConclusionPlanResponseSerializer,
@@ -30,6 +38,10 @@ from planner.serializers import (
     DailyStudyLogDetailSerializer,
     DailyStudyLogUpsertSerializer,
     ReportBaseResponseSerializer,
+    TotalActivityAnalyticsSerializer,
+    CourseAveragesAnalyticsSerializer,
+    TimeAllocationAnalyticsSerializer,
+    StackedCourseActivityAnalyticsSerializer,
 )
 
 
@@ -629,3 +641,181 @@ class FullReportView(BaseReportView):
             fetch_func=ReportFormattingService.get_full_report,
             filename_prefix='full_report'
         )
+
+
+# ============================================
+# Sub-module 7: Student Analytics
+# ============================================
+
+class TotalActivityAnalyticsView(APIView):
+    """
+    Sub-module 7: Time-series analytics for overall study time (reading, review, test, class).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Total Study Activity Analytics",
+        description="Returns time-series data for overall study time, broken down by reading, reviewing, and testing.",
+        parameters=[
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(
+                name="interval",
+                description="Interval enum (daily, weekly, monthly, 3-month, 6-month, 1-year, all)",
+                required=False,
+                type=str,
+            ),
+        ],
+        responses={200: TotalActivityAnalyticsSerializer},
+    )
+    def get(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        interval = request.query_params.get('interval', 'weekly')
+
+        cache_key = AnalyticsCacheService.make_cache_key(
+            student_id=request.user.id,
+            endpoint_name='total_activity',
+            params_str=f"{start_date}:{end_date}:{interval}"
+        )
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
+        data = ActivityAggregator.aggregate(
+            student=request.user,
+            start_date=start_date,
+            end_date=end_date,
+            interval=interval,
+        )
+        cache.set(cache_key, data, timeout=AnalyticsCacheService.CACHE_TIMEOUT)
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class CourseAveragesAnalyticsView(APIView):
+    """
+    Sub-module 7: Average metrics per course/subject (percent score, time per test, time per page).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Course Averages Analytics",
+        description="Returns average metrics per chapter/course (percent score, time per test, time per read/review page).",
+        parameters=[
+            OpenApiParameter(
+                name="metric_type",
+                description="Metric enum (percent, time_per_test, time_per_read_page, time_per_review_page)",
+                required=False,
+                type=str,
+            ),
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="interval", description="Interval enum", required=False, type=str),
+        ],
+        responses={200: CourseAveragesAnalyticsSerializer},
+    )
+    def get(self, request):
+        metric_type = request.query_params.get('metric_type', 'percent')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        interval = request.query_params.get('interval', 'all')
+
+        cache_key = AnalyticsCacheService.make_cache_key(
+            student_id=request.user.id,
+            endpoint_name='course_averages',
+            params_str=f"{metric_type}:{start_date}:{end_date}:{interval}"
+        )
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
+        data = CourseAverageAggregator.aggregate(
+            student=request.user,
+            metric_type=metric_type,
+            start_date=start_date,
+            end_date=end_date,
+            interval=interval,
+        )
+        cache.set(cache_key, data, timeout=AnalyticsCacheService.CACHE_TIMEOUT)
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class TimeAllocationAnalyticsView(APIView):
+    """
+    Sub-module 7: Aggregated study time and test counts grouped by broader course types/sections.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Time Allocation Analytics",
+        description="Returns aggregated study time and test counts grouped by course categories with matching bar chart and table data.",
+        parameters=[
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="interval", description="Interval enum", required=False, type=str),
+        ],
+        responses={200: TimeAllocationAnalyticsSerializer},
+    )
+    def get(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        interval = request.query_params.get('interval', 'all')
+
+        cache_key = AnalyticsCacheService.make_cache_key(
+            student_id=request.user.id,
+            endpoint_name='time_allocation',
+            params_str=f"{start_date}:{end_date}:{interval}"
+        )
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
+        data = TimeAllocationAggregator.aggregate(
+            student=request.user,
+            start_date=start_date,
+            end_date=end_date,
+            interval=interval,
+        )
+        cache.set(cache_key, data, timeout=AnalyticsCacheService.CACHE_TIMEOUT)
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class StackedCourseActivityAnalyticsView(APIView):
+    """
+    Sub-module 7: Time allocations per course, stacked by activity type (Read, Review, Test, Class).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="Get Stacked Course Activity Analytics",
+        description="Returns time allocations per subject/course stacked by activity type (Read, Review, Test, Class).",
+        parameters=[
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="interval", description="Interval enum", required=False, type=str),
+        ],
+        responses={200: StackedCourseActivityAnalyticsSerializer},
+    )
+    def get(self, request):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        interval = request.query_params.get('interval', 'all')
+
+        cache_key = AnalyticsCacheService.make_cache_key(
+            student_id=request.user.id,
+            endpoint_name='stacked_course_activity',
+            params_str=f"{start_date}:{end_date}:{interval}"
+        )
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return Response(cached, status=status.HTTP_200_OK)
+
+        data = StackedActivityAggregator.aggregate(
+            student=request.user,
+            start_date=start_date,
+            end_date=end_date,
+            interval=interval,
+        )
+        cache.set(cache_key, data, timeout=AnalyticsCacheService.CACHE_TIMEOUT)
+        return Response(data, status=status.HTTP_200_OK)
+

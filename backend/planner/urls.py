@@ -16,6 +16,10 @@ from planner.views import (
     PerformedReportView,
     ConclusionReportView,
     FullReportView,
+    TotalActivityAnalyticsView,
+    CourseAveragesAnalyticsView,
+    TimeAllocationAnalyticsView,
+    StackedCourseActivityAnalyticsView,
 )
 
 app_name = 'planner'
@@ -46,4 +50,10 @@ urlpatterns = [
     path('reports/performed/', PerformedReportView.as_view(), name='report-performed'),
     path('reports/conclusion/', ConclusionReportView.as_view(), name='report-conclusion'),
     path('reports/full/', FullReportView.as_view(), name='report-full'),
+
+    # Sub-module 7: Student Analytics
+    path('analytics/total-activity/', TotalActivityAnalyticsView.as_view(), name='analytics-total-activity'),
+    path('analytics/course-averages/', CourseAveragesAnalyticsView.as_view(), name='analytics-course-averages'),
+    path('analytics/time-allocation/', TimeAllocationAnalyticsView.as_view(), name='analytics-time-allocation'),
+    path('analytics/stacked-course-activity/', StackedCourseActivityAnalyticsView.as_view(), name='analytics-stacked-course-activity'),
 ]

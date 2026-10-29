@@ -62,6 +62,11 @@ const Sidebar = () => {
                 </Link>
               </li>
               <li className="nav-item">
+                <Link className="nav-link d-flex align-items-center gap-2" to="/charts" style={navLinkStyle}>
+                  <FiPieChart /> <span>{t('analytics.title', 'نمودارهای تحلیلی')}</span>
+                </Link>
+              </li>
+              <li className="nav-item">
                 <Link className="nav-link d-flex align-items-center gap-2" to="/my-purchases" style={navLinkStyle}>
                   <FiPackage /> <span>{t('sidebar.my_purchases')}</span>
                 </Link>

@@ -5,6 +5,14 @@ from .time_lock_service import TimeLockService, WeeklyHoursService
 from .analytics_engine import CoreAnalyticsEngine
 from .report_service import ReportFormattingService
 from .pdf_export_service import PdfExportService
+from .analytics_service import (
+    AnalyticsDateHelper,
+    AnalyticsCacheService,
+    ActivityAggregator,
+    CourseAverageAggregator,
+    TimeAllocationAggregator,
+    StackedActivityAggregator,
+)
 
 __all__ = [
     'PerformedPlanAggregationService',
@@ -15,4 +23,10 @@ __all__ = [
     'CoreAnalyticsEngine',
     'ReportFormattingService',
     'PdfExportService',
+    'AnalyticsDateHelper',
+    'AnalyticsCacheService',
+    'ActivityAggregator',
+    'CourseAverageAggregator',
+    'TimeAllocationAggregator',
+    'StackedActivityAggregator',
 ]
