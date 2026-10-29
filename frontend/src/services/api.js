@@ -217,4 +217,24 @@ export const bookConsultation = (data) => {
   return api.post('/planner/dashboard/consultations/', data);
 };
 
-export default api;
+// ============================================
+// Community: Sub-module 4 - Community & Leaderboard
+// ============================================
+export const getLeaderboard = (period = 'week') => {
+  return api.get('/community/leaderboard/', { params: { period } });
+};
+
+export const getOpinions = (params = {}) => {
+  return api.get('/community/opinions/', { params });
+};
+
+export const submitOpinion = (data) => {
+  return api.post('/community/opinions/', data);
+};
+
+export const voteOpinion = (id, value) => {
+  return api.post(`/community/opinions/${id}/vote/`, { value });
+};
+
+export default api;
+

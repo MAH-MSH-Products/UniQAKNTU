@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     'widgets.apps.WidgetsConfig',
     'curriculum.apps.CurriculumConfig',
     'planner.apps.PlannerConfig',
+    'community.apps.CommunityConfig',
     'django_cleanup.apps.CleanupConfig',
 ]
 

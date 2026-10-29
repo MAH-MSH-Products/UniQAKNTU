@@ -545,5 +545,38 @@
     "community_opinions_desc": "این بخش در ماژول جامعه دانشجویی توسعه می‌یابد",
     "community_leaderboard": "رتبه‌بندی برترین‌ها",
     "community_leaderboard_desc": "این بخش در ماژول جامعه دانشجویی توسعه می‌یابد"
+  },
+  "community": {
+    "leaderboard_title": "جدول رتبه‌بندی برترین‌ها",
+    "leaderboard_subtitle": "رتبه‌بندی زنده دانشجویان بر اساس ساعت مطالعه و تعداد تست",
+    "active_users": "دانشجویان فعال",
+    "period": "دوره",
+    "day": "روز",
+    "week": "هفته",
+    "month": "ماه",
+    "three_months": "سه ماه",
+    "rank": "رتبه",
+    "student": "دانشجو",
+    "major": "رشته",
+    "total_hours": "ساعت کل",
+    "daily_avg_hours": "میانگین روزانه ساعت",
+    "total_tests": "تست کل",
+    "daily_avg_tests": "میانگین روزانه تست",
+    "no_data": "رکوردی در این دوره زمانی یافت نشد.",
+    "opinions_title": "نظرات و تجربیات دانشجویان",
+    "opinions_subtitle": "تجربیات مطالعاتی و دیدگاه‌های دانشجویان برتر",
+    "sort_top": "برترین‌ها",
+    "sort_recent": "جدیدترین‌ها",
+    "submit_opinion": "ثبت نظر یا تجربه جدید",
+    "opinion_placeholder": "تجربه، نکته یا دیدگاه مطالعاتی خود را بنویسید...",
+    "is_anonymous": "ارسال به صورت ناشناس",
+    "anonymous_user": "دانشجوی ناشناس",
+    "submit": "ارسال نظر",
+    "submitting": "در حال ارسال...",
+    "submitted_success": "نظر شما با موفقیت ثبت شد و پس از بررسی منتشر خواهد شد.",
+    "pending_approval": "در انتظار تایید",
+    "like": "موافق",
+    "dislike": "مخالف"
   }
-}
+}
+

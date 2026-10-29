@@ -544,5 +544,38 @@
     "community_opinions_desc": "This section is managed by the student community module",
     "community_leaderboard": "Top Students Leaderboard",
     "community_leaderboard_desc": "This section is managed by the student community module"
+  },
+  "community": {
+    "leaderboard_title": "Top Students Leaderboard",
+    "leaderboard_subtitle": "Live student rankings based on study hours and test count",
+    "active_users": "Active Students",
+    "period": "Period",
+    "day": "Day",
+    "week": "Week",
+    "month": "Month",
+    "three_months": "3 Months",
+    "rank": "Rank",
+    "student": "Student",
+    "major": "Major",
+    "total_hours": "Total Hours",
+    "daily_avg_hours": "Daily Avg Hours",
+    "total_tests": "Total Tests",
+    "daily_avg_tests": "Daily Avg Tests",
+    "no_data": "No study records found for this period.",
+    "opinions_title": "Student Opinions & Reflections",
+    "opinions_subtitle": "Insights, tips, and reflections shared by top students",
+    "sort_top": "Top",
+    "sort_recent": "Recent",
+    "submit_opinion": "Share Opinion or Tip",
+    "opinion_placeholder": "Write your experience, reflection, or study tips...",
+    "is_anonymous": "Post anonymously",
+    "anonymous_user": "Anonymous Student",
+    "submit": "Submit Opinion",
+    "submitting": "Submitting...",
+    "submitted_success": "Your opinion was submitted successfully and will be published upon moderation approval.",
+    "pending_approval": "Pending Approval",
+    "like": "Like",
+    "dislike": "Dislike"
   }
-}
+}
+

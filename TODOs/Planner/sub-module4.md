@@ -199,31 +199,31 @@ export interface OpinionDTO {
 ## 4. Integration Plan (Delegation TODOs)
 
 ### Backend TODOs 
-- [ ] **App Creation:** Run `python manage.py startapp community`. Register it in `INSTALLED_APPS`.
-- [ ] **Models:** Define `StudentOpinion` and `OpinionVote`. Add constraints to prevent multiple votes per user per opinion.
-- [ ] **Leaderboard Caching Task (Celery):** 
+- [x] **App Creation:** Run `python manage.py startapp community`. Register it in `INSTALLED_APPS`.
+- [x] **Models:** Define `StudentOpinion` and `OpinionVote`. Add constraints to prevent multiple votes per user per opinion.
+- [x] **Leaderboard Caching Task (Celery):** 
     - Write a `tasks.py` script inside `community` that runs every 1 hour via Celery Beat.
     - The task must query the `planner` app's models (`StudyActivity` and `TestRecord`), calculate aggregations for `day`, `week`, `month`, and `three_months`, sort the top 10, and save the serialized JSON directly into Redis keys (e.g., `leaderboard:week`).
-- [ ] **Leaderboard View:** Implement `GET /leaderboard/` to fetch directly from Redis. **Strict Rule:** Do not query the PostgreSQL DB in this view to guarantee ultra-low latency.
-- [ ] **Opinions View:** Implement the ViewSet. Override `get_queryset` to only return `status='APPROVED'` opinions unless the requestor is an `ADMIN`. If `is_anonymous` is True, strip the `author` data before serializing.
-- [ ] **Voting Atomicity:** Use Django's `F()` expressions when incrementing/decrementing `likes` and `dislikes` in the `vote/` endpoint to prevent race conditions during high concurrency.
+- [x] **Leaderboard View:** Implement `GET /leaderboard/` to fetch directly from Redis. **Strict Rule:** Do not query the PostgreSQL DB in this view to guarantee ultra-low latency.
+- [x] **Opinions View:** Implement the ViewSet. Override `get_queryset` to only return `status='APPROVED'` opinions unless the requestor is an `ADMIN`. If `is_anonymous` is True, strip the `author` data before serializing.
+- [x] **Voting Atomicity:** Use Django's `F()` expressions when incrementing/decrementing `likes` and `dislikes` in the `vote/` endpoint to prevent race conditions during high concurrency.
 
 ### Frontend TODOs 
-- [ ] **Service Layer:** Update `src/services/api.js` with `getLeaderboard(period)`, `getOpinions(params)`, `submitOpinion(data)`, and `voteOpinion(id, value)`.
-- [ ] **Component Modularization:** 
+- [x] **Service Layer:** Update `src/services/api.js` with `getLeaderboard(period)`, `getOpinions(params)`, `submitOpinion(data)`, and `voteOpinion(id, value)`.
+- [x] **Component Modularization:** 
     - Create `src/components/dashboard/community/LeaderboardGrid.jsx`.
     - Create `src/components/dashboard/community/OpinionsList.jsx`.
     - Export these so they can be seamlessly imported by Sub-module 3 (`StudentDashboard.jsx`).
-- [ ] **Leaderboard UI:** Implement a Tabbed interface for `روز` (Day), `هفته` (Week), `ماه` (Month), and `سه ماه` (3-Months). Map the raw HTML table structure into standard React components utilizing existing CSS variables.
-- [ ] **Opinions UI:** Implement the voting buttons. Use local React state to optimistically update the like/dislike counters instantly when the user clicks, reverting the UI state if the API call fails.
-- [ ] **Translations:** Extract hardcoded strings (e.g., "نظرات برتر ماه", "جدول رتبه بندی") into `fa/translation.json` under the `"community"` namespace.
+- [x] **Leaderboard UI:** Implement a Tabbed interface for `روز` (Day), `هفته` (Week), `ماه` (Month), and `سه ماه` (3-Months). Map the raw HTML table structure into standard React components utilizing existing CSS variables.
+- [x] **Opinions UI:** Implement the voting buttons. Use local React state to optimistically update the like/dislike counters instantly when the user clicks, reverting the UI state if the API call fails.
+- [x] **Translations:** Extract hardcoded strings (e.g., "نظرات برتر ماه", "جدول رتبه بندی") into `fa/translation.json` under the `"community"` namespace.
 
 ---
 
 ## 6. Verification Checklist
-- [ ] **Module Boundaries:** The `community` app successfully owns these features and isolates them from the core `planner` app.
-- [ ] **Performance:** The Leaderboard endpoint responds in < 50ms because it executes purely against the Redis cache.
-- [ ] **Atomicity:** Concurrent votes on the same opinion do not corrupt the `likes`/`dislikes` count (tested via atomic `F()` DB updates).
-- [ ] **Privacy:** If an opinion is marked `is_anonymous=True`, the API strictly guarantees the frontend receives `author: null`.
+- [x] **Module Boundaries:** The `community` app successfully owns these features and isolates them from the core `planner` app.
+- [x] **Performance:** The Leaderboard endpoint responds in < 50ms because it executes purely against the Redis cache.
+- [x] **Atomicity:** Concurrent votes on the same opinion do not corrupt the `likes`/`dislikes` count (tested via atomic `F()` DB updates).
+- [x] **Privacy:** If an opinion is marked `is_anonymous=True`, the API strictly guarantees the frontend receives `author: null`.
 
 ```
