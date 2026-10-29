@@ -165,30 +165,30 @@ export interface TestRecordDTO {
 ## 4. Integration Plan (Delegation TODOs)
 
 ### Backend TODOs 
-- [ ] **Curriculum Extension:** Ensure `SourceMaterialChapter` exists in the `curriculum` app[cite: 24]. If not, create it so books/courses can be divided into chapters. This is mandatory for cross-module consistency.
-- [ ] **Models Definition:** Add `ChapterMastery` and `TestRecord` to `apps/planner/models.py`.
-- [ ] **Business Logic (Percentage Calculation):** Inside the `TestRecord` model `save()` method, enforce the standard exam percentage calculation: `percentage = ((correct_tests * 3) - wrong_tests) / (total_tests * 3) * 100`. Calculate `untested_tests = total_tests - correct_tests - wrong_tests`.
-- [ ] **Upsert Logic:** In the `POST /test-records/` and `POST /mastery/` views, check if a record with the same unique constraints exists. If it does, *update* it instead of creating a duplicate (Upsert pattern) to prevent data anomalies.
-- [ ] **ViewSets & Routing:** Implement the endpoints defined in the API contract in `apps/planner/views.py`. Ensure `STUDENT` users can only access/modify their own data[cite: 24].
+- [x] **Curriculum Extension:** Ensure `SourceMaterialChapter` exists in the `curriculum` app[cite: 24]. If not, create it so books/courses can be divided into chapters. This is mandatory for cross-module consistency.
+- [x] **Models Definition:** Add `ChapterMastery` and `TestRecord` to `apps/planner/models.py`.
+- [x] **Business Logic (Percentage Calculation):** Inside the `TestRecord` model `save()` method, enforce the standard exam percentage calculation: `percentage = ((correct_tests * 3) - wrong_tests) / (total_tests * 3) * 100`. Calculate `untested_tests = total_tests - correct_tests - wrong_tests`.
+- [x] **Upsert Logic:** In the `POST /test-records/` and `POST /mastery/` views, check if a record with the same unique constraints exists. If it does, *update* it instead of creating a duplicate (Upsert pattern) to prevent data anomalies.
+- [x] **ViewSets & Routing:** Implement the endpoints defined in the API contract in `apps/planner/views.py`. Ensure `STUDENT` users can only access/modify their own data[cite: 24].
 
 ### Frontend TODOs 
-- [ ] **Routing:** Add `/schedule/conclusion-plan` to `App.jsx` protected by `<RequireAuth>`.
-- [ ] **Service Layer:** Update `src/services/api.js` with the 5 new endpoints defined in the contract, utilizing the existing Axios interceptor for JWT auth[cite: 24].
-- [ ] **Component Structure:** 
+- [x] **Routing:** Add `/schedule/conclusion-plan` to `App.jsx` protected by `<RequireAuth>`.
+- [x] **Service Layer:** Update `src/services/api.js` with the 5 new endpoints defined in the contract, utilizing the existing Axios interceptor for JWT auth[cite: 24].
+- [x] **Component Structure:** 
     - Create `ConclusionPlan.jsx`.
     - Create `ConclusionForm.jsx` (for the input area with Book, Chapter, Format, Method dropdowns and input fields).
     - Create `ConclusionGrid.jsx` (for the complex data table showing the summary).
-- [ ] **Client-Side Calculation:** Implement live preview calculation on `blur` (focus out) for the test inputs before hitting save. Replicate the logic: `percent = (correct * 3 - fault)/ (total * 3) * 100`.
-- [ ] **Dynamic Dropdowns:** Fetch source materials via the existing `SourceMaterialsContext`[cite: 24]. When a book is selected, fetch and populate the associated chapters in the second dropdown.
-- [ ] **UI/UX Customization:** Apply existing Glassmorphism and custom CSS variables from `src/index.css` to the tables and forms to ensure perfect visual consistency with the rest of AzmoonHub[cite: 24].
+- [x] **Client-Side Calculation:** Implement live preview calculation on `blur` (focus out) for the test inputs before hitting save. Replicate the logic: `percent = (correct * 3 - fault)/ (total * 3) * 100`.
+- [x] **Dynamic Dropdowns:** Fetch source materials via the existing `SourceMaterialsContext`[cite: 24]. When a book is selected, fetch and populate the associated chapters in the second dropdown.
+- [x] **UI/UX Customization:** Apply existing Glassmorphism and custom CSS variables from `src/index.css` to the tables and forms to ensure perfect visual consistency with the rest of AzmoonHub[cite: 24].
 
 ---
 
 ## 6. Verification Checklist
-- [ ] `SourceMaterial` to `Chapter` relationship is securely established and utilized as the primary granularity metric.
-- [ ] Formula `((C*3)-W)/(T*3)*100` accurately calculates the percentage both on the frontend preview and the backend database save.
-- [ ] Upsert behavior works flawlessly: submitting identical format/method for the same chapter updates the existing row rather than crashing or duplicating.
-- [ ] Mastery level strictly validates integers between 1 and 100.
-- [ ] The Single Source of Truth architecture is intact: This is the *only* module handling test inputs.
+- [x] `SourceMaterial` to `Chapter` relationship is securely established and utilized as the primary granularity metric.
+- [x] Formula `((C*3)-W)/(T*3)*100` accurately calculates the percentage both on the frontend preview and the backend database save.
+- [x] Upsert behavior works flawlessly: submitting identical format/method for the same chapter updates the existing row rather than crashing or duplicating.
+- [x] Mastery level strictly validates integers between 1 and 100.
+- [x] The Single Source of Truth architecture is intact: This is the *only* module handling test inputs.
 
 ```

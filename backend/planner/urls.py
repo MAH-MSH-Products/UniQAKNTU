@@ -1,8 +1,25 @@
 from django.urls import path
-from planner.views import WeeklyPerformanceView
+from planner.views import (
+    WeeklyPerformanceView,
+    ConclusionPlanView,
+    ConclusionPlanChaptersView,
+    TestRecordCreateView,
+    TestRecordDetailView,
+    ChapterMasteryView,
+    ChapterMasteryDetailView,
+)
 
 app_name = 'planner'
 
 urlpatterns = [
+    # Sub-module 1: Performed Weekly Plan
     path('weekly-performance/', WeeklyPerformanceView.as_view(), name='weekly-performance'),
+
+    # Sub-module 2: Conclusion Plan & Test Analytics
+    path('conclusion-plan/', ConclusionPlanView.as_view(), name='conclusion-plan'),
+    path('conclusion-plan/chapters/', ConclusionPlanChaptersView.as_view(), name='conclusion-plan-chapters'),
+    path('conclusion-plan/test-records/', TestRecordCreateView.as_view(), name='conclusion-plan-test-records'),
+    path('conclusion-plan/test-records/<int:pk>/', TestRecordDetailView.as_view(), name='conclusion-plan-test-record-detail'),
+    path('conclusion-plan/mastery/', ChapterMasteryView.as_view(), name='conclusion-plan-mastery'),
+    path('conclusion-plan/mastery/<int:chapter_id>/', ChapterMasteryDetailView.as_view(), name='conclusion-plan-mastery-detail'),
 ]

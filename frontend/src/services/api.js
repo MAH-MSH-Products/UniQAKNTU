@@ -165,4 +165,33 @@ export const getWeeklyPerformance = (params = {}) => {
   return api.get('/planner/weekly-performance/', { params });
 };
 
+// ============================================
+// Planner: Sub-module 2 - Conclusion Plan & Test Analytics
+// ============================================
+export const getConclusionPlan = (params = {}) => {
+  return api.get('/planner/conclusion-plan/', { params });
+};
+
+export const getConclusionPlanChapters = (sourceMaterialId) => {
+  return api.get('/planner/conclusion-plan/chapters/', {
+    params: { source_material_id: sourceMaterialId }
+  });
+};
+
+export const createOrUpdateTestRecord = (data) => {
+  return api.post('/planner/conclusion-plan/test-records/', data);
+};
+
+export const deleteTestRecord = (id) => {
+  return api.delete(`/planner/conclusion-plan/test-records/${id}/`);
+};
+
+export const setChapterMastery = (data) => {
+  return api.post('/planner/conclusion-plan/mastery/', data);
+};
+
+export const deleteChapterMastery = (chapterId) => {
+  return api.delete(`/planner/conclusion-plan/mastery/${chapterId}/`);
+};
+
 export default api;
