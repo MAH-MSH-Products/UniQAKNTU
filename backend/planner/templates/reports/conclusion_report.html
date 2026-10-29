@@ -1,0 +1,65 @@
+{% extends "reports/base_report.html" %}
+
+{% block content %}
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="val">{{ data.overall_percentage }}%</div>
+    <div class="lbl">درصد کل آزمون</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.average_mastery }}%</div>
+    <div class="lbl">میانگین تسلط مبحثی</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_tests }}</div>
+    <div class="lbl">کل تست‌ها</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_correct }}</div>
+    <div class="lbl">تست‌های درست</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_wrong }}</div>
+    <div class="lbl">تست‌های غلط</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_untested }}</div>
+    <div class="lbl">تست‌های نزده</div>
+  </div>
+</div>
+
+<table class="table-report">
+  <thead>
+    <tr>
+      <th style="width: 40px;">ردیف</th>
+      <th>کتاب / درس</th>
+      <th>فصل</th>
+      <th>کل تست</th>
+      <th>درست</th>
+      <th>غلط</th>
+      <th>نزده</th>
+      <th>سطح تسلط</th>
+      <th>درصد</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ch in data.chapters %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ ch.source_material_title }}</td>
+      <td>{{ ch.chapter_title }}</td>
+      <td>{{ ch.total_tests }}</td>
+      <td>{{ ch.correct_tests }}</td>
+      <td>{{ ch.wrong_tests }}</td>
+      <td>{{ ch.untested_tests }}</td>
+      <td>{% if ch.mastery_level %}{{ ch.mastery_level }}%{% else %}-{% endif %}</td>
+      <td>{{ ch.percentage }}%</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="9">هیچ رکورد جمع‌بندی یا تستی در این بازه یافت نشد.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

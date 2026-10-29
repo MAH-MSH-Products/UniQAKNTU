@@ -12,6 +12,10 @@ from planner.views import (
     ConsultationBookingView,
     WeeklyHoursOverviewView,
     DailyStudyLogDetailView,
+    WeeklyReportView,
+    PerformedReportView,
+    ConclusionReportView,
+    FullReportView,
 )
 
 app_name = 'planner'
@@ -36,4 +40,10 @@ urlpatterns = [
     # Sub-module 5: Weekly Study Hours
     path('weekly-hours/current/', WeeklyHoursOverviewView.as_view(), name='weekly-hours-current'),
     path('weekly-hours/daily-logs/<str:date_str>/', DailyStudyLogDetailView.as_view(), name='weekly-hours-daily-log-detail'),
+
+    # Sub-module 6: Student Reports
+    path('reports/weekly/', WeeklyReportView.as_view(), name='report-weekly'),
+    path('reports/performed/', PerformedReportView.as_view(), name='report-performed'),
+    path('reports/conclusion/', ConclusionReportView.as_view(), name='report-conclusion'),
+    path('reports/full/', FullReportView.as_view(), name='report-full'),
 ]

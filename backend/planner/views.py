@@ -1,7 +1,9 @@
 from datetime import datetime, date
+from django.http import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from rest_framework.renderers import BaseRenderer, JSONRenderer
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.utils.translation import gettext as _
 
@@ -10,6 +12,8 @@ from planner.services.performed_plan_service import PerformedPlanAggregationServ
 from planner.services.conclusion_plan_service import ConclusionPlanService
 from planner.services.dashboard_service import DashboardSummaryService
 from planner.services.time_lock_service import TimeLockService, WeeklyHoursService
+from planner.services.report_service import ReportFormattingService
+from planner.services.pdf_export_service import PdfExportService
 from planner.serializers import (
     WeeklyPerformanceSerializer,
     ConclusionPlanResponseSerializer,
@@ -25,6 +29,7 @@ from planner.serializers import (
     WeeklyHoursOverviewSerializer,
     DailyStudyLogDetailSerializer,
     DailyStudyLogUpsertSerializer,
+    ReportBaseResponseSerializer,
 )
 
 
@@ -483,4 +488,144 @@ class DailyStudyLogDetailView(APIView):
         return Response(
             {'message': _('Daily log updated successfully.')},
             status=status.HTTP_200_OK
+        )
+
+
+# ============================================
+# Sub-module 6: Student Reports
+# ============================================
+
+class PdfRenderer(BaseRenderer):
+    """
+    Binary PDF renderer for DRF content negotiation (?format=pdf or Accept: application/pdf).
+    """
+    media_type = 'application/pdf'
+    format = 'pdf'
+    charset = None
+    render_style = 'binary'
+
+    def render(self, data, accepted_media_type=None, renderer_context=None):
+        return data
+
+
+class BaseReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [JSONRenderer, PdfRenderer]
+
+    def _render_report(self, request, report_type, fetch_func, filename_prefix):
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        report_data = fetch_func(
+            student=request.user,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        is_pdf = (
+            request.query_params.get('format') == 'pdf' or
+            'application/pdf' in request.headers.get('Accept', '') or
+            getattr(getattr(request, 'accepted_renderer', None), 'format', None) == 'pdf'
+        )
+
+        if is_pdf:
+            pdf_bytes = PdfExportService.generate_pdf(report_type, report_data, student=request.user)
+            filename = f"{filename_prefix}_{report_data['week_start']}.pdf"
+            response = HttpResponse(pdf_bytes, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        serializer = ReportBaseResponseSerializer(report_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class WeeklyReportView(BaseReportView):
+    """
+    Sub-module 6: Weekly Study Plan Report.
+    """
+    @extend_schema(
+        summary="Get Weekly Plan Report",
+        description="Generates the scheduled weekly study plan report (JSON or PDF via ?format=pdf).",
+        parameters=[
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="format", description="Response format (json or pdf)", required=False, type=str),
+        ],
+        responses={200: ReportBaseResponseSerializer},
+    )
+    def get(self, request):
+        return self._render_report(
+            request,
+            report_type='weekly',
+            fetch_func=ReportFormattingService.get_weekly_report,
+            filename_prefix='weekly_report'
+        )
+
+
+class PerformedReportView(BaseReportView):
+    """
+    Sub-module 6: Actually Performed Weekly Report.
+    """
+    @extend_schema(
+        summary="Get Performed Weekly Report",
+        description="Generates the actually performed weekly study report (JSON or PDF via ?format=pdf).",
+        parameters=[
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="format", description="Response format (json or pdf)", required=False, type=str),
+        ],
+        responses={200: ReportBaseResponseSerializer},
+    )
+    def get(self, request):
+        return self._render_report(
+            request,
+            report_type='performed',
+            fetch_func=ReportFormattingService.get_performed_report,
+            filename_prefix='performed_report'
+        )
+
+
+class ConclusionReportView(BaseReportView):
+    """
+    Sub-module 6: Conclusion and Mastery Report.
+    """
+    @extend_schema(
+        summary="Get Conclusion Report",
+        description="Generates the topic mastery and test summary report (JSON or PDF via ?format=pdf).",
+        parameters=[
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="format", description="Response format (json or pdf)", required=False, type=str),
+        ],
+        responses={200: ReportBaseResponseSerializer},
+    )
+    def get(self, request):
+        return self._render_report(
+            request,
+            report_type='conclusion',
+            fetch_func=ReportFormattingService.get_conclusion_report,
+            filename_prefix='conclusion_report'
+        )
+
+
+class FullReportView(BaseReportView):
+    """
+    Sub-module 6: Comprehensive Full Student Report.
+    """
+    @extend_schema(
+        summary="Get Comprehensive Full Report",
+        description="Generates a full report combining weekly, performed, and conclusion data (JSON or PDF via ?format=pdf).",
+        parameters=[
+            OpenApiParameter(name="start_date", description="Start date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="end_date", description="End date (YYYY-MM-DD)", required=False, type=str),
+            OpenApiParameter(name="format", description="Response format (json or pdf)", required=False, type=str),
+        ],
+        responses={200: ReportBaseResponseSerializer},
+    )
+    def get(self, request):
+        return self._render_report(
+            request,
+            report_type='full',
+            fetch_func=ReportFormattingService.get_full_report,
+            filename_prefix='full_report'
         )

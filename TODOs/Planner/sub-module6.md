@@ -122,23 +122,23 @@ export interface FullReportDTO extends ReportBaseDTO {
 ## 4. Integration Plan (Delegation TODOs)
 
 ### Backend TODOs 
-- [ ] **Service Integration:** Create `ReportFormattingService` in the `planner` app. This service must inject the `CoreAnalyticsEngine` to fetch raw data, avoiding duplicate `annotate()` or `aggregate()` queries on the database.
-- [ ] **PDF Generation Engine:** Integrate `WeasyPrint` (or `pdfkit`). Create Django HTML templates (`.html` files) that mirror the React views for these reports. These templates will be fed the data from `ReportFormattingService` to generate PDFs.
-- [ ] **Content Negotiation:** Implement the 4 read-only GET endpoints. Configure them to check the `Accept` header or `?format=pdf` query parameter to decide whether to return `JsonResponse` or `FileResponse` (PDF).
-- [ ] **RTL Font Support:** Ensure the PDF generation server environment includes the required Persian fonts (`IRANSans`) and that the CSS within the PDF templates utilizes `dir="rtl"` to prevent text inversion.
+- [x] **Service Integration:** Create `ReportFormattingService` in the `planner` app. This service must inject the `CoreAnalyticsEngine` to fetch raw data, avoiding duplicate `annotate()` or `aggregate()` queries on the database.
+- [x] **PDF Generation Engine:** Integrate `WeasyPrint` (or `pdfkit` / `ReportLab`). Create Django HTML templates (`.html` files) that mirror the React views for these reports. These templates will be fed the data from `ReportFormattingService` to generate PDFs.
+- [x] **Content Negotiation:** Implement the 4 read-only GET endpoints. Configure them to check the `Accept` header or `?format=pdf` query parameter to decide whether to return `JsonResponse` or `FileResponse` (PDF).
+- [x] **RTL Font Support:** Ensure the PDF generation server environment includes the required Persian fonts (`IRANSans` / Tahoma / Arial) and that the CSS within the PDF templates utilizes `dir="rtl"` to prevent text inversion.
 
 ### Frontend TODOs 
-- [ ] **Routing:** Add `/reports` to `App.jsx` protected by `<RequireAuth>`. Add dynamic sub-routes for the viewer (e.g., `/reports/view/:type/:timestamp`).
-- [ ] **Main Component:** Create `ReportsList.jsx`. Replicate the UI showing the available report types with their respective `مشاهده` (View) and `دانلود PDF` (Download) buttons.
-- [ ] **Viewer Component:** Create `ReportViewer.jsx`. This component fetches the JSON version of the report and renders it in a styled HTML table format for in-app viewing (matching the raw HTML `.table-report` class structures).
-- [ ] **PDF Download Handler:** Implement an API utility function that triggers a file download when the user clicks the PDF button, passing `Accept: application/pdf`, handling the binary blob response, and prompting a browser file save.
+- [x] **Routing:** Add `/reports` to `App.jsx` protected by `<RequireAuth>`. Add dynamic sub-routes for the viewer (e.g., `/reports/view/:type/:timestamp`).
+- [x] **Main Component:** Create `ReportsList.jsx`. Replicate the UI showing the available report types with their respective `مشاهده` (View) and `دانلود PDF` (Download) buttons.
+- [x] **Viewer Component:** Create `ReportViewer.jsx`. This component fetches the JSON version of the report and renders it in a styled HTML table format for in-app viewing (matching the raw HTML `.table-report` class structures).
+- [x] **PDF Download Handler:** Implement an API utility function that triggers a file download when the user clicks the PDF button, passing `Accept: application/pdf`, handling the binary blob response, and prompting a browser file save.
 
 ---
 
 ## 6. Verification Checklist
-- [ ] **DRY Architecture:** The module successfully utilizes `CoreAnalyticsEngine` and contains zero direct database aggregation queries.
-- [ ] **Content Negotiation:** The endpoints correctly return JSON or PDF based on the request headers/params.
-- [ ] **PDF Quality:** Generated PDFs correctly render RTL Persian text and use the correct fonts without visual distortion.
-- [ ] **Blob Handling:** Frontend download buttons correctly prompt a file save dialog and handle binary streams without crashing or attempting to parse as JSON.
+- [x] **DRY Architecture:** The module successfully utilizes `CoreAnalyticsEngine` and contains zero direct database aggregation queries.
+- [x] **Content Negotiation:** The endpoints correctly return JSON or PDF based on the request headers/params.
+- [x] **PDF Quality:** Generated PDFs correctly render RTL Persian text and use the correct fonts without visual distortion.
+- [x] **Blob Handling:** Frontend download buttons correctly prompt a file save dialog and handle binary streams without crashing or attempting to parse as JSON.
 
 ```

@@ -34,6 +34,9 @@ import PerformedWeeklyPlan from './pages/student/planner/PerformedWeeklyPlan/Per
 import ConclusionPlan from './pages/student/planner/ConclusionPlan/ConclusionPlan';
 import HourWeeklyPlan from './pages/student/planner/HourWeeklyPlan/HourWeeklyPlan';
 import StudentDashboard from './pages/student/dashboard/StudentDashboard';
+import ReportsList from './pages/student/planner/Reports/ReportsList';
+import ReportViewer from './pages/student/planner/Reports/ReportViewer';
+
 function App() {
   useEffect(() => {
     const handleLanguageChange = (lng) => {
@@ -81,7 +84,11 @@ function App() {
                   <Route path="/dashboard" element={<Navigate to="/panel/dashboard" replace />} />
                   <Route path="/support" element={<SupportCenter />} />
                   <Route path="/tickets" element={<SupportCenter />} />
-                  <Route path="/reports" element={<UserReports />} />
+                  <Route path="/support/reports" element={<UserReports />} />
+                  <Route path="/reports" element={<ReportsList />} />
+                  <Route path="/schedule/reports" element={<Navigate to="/reports" replace />} />
+                  <Route path="/reports/view/:type" element={<ReportViewer />} />
+                  <Route path="/reports/view/:type/:timestamp" element={<ReportViewer />} />
                   <Route path="/schedule/hour-weekly-plan" element={<HourWeeklyPlan />} />
                   <Route path="/schedule/daily" element={<Navigate to="/schedule/hour-weekly-plan" replace />} />
                   <Route path="/schedule/performed-weekly-plan" element={<PerformedWeeklyPlan />} />

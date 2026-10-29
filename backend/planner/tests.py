@@ -1264,3 +1264,206 @@ class WeeklyStudyHoursAPITests(TestCase):
         self.assertEqual(log1.sleep_duration_minutes, 480)
         self.assertTrue(log1.is_finalized)
         self.assertEqual(log1.activities.count(), 1)
+
+
+# ============================================
+# Sub-module 6: Student Reports Tests
+# ============================================
+
+class StudentReportsAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.student = User.objects.create_user(
+            username='report_student1',
+            email='rep1@test.com',
+            password='password123',
+            is_email_verified=True
+        )
+        self.other_student = User.objects.create_user(
+            username='report_student2',
+            email='rep2@test.com',
+            password='password123',
+            is_email_verified=True
+        )
+
+        self.course = SourceMaterial.objects.create(title='ریاضیات گسسته')
+        self.chapter1 = Chapter.objects.create(source_material=self.course, title='نظریه گراف', order=1)
+        self.chapter2 = Chapter.objects.create(source_material=self.course, title='ترکیبیات', order=2)
+
+        self.url_weekly = '/api/planner/reports/weekly/'
+        self.url_performed = '/api/planner/reports/performed/'
+        self.url_conclusion = '/api/planner/reports/conclusion/'
+        self.url_full = '/api/planner/reports/full/'
+
+    def test_unauthenticated_access_denied(self):
+        for url in [self.url_weekly, self.url_performed, self.url_conclusion, self.url_full]:
+            res = self.client.get(url)
+            self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_weekly_report_json(self):
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(self.url_weekly)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('report_title', res.data)
+        self.assertIn('week_start', res.data)
+        self.assertIn('week_end', res.data)
+        self.assertIn('generated_at', res.data)
+        self.assertIn('data', res.data)
+        self.assertIn('total_allocated_minutes', res.data['data'])
+        self.assertIn('chapters', res.data['data'])
+
+    def test_weekly_report_pdf_download(self):
+        self.client.force_authenticate(user=self.student)
+        # 1. Via query param format=pdf
+        res = self.client.get(f"{self.url_weekly}?format=pdf")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res['Content-Type'], 'application/pdf')
+        self.assertTrue(res.content.startswith(b'%PDF-'))
+        self.assertGreater(len(res.content), 500)
+
+        # 2. Via Accept header
+        res_header = self.client.get(self.url_weekly, HTTP_ACCEPT='application/pdf')
+        self.assertEqual(res_header.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_header['Content-Type'], 'application/pdf')
+        self.assertTrue(res_header.content.startswith(b'%PDF-'))
+
+    def test_performed_report_json_and_pdf(self):
+        today = date.today()
+        log = DailyStudyLog.objects.create(student=self.student, date=today, sleep_duration_minutes=420)
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=90
+        )
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.CLASS,
+            duration_minutes=60
+        )
+        TestRecord.objects.create(
+            student=self.student,
+            chapter=self.chapter1,
+            date=today,
+            total_tests=25,
+            correct_tests=20,
+            wrong_tests=3
+        )
+
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(self.url_performed)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['data']['total_read_time_minutes'], 90)
+        self.assertEqual(res.data['data']['total_class_time_minutes'], 60)
+        self.assertEqual(res.data['data']['total_sleep_time_minutes'], 420)
+        self.assertEqual(res.data['data']['total_tests'], 25)
+
+        # PDF export
+        res_pdf = self.client.get(f"{self.url_performed}?format=pdf")
+        self.assertEqual(res_pdf.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_pdf['Content-Type'], 'application/pdf')
+        self.assertTrue(res_pdf.content.startswith(b'%PDF-'))
+
+    def test_conclusion_report_json_and_pdf(self):
+        ChapterMastery.objects.create(student=self.student, chapter=self.chapter1, level=85)
+        TestRecord.objects.create(
+            student=self.student,
+            chapter=self.chapter1,
+            date=date.today(),
+            total_tests=30,
+            correct_tests=24,
+            wrong_tests=6
+        )
+
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(self.url_conclusion)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('chapters', res.data['data'])
+        self.assertIn('overall_mastery_average', res.data['data'])
+        self.assertEqual(res.data['data']['total_tests'], 30)
+
+        # PDF export
+        res_pdf = self.client.get(f"{self.url_conclusion}?format=pdf")
+        self.assertEqual(res_pdf.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_pdf['Content-Type'], 'application/pdf')
+        self.assertTrue(res_pdf.content.startswith(b'%PDF-'))
+
+    def test_full_report_json_and_pdf(self):
+        today = date.today()
+        log = DailyStudyLog.objects.create(student=self.student, date=today, sleep_duration_minutes=480)
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=120
+        )
+        ChapterMastery.objects.create(student=self.student, chapter=self.chapter1, level=75)
+
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(self.url_full)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('scheduled_data', res.data['data'])
+        self.assertIn('performed_data', res.data['data'])
+        self.assertIn('conclusion_data', res.data['data'])
+
+        # PDF export
+        res_pdf = self.client.get(f"{self.url_full}?format=pdf")
+        self.assertEqual(res_pdf.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_pdf['Content-Type'], 'application/pdf')
+        self.assertTrue(res_pdf.content.startswith(b'%PDF-'))
+
+    def test_student_isolation_in_reports(self):
+        # Create activities and tests for other student
+        today = date.today()
+        other_log = DailyStudyLog.objects.create(student=self.other_student, date=today, sleep_duration_minutes=500)
+        StudyActivity.objects.create(
+            daily_log=other_log,
+            chapter=self.chapter2,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=300
+        )
+        TestRecord.objects.create(
+            student=self.other_student,
+            chapter=self.chapter2,
+            date=today,
+            total_tests=100,
+            correct_tests=90,
+            wrong_tests=10
+        )
+
+        # Query as self.student
+        self.client.force_authenticate(user=self.student)
+        res_perf = self.client.get(self.url_performed)
+        self.assertEqual(res_perf.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_perf.data['data']['total_read_time_minutes'], 0)
+        self.assertEqual(res_perf.data['data']['total_tests'], 0)
+
+        res_concl = self.client.get(self.url_conclusion)
+        self.assertEqual(res_concl.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_concl.data['data']['total_tests'], 0)
+        self.assertEqual(len(res_concl.data['data']['chapters']), 0)
+
+    def test_date_range_filtering(self):
+        self.client.force_authenticate(user=self.student)
+        today = date.today()
+        past_date = today - timedelta(days=20)
+        log = DailyStudyLog.objects.create(student=self.student, date=past_date, sleep_duration_minutes=400)
+        StudyActivity.objects.create(
+            daily_log=log,
+            chapter=self.chapter1,
+            activity_type=StudyActivityType.READING,
+            duration_minutes=150
+        )
+
+        # Query current week -> shouldn't include past_date
+        res_curr = self.client.get(self.url_performed)
+        self.assertEqual(res_curr.data['data']['total_read_time_minutes'], 0)
+
+        # Query with explicit start_date and end_date matching past_date
+        start = (past_date - timedelta(days=1)).isoformat()
+        end = (past_date + timedelta(days=1)).isoformat()
+        res_filtered = self.client.get(f"{self.url_performed}?start_date={start}&end_date={end}")
+        self.assertEqual(res_filtered.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_filtered.data['data']['total_read_time_minutes'], 150)
+

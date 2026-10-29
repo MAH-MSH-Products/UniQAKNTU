@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ report_title }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 1.5cm;
+    }
+    body {
+      font-family: 'IRANSans', 'Tahoma', sans-serif;
+      direction: rtl;
+      text-align: right;
+      color: #1e293b;
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .header {
+      border-bottom: 2px solid #0284c7;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0 0 6px 0;
+      color: #0f172a;
+      font-size: 20px;
+    }
+    .header .meta {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .kpi-grid {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      flex: 1;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px;
+      text-align: center;
+    }
+    .kpi-card .val {
+      font-size: 18px;
+      font-weight: bold;
+      color: #0284c7;
+    }
+    .kpi-card .lbl {
+      font-size: 10px;
+      color: #64748b;
+    }
+    table.table-report {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 24px;
+    }
+    table.table-report th {
+      background-color: #0284c7;
+      color: #ffffff;
+      padding: 8px 10px;
+      font-size: 11px;
+      border: 1px solid #0284c7;
+      text-align: center;
+    }
+    table.table-report td {
+      padding: 8px 10px;
+      font-size: 11px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    table.table-report tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+    .footer {
+      border-top: 1px solid #cbd5e1;
+      padding-top: 10px;
+      font-size: 10px;
+      color: #94a3b8;
+      text-align: center;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>{{ report_title }}</h1>
+    <div class="meta">
+      دانشجو: {{ student_name }} | بازه زمانی: {{ week_start }} تا {{ week_end }} | تاریخ تولید: {{ generated_at }}
+    </div>
+  </div>
+
+  {% block content %}{% endblock %}
+
+  <div class="footer">
+    سامانه هوشمند برنامه‌ریزی تحصیلی نصیر | آزمون‌هاب
+  </div>
+</body>
+</html>

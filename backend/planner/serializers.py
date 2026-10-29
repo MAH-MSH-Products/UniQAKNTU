@@ -236,3 +236,17 @@ class DailyStudyLogUpsertSerializer(serializers.Serializer):
                 _("Total study and sleep time in a day cannot exceed 24 hours (1440 minutes).")
             )
         return attrs
+
+
+# ============================================
+# Sub-module 6: Student Reports
+# ============================================
+
+class ReportBaseResponseSerializer(serializers.Serializer):
+    report_title = serializers.CharField()
+    report_type = serializers.CharField()
+    week_start = serializers.CharField()
+    week_end = serializers.CharField()
+    generated_at = serializers.CharField()
+    student_name = serializers.CharField()
+    data = serializers.DictField()

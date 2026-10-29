@@ -1,0 +1,57 @@
+{% extends "reports/base_report.html" %}
+
+{% block content %}
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="val">{{ data.total_read_time_minutes }}</div>
+    <div class="lbl">مطالعه (دقیقه)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_review_time_minutes }}</div>
+    <div class="lbl">مرور (دقیقه)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_class_time_minutes }}</div>
+    <div class="lbl">کلاس (دقیقه)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_sleep_time_minutes }}</div>
+    <div class="lbl">خواب (دقیقه)</div>
+  </div>
+  <div class="kpi-card">
+    <div class="val">{{ data.total_tests }}</div>
+    <div class="lbl">تعداد تست</div>
+  </div>
+</div>
+
+<table class="table-report">
+  <thead>
+    <tr>
+      <th style="width: 50px;">ردیف</th>
+      <th>کتاب / درس</th>
+      <th>فصل</th>
+      <th>مطالعه (دقیقه)</th>
+      <th>مرور (دقیقه)</th>
+      <th>کلاس (دقیقه)</th>
+      <th>تست‌ها</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ch in data.chapters %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ ch.source_material_title }}</td>
+      <td>{{ ch.chapter_title }}</td>
+      <td>{{ ch.read_time_minutes }}</td>
+      <td>{{ ch.review_time_minutes }}</td>
+      <td>{{ ch.class_time_minutes }}</td>
+      <td>{{ ch.test_count }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="7">هیچ فعالیت عملکردی در این بازه ثبت نشده است.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

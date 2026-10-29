@@ -1,0 +1,28 @@
+{% extends "reports/base_report.html" %}
+
+{% block content %}
+<table class="table-report">
+  <thead>
+    <tr>
+      <th style="width: 50px;">ردیف</th>
+      <th>کتاب / درس</th>
+      <th>فصل</th>
+      <th style="width: 150px;">مدت زمان تخصیص داده شده (دقیقه)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ch in data.chapters %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ ch.source_material_title }}</td>
+      <td>{{ ch.chapter_title }}</td>
+      <td>{{ ch.allocated_minutes }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="4">هیچ برنامه‌ای در این بازه زمانی ثبت نشده است.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

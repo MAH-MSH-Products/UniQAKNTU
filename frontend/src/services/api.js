@@ -251,5 +251,45 @@ export const saveDailyStudyLog = (date, data) => {
   return api.put(`/planner/weekly-hours/daily-logs/${date}/`, data);
 };
 
+// ============================================
+// Planner: Sub-module 6 - Student Reports
+// ============================================
+export const getWeeklyReport = (params = {}) => {
+  return api.get('/planner/reports/weekly/', { params });
+};
+
+export const getPerformedReport = (params = {}) => {
+  return api.get('/planner/reports/performed/', { params });
+};
+
+export const getConclusionReport = (params = {}) => {
+  return api.get('/planner/reports/conclusion/', { params });
+};
+
+export const getFullReport = (params = {}) => {
+  return api.get('/planner/reports/full/', { params });
+};
+
+export const downloadReportPdf = async (type, params = {}) => {
+  const response = await api.get(`/planner/reports/${type}/`, {
+    params: { ...params, format: 'pdf' },
+    responseType: 'blob',
+    headers: {
+      Accept: 'application/pdf',
+    },
+  });
+  const blob = new Blob([response.data], { type: 'application/pdf' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  const filename = `${type}_report_${params.start_date || 'week'}.pdf`;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
 export default api;
+
 
